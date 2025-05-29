@@ -15,10 +15,7 @@ use std::pin::Pin;
 //     // })
 // }
 
-pub async fn filter(
-    _s: Select<entity::User>,
-    _req: axum::extract::Request,
-) -> Result<Select<entity::User>, ()> {
+pub async fn filter(_req: Request, _s: Select<entity::User>) -> Result<Select<entity::User>, ()> {
     Ok(_s)
 }
 
