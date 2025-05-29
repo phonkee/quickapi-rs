@@ -1,20 +1,17 @@
-use axum::routing::get;
-use quickapi::ListView;
+#![allow(unused_imports)]
+
+use quickapi::view::list::View as ListView;
 
 #[tokio::main]
-async fn main() {
-    let mut router: axum::Router<()> = axum::Router::new();
-
-    router = router.route(
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let router: axum::Router<()> = axum::Router::new().route(
         "/api/user",
-        get::<ListView<entity::User>, (), ()>(ListView::default()),
+        quickapi::view::get(ListView::<entity::User>::default()),
     );
 
     // prepare listener
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:4148")
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;
 
-    // Serve the router with the state
-    axum::serve(listener, router).await.unwrap();
+    // Serve the router
+    Ok(axum::serve(listener, router).await?)
 }
