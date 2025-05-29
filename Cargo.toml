@@ -7,3 +7,4 @@ edition = "2024"
 axum = { version = "0.8.4" }
 sea-orm = { version = "1.2.0-rc.1", features = ["sqlx-postgres", "runtime-tokio"] }
 serde = { version = "1.0", features = ["derive"] }
+thiserror = "2.0"

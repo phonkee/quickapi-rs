@@ -1,5 +1,6 @@
 #![allow(unused_mut)]
 
+use crate::view::when::When;
 use axum::response::{IntoResponse, Response};
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -15,14 +16,15 @@ where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
-    pub fn when(mut self, _when: impl When) -> Self {
+    pub fn when<F>(mut self, _when: impl When, _f: F) -> Self
+    where
+        F: FnOnce(Self) -> Self,
+    {
         // Here you can implement logic to handle the `when` condition
         // For now, we just return self
         self
     }
 }
-
-pub trait When {}
 
 // Handler trait implementation for RequestHandler
 impl<M, S> axum::handler::Handler<(), S> for View<M, S>

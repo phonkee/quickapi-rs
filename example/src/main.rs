@@ -6,7 +6,14 @@ use quickapi::view::list::View as ListView;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router: axum::Router<()> = axum::Router::new().route(
         "/api/user",
-        quickapi::view::get(ListView::<entity::User>::default()),
+        quickapi::view::get(
+            // add list view for User entity
+            ListView::<entity::User>::default()
+                // add a condition to the view
+                .when((), |view| {
+                    view
+                }),
+        ),
     );
 
     // prepare listener
