@@ -1,30 +1,31 @@
-use axum::handler::Handler;
+use axum::extract::FromRequest;
+use axum::http::Request;
+use axum::response::Response;
 use sea_orm::{EntityTrait, Select};
+use std::future::Future;
+use std::pin::Pin;
 
-pub trait Filter<M>
+pub trait Filter<S, M>: Clone + Send + Sync + Sized + 'static
 where
-    M: sea_orm::EntityTrait,
+    M: EntityTrait + Send + Sync + 'static,
 {
-    fn filter(
-        &self,
-        req: &mut axum::extract::Request,
-        sel: sea_orm::Select<M>,
-    ) -> Result<sea_orm::Select<M>, crate::view::error::Error>;
+    /// The type of future calling this handler returns.
+    type Future: Future<Output = Result<Select<M>, ()>> + Send + 'static;
+
+    // /// Call the handler with the given request.
+    fn call(self, req: axum::extract::Request, s: Select<M>) -> Self::Future;
 }
 
-impl<M, F> Filter<M> for F
+impl<S, M, F, R> Filter<S, M> for F
 where
-    M: sea_orm::EntityTrait,
-    F: Fn(
-        &mut axum::extract::Request,
-        sea_orm::Select<M>,
-    ) -> Result<sea_orm::Select<M>, crate::view::error::Error>,
+    S: Clone + Send + Sync + 'static,
+    M: EntityTrait + Send + Sync + 'static,
+    R: Future<Output = Result<Select<M>, ()>> + Send + 'static,
+    F: Fn(Select<M>, axum::extract::Request) -> R + Clone + Send + Sync + 'static,
 {
-    fn filter(
-        &self,
-        _req: &mut axum::extract::Request,
-        sel: sea_orm::Select<M>,
-    ) -> Result<sea_orm::Select<M>, crate::view::error::Error> {
-        (self)(_req, sel)
+    type Future = Pin<Box<dyn Future<Output = Result<Select<M>, ()>> + Send>>;
+
+    fn call(self, req: axum::extract::Request, s: Select<M>) -> Self::Future {
+        Box::pin(self(s, req))
     }
 }

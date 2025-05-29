@@ -28,7 +28,10 @@ where
     }
 
     /// filter method to apply a filter condition
-    pub fn filter(mut self, _filter: impl Filter<M>) -> Self {
+    pub fn filter<F>(mut self, _filter: F) -> Self
+    where
+        F: Filter<S, M> + Clone + Send + Sync,
+    {
         // Here you can implement logic to handle the filter condition
         // For now, we just return self
         // TODO: not use yet

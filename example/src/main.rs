@@ -1,6 +1,26 @@
 #![allow(unused_imports)]
 
+use axum::extract::Request;
 use quickapi::view::list::View as ListView;
+use sea_orm::Select;
+use std::pin::Pin;
+
+// pub async fn filter(
+//     sel: sea_orm::Select<entity::User>,
+//     _req: &mut axum::extract::Request,
+// ) -> Result<sea_orm::Select<entity::User>, ()> {
+//     // Box::pin(async move {
+//     //     // Filtering logic here
+//     Ok(sel)
+//     // })
+// }
+
+pub async fn filter(
+    _s: Select<entity::User>,
+    _req: axum::extract::Request,
+) -> Result<Select<entity::User>, ()> {
+    Ok(_s)
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -11,10 +31,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ListView::<entity::User>::default()
                 // add a condition to the view
                 .when((), |view| {
-                    view.filter(|_: &mut axum::extract::Request, _sel: sea_orm::Select<entity::User>| {
-                        // this is what
-                        Ok(_sel)
-                    })
+                    // filter by something
+                    view.filter(filter)
+                    // view
                 }),
         ),
     );
