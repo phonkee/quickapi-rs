@@ -11,7 +11,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             ListView::<entity::User>::default()
                 // add a condition to the view
                 .when((), |view| {
-                    view
+                    view.filter(|_: &mut axum::extract::Request, _sel: sea_orm::Select<entity::User>| {
+                        // this is what
+                        Ok(_sel)
+                    })
                 }),
         ),
     );

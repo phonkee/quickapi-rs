@@ -1,5 +1,5 @@
-mod order;
-mod user;
+pub mod order;
+pub mod user;
 
 pub use order::Entity as Order;
 pub use user::Entity as User;

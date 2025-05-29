@@ -1,5 +1,6 @@
 #![allow(unused_mut)]
 
+use crate::view::filter::Filter;
 use crate::view::when::When;
 use axum::response::{IntoResponse, Response};
 use std::marker::PhantomData;
@@ -16,12 +17,21 @@ where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
+    /// when method to conditionally apply logic
     pub fn when<F>(mut self, _when: impl When, _f: F) -> Self
     where
         F: FnOnce(Self) -> Self,
     {
         // Here you can implement logic to handle the `when` condition
         // For now, we just return self
+        self
+    }
+
+    /// filter method to apply a filter condition
+    pub fn filter(mut self, _filter: impl Filter<M>) -> Self {
+        // Here you can implement logic to handle the filter condition
+        // For now, we just return self
+        // TODO: not use yet
         self
     }
 }

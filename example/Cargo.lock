@@ -514,6 +514,7 @@ dependencies = [
  "axum",
  "entity",
  "quickapi",
+ "sea-orm",
  "tokio",
 ]
 
