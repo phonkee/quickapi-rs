@@ -35,6 +35,17 @@ impl From<entity::UserModel> for SimpleUser {
     }
 }
 
+#[derive(Debug, Default, Clone, serde::Serialize)]
+pub struct UserIdOnly {
+    pub id: i32,
+}
+
+impl From<entity::UserModel> for UserIdOnly {
+    fn from(user: entity::UserModel) -> Self {
+        UserIdOnly { id: user.id }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // prepare tracing subscriber
@@ -54,8 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 // add a condition to the view
                 .when((), |view| {
                     // filter by something
-                    view.filter(filter)
-                    // view
+                    view.filter(filter).with_serializer::<UserIdOnly>()
                 }),
         ),
     );

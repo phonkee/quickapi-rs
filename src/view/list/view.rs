@@ -14,7 +14,7 @@ where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     phantom_data: PhantomData<O>,
     // a list of filters to apply to the query
@@ -22,12 +22,12 @@ where
         Arc<
             Box<
                 dyn Filter<
-                    S,
-                    M,
-                    Future=Pin<
-                        Box<dyn Future<Output=Result<Select<M>, ()>> + Send + 'static>,
+                        S,
+                        M,
+                        Future = Pin<
+                            Box<dyn Future<Output = Result<Select<M>, ()>> + Send + 'static>,
+                        >,
                     >,
-                >,
             >,
         >,
     >,
@@ -36,11 +36,11 @@ where
         Arc<
             Box<
                 dyn When<
-                    Future=Pin<
+                    Future = Pin<
                         Box<
-                            dyn Future<Output=Result<(), crate::view::error::Error>>
-                            + Send
-                            + 'static,
+                            dyn Future<Output = Result<(), crate::view::error::Error>>
+                                + Send
+                                + 'static,
                         >,
                     >,
                 >,
@@ -71,15 +71,15 @@ where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// with_serializer method to set a custom serializer
     pub fn with_serializer<Ser>(mut self) -> ListView<M, S, Ser>
     where
-        Ser: serde::Serialize,
+        Ser: serde::Serialize + Clone + Send + Sync + 'static,
         <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
     {
-        ListView::<M, S, Ser>{
+        ListView::<M, S, Ser> {
             filters: self.filters,
             when: self.when,
             phantom_data: PhantomData,
@@ -87,13 +87,16 @@ where
     }
 
     /// when method to conditionally apply logic
-    pub fn when<F>(mut self, _when: impl When, _f: F) -> Self
+    pub fn when<F, Ser>(mut self, _when: impl When, _f: F) -> ListView<M, S, Ser>
     where
-        F: FnOnce(Self) -> Self,
+        F: FnOnce(Self) -> ListView<M, S, Ser>,
+        Ser: serde::Serialize + Clone + Send + Sync + 'static,
+        <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
     {
+        let _x = _f(self.clone());
         // Here you can implement logic to handle the `when` condition
         // For now, we just return self
-        self
+        self.with_serializer()
     }
 
     /// filter method to apply a filter condition
@@ -111,7 +114,7 @@ where
     O: serde::Serialize + Clone + Sync + Send + 'static,
 {
     // Future type for the handler
-    type Future = Pin<Box<dyn Future<Output=Response> + Send>>;
+    type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
 
     // Call method to handle the request
     fn call(self, _req: axum::extract::Request, _state: S) -> Self::Future {
