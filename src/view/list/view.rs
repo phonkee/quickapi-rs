@@ -8,7 +8,6 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
 
-#[derive(Default)]
 pub struct ListView<M, S = (), O = ()>
 where
     M: sea_orm::entity::EntityTrait,
@@ -46,6 +45,43 @@ where
         ListView {
             filters: self.filters.clone(),
             when: self.when.clone(),
+            phantom_data: PhantomData,
+        }
+    }
+}
+
+impl<M, S> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model>
+where
+    M: sea_orm::entity::EntityTrait,
+    <M as sea_orm::entity::EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static,
+{
+    /// new method to create a new ListView instance
+    pub fn new() -> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model>
+    where
+        M: sea_orm::entity::EntityTrait,
+        <M as sea_orm::entity::EntityTrait>::Model:
+            serde::Serialize + Clone + Send + Sync + 'static,
+        S: Clone + Send + Sync + 'static,
+    {
+        ListView::<M, S, <M as sea_orm::entity::EntityTrait>::Model> {
+            filters: Vec::new(),
+            when: Vec::new(),
+            phantom_data: PhantomData,
+        }
+    }
+
+    /// new method to create a new ListView instance
+    pub fn new_with_serializer<Model, State, Ser>() -> ListView<Model, State, Ser>
+    where
+        Model: sea_orm::entity::EntityTrait,
+        State: Clone + Send + Sync + 'static,
+        <Model as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
+        Ser: serde::Serialize + Clone + Send + Sync + 'static,
+    {
+        ListView::<Model, State, Ser> {
+            filters: Vec::new(),
+            when: Vec::new(),
             phantom_data: PhantomData,
         }
     }
