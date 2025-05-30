@@ -9,11 +9,13 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 #[derive(Default)]
-pub struct ListView<M, S = ()>
+pub struct ListView<M, O, S = ()>
 where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
+    O: serde::Serialize,
 {
+    phantom_data: PhantomData<O>,
     // a list of filters to apply to the query
     filters: Vec<
         Arc<
@@ -46,24 +48,27 @@ where
     >,
 }
 
-impl<M, S> Clone for ListView<M, S>
+impl<M, O, S> Clone for ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
+    O: serde::Serialize,
 {
     fn clone(&self) -> Self {
         ListView {
             filters: self.filters.clone(),
             when: self.when.clone(),
+            phantom_data: PhantomData,
         }
     }
 }
 
 /// ListView struct for handling list views of entities
-impl<M, S> ListView<M, S>
+impl<M, O, S> ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
+    O: serde::Serialize,
 {
     /// when method to conditionally apply logic
     pub fn when<F>(mut self, _when: impl When, _f: F) -> Self
@@ -82,10 +87,11 @@ where
 }
 
 // Handler trait implementation for RequestHandler
-impl<M, S> axum::handler::Handler<(), S> for ListView<M, S>
+impl<M, O, S> axum::handler::Handler<(), S> for ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Sync + Send + 'static,
 {
     // Future type for the handler
     type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
