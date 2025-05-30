@@ -5,6 +5,7 @@ use axum::http::request::Parts;
 use quickapi::view::list::ListView;
 use sea_orm::Select;
 use std::pin::Pin;
+use tracing::info;
 // pub async fn filter(
 //     sel: sea_orm::Select<entity::User>,
 //     _req: &mut axum::extract::Request,
@@ -46,6 +47,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;
+
+    // Log the address we're listening on
+    info!("Listening on {}", listener.local_addr()?);
 
     // Serve the router
     Ok(axum::serve(listener, router).await?)
