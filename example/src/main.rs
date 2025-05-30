@@ -20,6 +20,21 @@ pub async fn filter(_s: Select<entity::User>, _: Parts) -> Result<Select<entity:
     Ok(_s)
 }
 
+#[derive(Debug, Default, Clone, serde::Serialize)]
+pub struct SimpleUser {
+    pub id: i32,
+    pub username: String,
+}
+
+impl From<entity::UserModel> for SimpleUser {
+    fn from(user: entity::UserModel) -> Self {
+        SimpleUser {
+            id: user.id,
+            username: user.username,
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // prepare tracing subscriber
@@ -35,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "/api/user",
         quickapi::view::get(
             // add list view for User entity
-            ListView::<entity::User, (), entity::User>::default()
+            ListView::<entity::User, (), SimpleUser>::default()
                 // add a condition to the view
                 .when((), |view| {
                     // filter by something

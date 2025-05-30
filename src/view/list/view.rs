@@ -11,8 +11,8 @@ use std::sync::Arc;
 #[derive(Default)]
 pub struct ListView<M, S = (), O = ()>
 where
-    M: sea_orm::entity::EntityTrait + Into<O>,
-    <M as sea_orm::entity::EntityTrait>::Model: serde::Serialize,
+    M: sea_orm::entity::EntityTrait,
+    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize,
 {
@@ -51,8 +51,8 @@ where
 
 impl<M, S, O> Clone for ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait + Into<O>,
-    <M as sea_orm::entity::EntityTrait>::Model: serde::Serialize,
+    M: sea_orm::entity::EntityTrait,
+    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -68,8 +68,8 @@ where
 /// ListView struct for handling list views of entities
 impl<M, S, O> ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait + Into<O>,
-    <M as sea_orm::entity::EntityTrait>::Model: serde::Serialize,
+    M: sea_orm::entity::EntityTrait,
+    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize,
 {
@@ -92,8 +92,8 @@ where
 // Handler trait implementation for RequestHandler
 impl<M, S, O> axum::handler::Handler<(), S> for ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait + Into<O>,
-    <M as sea_orm::entity::EntityTrait>::Model: serde::Serialize,
+    M: sea_orm::entity::EntityTrait,
+    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Sync + Send + 'static,
 {
