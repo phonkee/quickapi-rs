@@ -9,9 +9,9 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 #[derive(Default)]
-pub struct ListView<M, O, S = ()>
+pub struct ListView<M, S = (), O = M>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: sea_orm::entity::EntityTrait + Into<O> + serde::Serialize,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize,
 {
@@ -48,11 +48,11 @@ where
     >,
 }
 
-impl<M, O, S> Clone for ListView<M, O, S>
+impl<M, S, O> Clone for ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: sea_orm::entity::EntityTrait + Into<O> + serde::Serialize,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     fn clone(&self) -> Self {
         ListView {
@@ -64,9 +64,9 @@ where
 }
 
 /// ListView struct for handling list views of entities
-impl<M, O, S> ListView<M, O, S>
+impl<M, S, O> ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: sea_orm::entity::EntityTrait + Into<O> + serde::Serialize,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize,
 {
@@ -87,11 +87,11 @@ where
 }
 
 // Handler trait implementation for RequestHandler
-impl<M, O, S> axum::handler::Handler<(), S> for ListView<M, O, S>
+impl<M, S, O> axum::handler::Handler<(), S> for ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: sea_orm::entity::EntityTrait + Into<O> + serde::Serialize,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Sync + Send + 'static,
+    O: serde::Serialize + Clone + Sync + Send + 'static,
 {
     // Future type for the handler
     type Future = Pin<Box<dyn Future<Output = Response> + Send>>;

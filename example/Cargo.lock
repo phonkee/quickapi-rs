@@ -477,6 +477,7 @@ name = "entity"
 version = "0.1.0"
 dependencies = [
  "sea-orm",
+ "serde",
 ]
 
 [[package]]
@@ -515,6 +516,7 @@ dependencies = [
  "entity",
  "quickapi",
  "sea-orm",
+ "serde",
  "tokio",
  "tracing",
  "tracing-subscriber",
