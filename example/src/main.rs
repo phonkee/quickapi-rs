@@ -2,7 +2,7 @@
 
 use axum::extract::Request;
 use axum::http::request::Parts;
-use quickapi::view::list::View as ListView;
+use quickapi::view::list::ListView;
 use sea_orm::Select;
 use std::pin::Pin;
 // pub async fn filter(
@@ -21,6 +21,15 @@ pub async fn filter(_s: Select<entity::User>, _: Parts) -> Result<Select<entity:
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // prepare tracing subscriber
+    tracing_subscriber::fmt()
+        .compact()
+        .with_target(false)
+        .with_thread_names(true)
+        .with_line_number(true)
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
+
     let router: axum::Router<()> = axum::Router::new().route(
         "/api/user",
         quickapi::view::get(

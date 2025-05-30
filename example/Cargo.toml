@@ -9,3 +9,5 @@ axum = { version = "0.8", features = ["macros"] }
 quickapi = { path = "../" }
 entity = { path = "entity" }
 sea-orm = "1.2.0-rc.1"
+tracing = { version = "0.1" }
+tracing-subscriber = { version = "0.3" }

@@ -3,16 +3,48 @@
 use crate::view::filter::Filter;
 use crate::view::when::When;
 use axum::response::{IntoResponse, Response};
+use sea_orm::Select;
 use std::marker::PhantomData;
 use std::pin::Pin;
+use std::sync::Arc;
 
-#[derive(Clone, Default)]
-pub struct View<M, S = ()> {
-    _phantom: PhantomData<M>,
-    _phantom2: PhantomData<S>,
+#[derive(Default)]
+pub struct ListView<M, S = ()>
+where
+    M: sea_orm::entity::EntityTrait,
+    S: Clone + Send + Sync + 'static,
+{
+    // a list of filters to apply to the query
+    filters: Vec<
+        Arc<
+            Box<
+                dyn Filter<
+                        S,
+                        M,
+                        Future = Pin<
+                            Box<dyn Future<Output = Result<Select<M>, ()>> + Send + 'static>,
+                        >,
+                    >,
+            >,
+        >,
+    >,
+    // when condition to apply logic
 }
 
-impl<M, S> View<M, S>
+impl<M, S> Clone for ListView<M, S>
+where
+    M: sea_orm::entity::EntityTrait,
+    S: Clone + Send + Sync + 'static,
+{
+    fn clone(&self) -> Self {
+        ListView {
+            filters: self.filters.clone(),
+        }
+    }
+}
+
+/// ListView struct for handling list views of entities
+impl<M, S> ListView<M, S>
 where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
@@ -34,7 +66,7 @@ where
 }
 
 // Handler trait implementation for RequestHandler
-impl<M, S> axum::handler::Handler<(), S> for View<M, S>
+impl<M, S> axum::handler::Handler<(), S> for ListView<M, S>
 where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
