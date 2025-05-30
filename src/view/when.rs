@@ -16,7 +16,7 @@ impl When for () {
         Box<dyn Future<Output = Result<(), crate::view::error::Error>> + Send + Sync + 'static>,
     >;
     fn when(self, _req: &mut axum::extract::Request) -> Self::Future {
-        Box::pin(async { Err(crate::view::error::Error::NotApplied {}) })
+        Box::pin(async { Ok(()) })
     }
 }
 
