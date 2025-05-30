@@ -3,7 +3,7 @@
 use axum::extract::Request;
 use axum::http::request::Parts;
 use quickapi::view::list::ListView;
-use sea_orm::Select;
+use sea_orm::{EntityTrait, Select};
 use std::pin::Pin;
 use tracing::info;
 // pub async fn filter(
