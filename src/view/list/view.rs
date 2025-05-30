@@ -8,7 +8,7 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
 
-pub struct ListView<M, S = (), O = ()>
+pub struct ListView<M, S, O>
 where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
