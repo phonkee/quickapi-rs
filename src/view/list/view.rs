@@ -93,7 +93,10 @@ where
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
         <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
     {
+        // TODO: push to when vector?
         let _x = _f(self.clone());
+        // self.when.push(Arc::new(Box::new(_x)));
+
         // Here you can implement logic to handle the `when` condition
         // For now, we just return self
         self.with_serializer()
