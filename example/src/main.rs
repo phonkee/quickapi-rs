@@ -1,10 +1,10 @@
 #![allow(unused_imports)]
 
 use axum::extract::Request;
+use axum::http::request::Parts;
 use quickapi::view::list::View as ListView;
 use sea_orm::Select;
 use std::pin::Pin;
-
 // pub async fn filter(
 //     sel: sea_orm::Select<entity::User>,
 //     _req: &mut axum::extract::Request,
@@ -15,7 +15,7 @@ use std::pin::Pin;
 //     // })
 // }
 
-pub async fn filter(_req: Request, _s: Select<entity::User>) -> Result<Select<entity::User>, ()> {
+pub async fn filter(_s: Select<entity::User>, _: Parts) -> Result<Select<entity::User>, ()> {
     Ok(_s)
 }
 
