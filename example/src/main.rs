@@ -35,7 +35,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "/api/user",
         quickapi::view::get(
             // add list view for User entity
-            ListView::<entity::User, ()>::default()
+            ListView::<entity::User, (), entity::User>::default()
                 // add a condition to the view
                 .when((), |view| {
                     // filter by something
