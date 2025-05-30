@@ -29,6 +29,21 @@ where
         >,
     >,
     // when condition to apply logic
+    when: Vec<
+        Arc<
+            Box<
+                dyn When<
+                    Future = Pin<
+                        Box<
+                            dyn Future<Output = Result<(), crate::view::error::Error>>
+                                + Send
+                                + 'static,
+                        >,
+                    >,
+                >,
+            >,
+        >,
+    >,
 }
 
 impl<M, S> Clone for ListView<M, S>
@@ -39,6 +54,7 @@ where
     fn clone(&self) -> Self {
         ListView {
             filters: self.filters.clone(),
+            when: self.when.clone(),
         }
     }
 }
