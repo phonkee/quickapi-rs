@@ -1,7 +1,7 @@
 #![allow(unused_mut)]
 
 use crate::view::filter::Filter;
-use crate::view::when::When;
+use crate::view::when::{When, WhenView};
 use axum::response::{IntoResponse, Response};
 use sea_orm::Select;
 use std::marker::PhantomData;
@@ -32,21 +32,7 @@ where
         >,
     >,
     // when condition to apply logic
-    when: Vec<
-        Arc<
-            Box<
-                dyn When<
-                    Future = Pin<
-                        Box<
-                            dyn Future<Output = Result<(), crate::view::error::Error>>
-                                + Send
-                                + 'static,
-                        >,
-                    >,
-                >,
-            >,
-        >,
-    >,
+    when: Vec<WhenView<M, S, O>>,
 }
 
 impl<M, S, O> Clone for ListView<M, S, O>
@@ -81,7 +67,12 @@ where
     {
         ListView::<M, S, Ser> {
             filters: self.filters,
-            when: self.when,
+            when: self
+                .when
+                .clone()
+                .iter()
+                .map(|x| x.clone().with_serializer())
+                .collect(),
             phantom_data: PhantomData,
         }
     }
