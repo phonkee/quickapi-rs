@@ -22,12 +22,12 @@ where
         Arc<
             Box<
                 dyn Filter<
-                        S,
-                        M,
-                        Future = Pin<
-                            Box<dyn Future<Output = Result<Select<M>, ()>> + Send + 'static>,
-                        >,
+                    S,
+                    M,
+                    Future=Pin<
+                        Box<dyn Future<Output=Result<Select<M>, ()>> + Send + 'static>,
                     >,
+                >,
             >,
         >,
     >,
@@ -36,11 +36,11 @@ where
         Arc<
             Box<
                 dyn When<
-                    Future = Pin<
+                    Future=Pin<
                         Box<
-                            dyn Future<Output = Result<(), crate::view::error::Error>>
-                                + Send
-                                + 'static,
+                            dyn Future<Output=Result<(), crate::view::error::Error>>
+                            + Send
+                            + 'static,
                         >,
                     >,
                 >,
@@ -73,6 +73,19 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize,
 {
+    /// with_serializer method to set a custom serializer
+    pub fn with_serializer<Ser>(mut self) -> ListView<M, S, Ser>
+    where
+        Ser: serde::Serialize,
+        <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
+    {
+        ListView::<M, S, Ser>{
+            filters: self.filters,
+            when: self.when,
+            phantom_data: PhantomData,
+        }
+    }
+
     /// when method to conditionally apply logic
     pub fn when<F>(mut self, _when: impl When, _f: F) -> Self
     where
@@ -98,7 +111,7 @@ where
     O: serde::Serialize + Clone + Sync + Send + 'static,
 {
     // Future type for the handler
-    type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
+    type Future = Pin<Box<dyn Future<Output=Response> + Send>>;
 
     // Call method to handle the request
     fn call(self, _req: axum::extract::Request, _state: S) -> Self::Future {
