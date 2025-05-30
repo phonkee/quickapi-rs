@@ -7,7 +7,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 // Filter trait for any function taking Select<M> and extractors
-pub trait Filter<S, M, Arg>: Send + Sync
+pub trait Filter<S, M, Arg = ()>: Send + Sync
 where
     M: EntityTrait + Send + Sync + 'static,
 {
@@ -60,12 +60,11 @@ where
     }
 }
 
-impl<S, M, T1, T2> Filter<S, M, ((), ())> for (T1, T2)
+impl<S, M, T1> Filter<S, M, (T1,)> for (T1,)
 where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
-    T1: Filter<S, M, ((), ())> + Send + Sync + 'static,
-    T2: Filter<S, M, ((), ())> + Send + Sync + 'static,
+    T1: Filter<S, M> + Send + Sync + 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Result<Select<M>, ()>> + Send + 'static>>;
     fn call(self, parts: Parts, _state: S, s: Select<M>) -> Self::Future {
@@ -74,17 +73,13 @@ where
             let Ok(s) = self.0.call(parts.clone(), state.clone(), s).await else {
                 return Err(());
             };
-            let Ok(s) = self.1.call(parts.clone(), state.clone(), s).await else {
-                return Err(());
-            };
-
             Ok(s)
         })
     }
 }
 
 macro_rules! impl_filter_tuple {
-    ([$($ty:ident),*], $tt:tt) => {
+    ([$($ty:ident),*], [$($idx:tt),*], $tt:tt) => {
         impl<S, M, $($ty,)*> Filter<S, M, $tt> for ($($ty,)*)
         where
             M: EntityTrait + Send + Sync + 'static,
@@ -99,24 +94,28 @@ macro_rules! impl_filter_tuple {
                     let state = _state.clone();
                     Box::pin(async move {
                         $(
-                           let Ok(s) = self.0.call(parts.clone(), state.clone(), s).await else { 
+                           let Ok(s) = self.$idx.call(parts.clone(), state.clone(), s).await else {
                                return Err(());
                            };
                         )*
- 
-                        let Ok(s) = self.0.call(parts.clone(), state.clone(), s).await else {
-                            return Err(());
-                        };
-                        let Ok(s) = self.1.call(parts.clone(), state.clone(), s).await else {
-                            return Err(());
-                        };
-            
                         Ok(s)
                     })
-                }                
+                }
             }
-        }
     }
 }
 
-impl_filter_tuple!([T1, T2, T3], ((), (), ()));
+impl_filter_tuple!([T1, T2], [0, 1], ((), ()));
+impl_filter_tuple!([T1, T2, T3], [0, 1, 2], ((), (), ()));
+impl_filter_tuple!([T1, T2, T3, T4], [0, 1, 2, 3], ((), (), (), ()));
+impl_filter_tuple!([T1, T2, T3, T4, T5], [0, 1, 2, 3, 4], ((), (), (), (), ()));
+impl_filter_tuple!(
+    [T1, T2, T3, T4, T5, T6],
+    [0, 1, 2, 3, 4, 5],
+    ((), (), (), (), (), ())
+);
+impl_filter_tuple!(
+    [T1, T2, T3, T4, T5, T6, T7],
+    [0, 1, 2, 3, 4, 5, 6],
+    ((), (), (), (), (), (), ())
+);
