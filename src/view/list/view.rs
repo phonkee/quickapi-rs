@@ -171,7 +171,14 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    type Future = Pin<Box<dyn Future<Output = Result<serde_json::Value, crate::error::Error>>>>;
+    type Future = Pin<
+        Box<
+            dyn Future<Output = Result<serde_json::Value, crate::error::Error>>
+                + Send
+                + Sync
+                + 'static,
+        >,
+    >;
 
     // view method to handle the request
     #[allow(unused_variables)]
@@ -213,21 +220,20 @@ where
         let state = _state.clone();
 
         Box::pin(async move {
-            (axum::http::StatusCode::OK, "hello".to_owned()).into_response()
-            // match self.view(&mut parts, state).await {
-            //     Ok(value) => {
-            //         // Convert the value to a JSON response
-            //         (
-            //             axum::http::StatusCode::OK,
-            //             serde_json::to_string(&value).unwrap(),
-            //         )
-            //             .into_response()
-            //     }
-            //     Err(e) => {
-            //         // Handle error and return a 500 Internal Server Error
-            //         (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
-            //     }
-            // }
+            match self.view(&mut parts, state).await {
+                Ok(value) => {
+                    // Convert the value to a JSON response
+                    (
+                        axum::http::StatusCode::OK,
+                        serde_json::to_string(&value).unwrap(),
+                    )
+                        .into_response()
+                }
+                Err(e) => {
+                    // Handle error and return a 500 Internal Server Error
+                    (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+                }
+            }
         })
     }
 }

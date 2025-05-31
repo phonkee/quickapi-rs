@@ -20,7 +20,12 @@ impl<S> ViewSet<S> {
         _view: impl View<
             S,
             Future = Pin<
-                Box<dyn Future<Output = Result<serde_json::Value, crate::error::Error>> + 'static>,
+                Box<
+                    dyn Future<Output = Result<serde_json::Value, crate::error::Error>>
+                        + Send
+                        + Sync
+                        + 'static,
+                >,
             >,
         >,
     ) -> Self {
