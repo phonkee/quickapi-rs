@@ -71,6 +71,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     )
     .register_router(router)?;
 
+    // add viewset for User entity
     let router = quickapi::ViewSet::new("/api/viewset/user")
         .add_view(ListView::<
             entity::User,

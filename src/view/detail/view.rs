@@ -30,7 +30,7 @@ where
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
     pub fn new(path: &str, method: Method, _lookup: impl Lookup<M, S>) -> Self {
-        DetailView {
+        Self {
             path: path.to_owned(),
             method,
             ph: PhantomData,
