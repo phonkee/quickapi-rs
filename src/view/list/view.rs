@@ -4,6 +4,7 @@ use crate::view::filter::Filter;
 use crate::view::when::{When, WhenView};
 use crate::view::{View, get};
 use axum::http::Method;
+use axum::http::request::Parts;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{MethodFilter, on};
 use sea_orm::Select;
@@ -26,7 +27,7 @@ where
                 dyn Filter<
                         S,
                         M,
-                        Future = Pin<Box<dyn Future<Output = Result<Select<M>, ()>> + 'static>>,
+                        Future = Pin<Box<dyn Future<Output = Result<Select<M>, ()>> + Send + Sync>>,
                     >,
             >,
         >,
@@ -173,7 +174,8 @@ where
     type Future = Pin<Box<dyn Future<Output = Result<serde_json::Value, crate::error::Error>>>>;
 
     // view method to handle the request
-    fn view(&self, _req: axum::extract::Request, _state: S) -> Self::Future {
+    #[allow(unused_variables)]
+    fn view(&self, parts: &mut Parts, _state: S) -> Self::Future {
         Box::pin(async move {
             // Here you would implement the logic to retrieve the list of items
             Ok(serde_json::json!({"message": "ListView is working!"}))
@@ -187,8 +189,8 @@ where
     ) -> Result<axum::Router<S>, crate::error::Error> {
         let _mf: MethodFilter = self.method.clone().try_into().unwrap();
         // Register the ListView with the axum router
-        Ok(router)
-        // Ok(router.route(self.path.clone().as_str(), on(mf, self)))
+        // Ok(router)
+        Ok(router.route(self.path.clone().as_str(), on(_mf, self.clone())))
     }
 }
 
@@ -201,12 +203,31 @@ where
     O: serde::Serialize + Clone + Sync + Send + 'static,
 {
     // Future type for the handler
-    type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
+    type Future = Pin<Box<dyn Future<Output = Response> + Send + Sync + 'static>>;
 
     // Call method to handle the request
+    #[allow(unused_variables)]
     fn call(self, _req: axum::extract::Request, _state: S) -> Self::Future {
-        Box::pin(
-            async move { (axum::http::StatusCode::OK, "hello world".to_string()).into_response() },
-        )
+        let (mut parts, body) = _req.into_parts();
+
+        let state = _state.clone();
+
+        Box::pin(async move {
+            (axum::http::StatusCode::OK, "hello".to_owned()).into_response()
+            // match self.view(&mut parts, state).await {
+            //     Ok(value) => {
+            //         // Convert the value to a JSON response
+            //         (
+            //             axum::http::StatusCode::OK,
+            //             serde_json::to_string(&value).unwrap(),
+            //         )
+            //             .into_response()
+            //     }
+            //     Err(e) => {
+            //         // Handle error and return a 500 Internal Server Error
+            //         (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
+            //     }
+            // }
+        })
     }
 }
