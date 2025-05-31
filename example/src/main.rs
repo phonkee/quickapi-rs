@@ -73,8 +73,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             (),
             <entity::User as EntityTrait>::Model,
         >::new("/api/viewset/user", Method::GET))
-        .register_axum(router)
-        .unwrap();
+        .register_axum(router)?;
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;

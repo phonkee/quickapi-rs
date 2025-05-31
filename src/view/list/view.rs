@@ -155,13 +155,17 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    /// register_axum method to register the ListView with an axum router
     pub fn register_axum(
         self,
         router: axum::Router<S>,
     ) -> Result<axum::Router<S>, crate::error::Error> {
         let mf: MethodFilter = self.method.clone().try_into().unwrap();
 
-        debug!("Registering ListView at path: {}", self.path);
+        debug!(
+            "Registering ListView at path: {}, method: {}",
+            self.path, self.method
+        );
 
         // Register the ListView with the axum router
         Ok(router.route(self.path.clone().as_str(), on(mf, self)))

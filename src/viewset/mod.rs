@@ -1,13 +1,31 @@
 use crate::view::View;
 use std::pin::Pin;
 
+/// ViewSet is a collection of views that can be registered with an axum router.
 pub struct ViewSet<S> {
     path: String,
-    views: Vec<Box<dyn View<S, Future = Result<serde_json::Value, crate::error::Error>>>>,
+    views: Vec<
+        Pin<
+            Box<
+                dyn View<
+                        S,
+                        Future = Pin<
+                            Box<
+                                dyn Future<Output = Result<serde_json::Value, crate::error::Error>>
+                                    + Send
+                                    + Sync
+                                    + 'static,
+                            >,
+                        >,
+                    >,
+            >,
+        >,
+    >,
 }
 
 #[allow(unused_mut)]
 impl<S> ViewSet<S> {
+    /// new creates a new ViewSet with the given path.
     pub fn new(path: impl Into<String>) -> Self {
         Self {
             path: path.into(),
@@ -15,6 +33,7 @@ impl<S> ViewSet<S> {
         }
     }
 
+    /// add_view adds a view to the ViewSet.
     pub fn add_view(
         mut self,
         _view: impl View<
@@ -27,12 +46,14 @@ impl<S> ViewSet<S> {
                         + 'static,
                 >,
             >,
-        >,
+        > + 'static,
     ) -> Self {
+        self.views.push(Box::pin(_view));
         self
     }
 
-    pub fn register_axum(self, router: axum::Router<()>) -> Result<axum::Router<()>, ()> {
+    /// register_axum registers the views in the ViewSet with the given axum router.
+    pub fn register_axum(self, router: axum::Router<S>) -> Result<axum::Router<S>, crate::Error> {
         // Here you would register your views with the router
         Ok(router)
     }
