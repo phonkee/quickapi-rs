@@ -1,3 +1,4 @@
+use crate::Error;
 use crate::view::View;
 use axum::Router;
 use axum::http::request::Parts;
@@ -69,7 +70,11 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    fn register_router(&self, router: Router<S>) -> Result<Router<S>, crate::Error> {
+    fn register_router_with_prefix(
+        &self,
+        router: Router<S>,
+        _prefix: &str,
+    ) -> Result<Router<S>, Error> {
         Ok(router)
     }
 }

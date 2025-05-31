@@ -200,7 +200,11 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// register_axum method to register the view with an axum router
-    fn register_router(&self, router: Router<S>) -> Result<Router<S>, Error> {
+    fn register_router_with_prefix(
+        &self,
+        router: Router<S>,
+        prefix: &str,
+    ) -> Result<Router<S>, Error> {
         let mf: MethodFilter = self.method.clone().try_into().map_err(|e| {
             Error::InvalidMethod(format!(
                 "Failed to convert method {} to MethodFilter: {}",
@@ -209,8 +213,8 @@ where
         })?;
 
         debug!(
-            "registering list view at path: {}, method: {}",
-            self.path, self.method
+            "registering list view at path: {}{}, method: {}",
+            prefix, self.path, self.method
         );
 
         // Register the ListView with the axum router
