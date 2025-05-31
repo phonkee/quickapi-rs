@@ -1,5 +1,6 @@
 use crate::view::View;
 use std::pin::Pin;
+use tracing::debug;
 
 /// ViewSet is a collection of views that can be registered with an axum router.
 pub struct ViewSet<S> {
@@ -57,6 +58,8 @@ where
 
     /// register_axum registers the views in the ViewSet with the given axum router.
     pub fn register_axum(self, router: axum::Router<S>) -> Result<axum::Router<S>, crate::Error> {
+        debug!("registering viewset at path: {}", self.path);
+
         let mut inner = axum::Router::new();
         for view in self.views {
             inner = view.register_axum(inner)?;

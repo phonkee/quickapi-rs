@@ -72,7 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             entity::User,
             (),
             <entity::User as EntityTrait>::Model,
-        >::new("/api/viewset/user", Method::GET))
+        >::new("/", Method::GET))
         .register_axum(router)?;
 
     // prepare listener

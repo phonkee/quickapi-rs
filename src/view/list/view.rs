@@ -8,6 +8,7 @@ use axum::http::request::Parts;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{MethodFilter, on};
 use sea_orm::Select;
+use sea_orm::sea_query::ColumnSpec::Default;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -37,6 +38,7 @@ where
     when: Vec<WhenView<M, S, O>>,
     path: String,
     method: Method,
+    fallback: bool,
 }
 
 impl<M, S, O> Clone for ListView<M, S, O>
@@ -53,6 +55,7 @@ where
             when: self.when.clone(),
             phantom_data: PhantomData,
             method: self.method.clone(),
+            fallback: false,
         }
     }
 }
@@ -74,6 +77,7 @@ where
             filters: Vec::new(),
             when: Vec::new(),
             phantom_data: PhantomData,
+            fallback: false,
         }
     }
 
@@ -94,6 +98,7 @@ where
             filters: Vec::new(),
             when: Vec::new(),
             phantom_data: PhantomData,
+            fallback: false,
         }
     }
 }
@@ -123,6 +128,7 @@ where
                 .map(|x| x.clone().with_serializer())
                 .collect(),
             phantom_data: PhantomData,
+            fallback: self.fallback,
         }
     }
 
@@ -146,6 +152,15 @@ where
     pub fn filter<X>(mut self, _filter: impl Filter<S, M, X>) -> Self {
         self
     }
+
+    /// fallback method to handle fallback logic
+    pub fn fallback<F>(mut self, _fallback: F) -> Self
+    where
+        F: FnOnce(Self) -> Result<Self, crate::error::Error>,
+    {
+        self.fallback = true;
+        self
+    }
 }
 
 impl<M, S, O> ListView<M, S, O>
@@ -163,7 +178,7 @@ where
         let mf: MethodFilter = self.method.clone().try_into().unwrap();
 
         debug!(
-            "Registering ListView at path: {}, method: {}",
+            "registering list view at path: {}, method: {}",
             self.path, self.method
         );
 
