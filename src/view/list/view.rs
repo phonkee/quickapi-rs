@@ -65,7 +65,8 @@ where
     pub fn new(
         path: &str,
         method: Method,
-    ) -> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model> {
+    ) -> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model>
+    {
         ListView::<M, S, <M as sea_orm::entity::EntityTrait>::Model> {
             path: String::from(path),
             method,

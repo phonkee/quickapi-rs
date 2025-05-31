@@ -15,18 +15,15 @@ impl<S> ViewSet<S> {
         }
     }
 
-    pub fn add_view<V>(mut self, _view: V) -> Self
-    where
-        V: View<
-                S,
-                Future = Pin<
-                    Box<
-                        dyn Future<Output = Result<serde_json::Value, crate::error::Error>>
-                            + 'static,
-                    >,
-                >,
+    pub fn add_view(
+        mut self,
+        _view: impl View<
+            S,
+            Future = Pin<
+                Box<dyn Future<Output = Result<serde_json::Value, crate::error::Error>> + 'static>,
             >,
-    {
+        >,
+    ) -> Self {
         self
     }
 
