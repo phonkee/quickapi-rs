@@ -11,6 +11,7 @@ use sea_orm::Select;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
+use tracing::debug;
 
 pub struct ListView<M, S, O>
 where
@@ -159,6 +160,9 @@ where
         router: axum::Router<S>,
     ) -> Result<axum::Router<S>, crate::error::Error> {
         let mf: MethodFilter = self.method.clone().try_into().unwrap();
+
+        debug!("Registering ListView at path: {}", self.path);
+
         // Register the ListView with the axum router
         Ok(router.route(self.path.clone().as_str(), on(mf, self)))
     }
@@ -194,9 +198,12 @@ where
         &self,
         router: axum::Router<S>,
     ) -> Result<axum::Router<S>, crate::error::Error> {
-        let _mf: MethodFilter = self.method.clone().try_into().unwrap();
-        // Register the ListView with the axum router
-        // Ok(router)
+        let _mf: MethodFilter = self.method.clone().try_into().map_err(|e| {
+            crate::error::Error::MethodFilter(format!(
+                "Failed to convert method {}: {}",
+                self.method, e
+            ))
+        })?;
         Ok(router.route(self.path.clone().as_str(), on(_mf, self.clone())))
     }
 }

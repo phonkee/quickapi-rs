@@ -4,4 +4,7 @@ use axum::routing::MethodFilter;
 pub enum Error {
     #[error("Match error: {0}")]
     Match(String),
+
+    #[error("Method: {0} not")]
+    MethodFilter(String),
 }
