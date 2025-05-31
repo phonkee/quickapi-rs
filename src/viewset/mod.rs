@@ -64,16 +64,12 @@ where
     S: Clone + Send + Sync + 'static,
 {
     /// register_router registers the views in the ViewSet with the given axum router.
-    fn register_router_with_prefix(
-        &self,
-        router: Router<S>,
-        _prefix: &str,
-    ) -> Result<Router<S>, Error> {
-        debug!("viewset: {}: {}", self.path, self.views.len());
+    fn register_router_with_prefix(&self, router: Router<S>, _: &str) -> Result<Router<S>, Error> {
+        debug!("viewset: {} : views: {}", self.path, self.views.len());
 
         // prepare new router
         let mut inner = Router::new();
-        
+
         // register all views
         for view in &self.views {
             inner = view.register_router_with_prefix(inner, &self.path.clone())?;
