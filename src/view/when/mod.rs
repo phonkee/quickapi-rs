@@ -1,4 +1,4 @@
-use crate::filter::Filter;
+use crate::view::filter::Filter;
 use crate::view::list::ListView;
 use axum::body::Body;
 use sea_orm::Select;
