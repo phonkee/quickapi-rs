@@ -1,11 +1,11 @@
+pub mod detail;
 pub mod error;
+pub mod filter;
 pub mod list;
 pub mod when;
-pub mod filter;
-mod detail;
 
-use axum::http::request::Parts;
 use crate::router::RouterExt;
+use axum::http::request::Parts;
 pub use error::Error;
 
 /// View trait for defining a view (List, Get, Delete, Update, Create)

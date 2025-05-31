@@ -5,6 +5,7 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use quickapi::router::RouterExt;
 use quickapi::view::View;
+use quickapi::view::detail::DetailView;
 use quickapi::view::list::ListView;
 use sea_orm::{EntityTrait, Select};
 use std::pin::Pin;
@@ -76,6 +77,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             (),
             <entity::User as EntityTrait>::Model,
         >::new("/", Method::GET))
+        .add_view(DetailView::<
+            entity::User,
+            (),
+            <entity::User as EntityTrait>::Model,
+        >::new_with_serializer("id".to_string()))
         .register_router(router)?;
 
     // prepare listener
