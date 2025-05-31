@@ -69,13 +69,17 @@ where
         router: Router<S>,
         _prefix: &str,
     ) -> Result<Router<S>, Error> {
-        debug!("viewset: {}", self.path);
+        debug!("viewset: {}: {}", self.path, self.views.len());
 
-        let mut inner = axum::Router::new();
+        // prepare new router
+        let mut inner = Router::new();
+        
+        // register all views
         for view in &self.views {
             inner = view.register_router_with_prefix(inner, &self.path.clone())?;
         }
 
+        // return nested router
         Ok(router.nest(&self.path.clone(), inner))
     }
 }
