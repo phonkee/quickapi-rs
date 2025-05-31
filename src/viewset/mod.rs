@@ -24,7 +24,10 @@ pub struct ViewSet<S> {
 }
 
 #[allow(unused_mut)]
-impl<S> ViewSet<S> {
+impl<S> ViewSet<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
     /// new creates a new ViewSet with the given path.
     pub fn new(path: impl Into<String>) -> Self {
         Self {
@@ -54,7 +57,11 @@ impl<S> ViewSet<S> {
 
     /// register_axum registers the views in the ViewSet with the given axum router.
     pub fn register_axum(self, router: axum::Router<S>) -> Result<axum::Router<S>, crate::Error> {
-        // Here you would register your views with the router
-        Ok(router)
+        let mut inner = axum::Router::new();
+        for view in self.views {
+            inner = view.register_axum(inner)?;
+        }
+
+        Ok(router.nest(&self.path.clone(), inner))
     }
 }
