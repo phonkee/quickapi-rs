@@ -1,6 +1,7 @@
 use super::lookup::Lookup;
 use crate::Error;
 use crate::view::View;
+use crate::view::handler::Handler;
 use crate::view::list::ListView;
 use axum::Router;
 use axum::http::Method;
@@ -61,7 +62,7 @@ where
     >;
 
     /// view method to render the detail view.
-    fn view(&self, _parts: &mut Parts, _state: S) -> Self::Future {
+    fn handle_view(&self, _parts: &mut Parts, _state: S) -> Self::Future {
         todo!()
     }
 }
@@ -74,6 +75,7 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    /// register_router_with_prefix method to register the DetailView with an axum router.
     fn register_router_with_prefix(
         &self,
         router: Router<S>,
@@ -92,42 +94,9 @@ where
         );
 
         // Register the ListView with the axum router
-        Ok(router.route(self.path.clone().as_str(), on(mf, self.clone())))
-    }
-}
-
-impl<M, S, O> axum::handler::Handler<(), S> for DetailView<M, S, O>
-where
-    M: EntityTrait,
-    <M as EntityTrait>::Model: Into<O>,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Sync + Send + 'static,
-{
-    // Future type for the handler
-    type Future = Pin<Box<dyn Future<Output = Response> + Send + Sync + 'static>>;
-
-    // Call method to handle the request
-    #[allow(unused_variables)]
-    fn call(self, _req: axum::extract::Request, _state: S) -> Self::Future {
-        let (mut parts, body) = _req.into_parts();
-
-        let state = _state.clone();
-
-        Box::pin(async move {
-            match self.view(&mut parts, state).await {
-                Ok(value) => {
-                    // Convert the value to a JSON response
-                    (
-                        axum::http::StatusCode::OK,
-                        serde_json::to_string(&value).unwrap(),
-                    )
-                        .into_response()
-                }
-                Err(e) => {
-                    // Handle error and return a 500 Internal Server Error
-                    (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string()).into_response()
-                }
-            }
-        })
+        Ok(router.route(
+            self.path.clone().as_str(),
+            on(mf, Handler::new(self.clone())),
+        ))
     }
 }

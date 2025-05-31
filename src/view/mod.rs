@@ -1,6 +1,7 @@
 pub mod detail;
 pub mod error;
 pub mod filter;
+pub mod handler;
 pub mod list;
 pub mod when;
 
@@ -21,6 +22,6 @@ where
     /// Future type for the view method
     type Future: Future<Output = Result<serde_json::Value, crate::error::Error>>;
 
-    /// list method to retrieve a list of items
-    fn view(&self, parts: &mut Parts, state: S) -> Self::Future;
+    /// handle_view for view
+    fn handle_view(&self, parts: &mut Parts, state: S) -> Self::Future;
 }
