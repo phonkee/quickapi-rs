@@ -3,13 +3,15 @@
 use axum::extract::Request;
 use axum::http::Method;
 use axum::http::request::Parts;
+use quickapi::router::RouterExt;
 use quickapi::view::View;
 use quickapi::view::list::ListView;
 use sea_orm::{EntityTrait, Select};
 use std::pin::Pin;
 use tracing::info;
 
-pub async fn filter(_s: Select<entity::User>, _: Parts) -> Result<Select<entity::User>, ()> {
+/// Filter user
+pub async fn filter_user(_s: Select<entity::User>, _: Parts) -> Result<Select<entity::User>, ()> {
     Ok(_s)
 }
 
@@ -74,7 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             (),
             <entity::User as EntityTrait>::Model,
         >::new("/", Method::GET))
-        .register_axum(router)?;
+        .register_router(router)?;
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;

@@ -1,3 +1,4 @@
+use crate::RouterExt;
 use crate::view::View;
 use std::pin::Pin;
 use tracing::debug;
@@ -55,13 +56,18 @@ where
         self.views.push(Box::pin(_view));
         self
     }
+}
 
-    /// register_axum registers the views in the ViewSet with the given axum router.
-    pub fn register_axum(self, router: axum::Router<S>) -> Result<axum::Router<S>, crate::Error> {
+impl<S> RouterExt<S> for ViewSet<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    /// register_router registers the views in the ViewSet with the given axum router.
+    fn register_router(&self, router: axum::Router<S>) -> Result<axum::Router<S>, crate::Error> {
         debug!("registering viewset at path: {}", self.path);
 
         let mut inner = axum::Router::new();
-        for view in self.views {
+        for view in &self.views {
             inner = view.register_router(inner)?;
         }
 

@@ -1,6 +1,7 @@
 #![allow(unused_mut)]
 
 use crate::Error;
+use crate::router::RouterExt;
 use crate::view::View;
 use crate::view::filter::Filter;
 use crate::view::when::{When, WhenView};
@@ -189,7 +190,15 @@ where
             Ok(serde_json::json!({"message": "ListView is working!"}))
         })
     }
+}
 
+impl<M, S, O> RouterExt<S> for ListView<M, S, O>
+where
+    M: sea_orm::entity::EntityTrait,
+    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
     /// register_axum method to register the view with an axum router
     fn register_router(&self, router: Router<S>) -> Result<Router<S>, Error> {
         let mf: MethodFilter = self.method.clone().try_into().map_err(|e| {

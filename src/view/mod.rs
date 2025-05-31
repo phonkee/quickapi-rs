@@ -6,12 +6,13 @@ pub mod when;
 use axum::http::request::Parts;
 use axum::routing::{MethodFilter, on};
 
+use crate::router::RouterExt;
 pub use error::Error;
 
 /// View trait for defining a view (List, Get, Delete, Update, Create)
 /// TODO: This trait is still in development and may change in the future.
 /// S is axum state type, which can be any type that implements Send + Sync.
-pub trait View<S>
+pub trait View<S>: RouterExt<S>
 where
     S: Clone + Send + Sync + 'static,
 {
@@ -20,10 +21,4 @@ where
 
     /// list method to retrieve a list of items
     fn view(&self, parts: &mut Parts, state: S) -> Self::Future;
-
-    /// register_router method to register the view with an axum router
-    fn register_router(
-        &self,
-        router: axum::Router<S>,
-    ) -> Result<axum::Router<S>, crate::error::Error>;
 }
