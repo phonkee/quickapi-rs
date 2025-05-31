@@ -1,12 +1,12 @@
+use super::lookup::Lookup;
 use crate::Error;
 use crate::view::View;
 use axum::Router;
+use axum::http::Method;
 use axum::http::request::Parts;
 use sea_orm::EntityTrait;
 use std::marker::PhantomData;
 use std::pin::Pin;
-
-use super::lookup::Lookup;
 
 /// DetailView is a view for displaying details of a single entity.
 pub struct DetailView<M, S, O>
@@ -16,6 +16,8 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    path: String,
+    method: Method,
     ph: PhantomData<(M, S, O)>,
 }
 
@@ -27,21 +29,12 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
-    pub fn new<Model, State>(
-        _lookup: impl Lookup<M, S>,
-        _method: axum::http::Method,
-    ) -> DetailView<Model, State, <Model as EntityTrait>::Model>
-    where
-        Model: EntityTrait,
-        State: Clone + Send + Sync + 'static,
-        <Model as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
-    {
-        DetailView::<Model, State, <Model as EntityTrait>::Model> { ph: PhantomData }
-    }
-
-    /// new_with_serializer creates a new DetailView with a specific serializer.
-    pub fn new_with_serializer(_lookup: impl Lookup<M, S>) -> DetailView<M, S, O> {
-        DetailView { ph: PhantomData }
+    pub fn new(path: &str, method: Method, _lookup: impl Lookup<M, S>) -> Self {
+        DetailView {
+            path: path.to_owned(),
+            method,
+            ph: PhantomData,
+        }
     }
 }
 

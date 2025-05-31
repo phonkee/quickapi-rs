@@ -81,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             entity::User,
             (),
             <entity::User as EntityTrait>::Model,
-        >::new_with_serializer("id".to_string()))
+        >::new("/{id}", Method::GET, "id".to_string()))
         .register_router(router)?;
 
     // prepare listener
