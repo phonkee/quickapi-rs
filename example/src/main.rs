@@ -66,7 +66,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             // filter by something
             view.filter(filter).with_serializer::<UserIdOnly>()
         })
-        .register_axum(router);
+        .register_axum(router)?;
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;

@@ -1,9 +1,11 @@
 #![allow(unused_mut)]
 
 use crate::view::filter::Filter;
+use crate::view::get;
 use crate::view::when::{When, WhenView};
 use axum::http::Method;
 use axum::response::{IntoResponse, Response};
+use axum::routing::{MethodFilter, on};
 use sea_orm::Select;
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -159,11 +161,13 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    pub fn register_axum(self, router: axum::Router<S>) -> axum::Router<S> {
+    pub fn register_axum(
+        self,
+        router: axum::Router<S>,
+    ) -> Result<axum::Router<S>, crate::error::Error> {
+        let mf: MethodFilter = self.method.clone().try_into().unwrap();
         // Register the ListView with the axum router
-        router
-        //
-        // router.route(&self.path, axum::routing::get(self))
+        Ok(router.route(self.path.clone().as_str(), on(mf, self)))
     }
 }
 
