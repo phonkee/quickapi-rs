@@ -1,4 +1,6 @@
 #![allow(dead_code, unused_imports)]
-pub mod view;
-mod viewset;
 mod error;
+pub mod view;
+pub mod viewset;
+
+pub use viewset::ViewSet;

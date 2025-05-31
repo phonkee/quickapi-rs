@@ -1,8 +1,8 @@
 #![allow(unused_mut)]
 
 use crate::view::filter::Filter;
-use crate::view::get;
 use crate::view::when::{When, WhenView};
+use crate::view::{View, get};
 use axum::http::Method;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{MethodFilter, on};
@@ -26,9 +26,7 @@ where
                 dyn Filter<
                         S,
                         M,
-                        Future = Pin<
-                            Box<dyn Future<Output = Result<Select<M>, ()>> + Send + 'static>,
-                        >,
+                        Future = Pin<Box<dyn Future<Output = Result<Select<M>, ()>> + 'static>>,
                     >,
             >,
         >,
@@ -67,13 +65,7 @@ where
     pub fn new(
         path: &str,
         method: Method,
-    ) -> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model>
-    where
-        M: sea_orm::entity::EntityTrait,
-        <M as sea_orm::entity::EntityTrait>::Model:
-            serde::Serialize + Clone + Send + Sync + 'static,
-        S: Clone + Send + Sync + 'static,
-    {
+    ) -> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model> {
         ListView::<M, S, <M as sea_orm::entity::EntityTrait>::Model> {
             path: String::from(path),
             method,
@@ -135,7 +127,7 @@ where
     /// when method to conditionally apply logic
     pub fn when<F, Ser>(mut self, _when: impl When, _f: F) -> ListView<M, S, Ser>
     where
-        F: FnOnce(Self) -> ListView<M, S, Ser>,
+        F: FnOnce(Self) -> Result<ListView<M, S, Ser>, crate::error::Error>,
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
         <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
     {
@@ -168,6 +160,24 @@ where
         let mf: MethodFilter = self.method.clone().try_into().unwrap();
         // Register the ListView with the axum router
         Ok(router.route(self.path.clone().as_str(), on(mf, self)))
+    }
+}
+
+impl<M, S, O> View<S> for ListView<M, S, O>
+where
+    M: sea_orm::entity::EntityTrait,
+    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    type Future = Pin<Box<dyn Future<Output = Result<serde_json::Value, crate::error::Error>>>>;
+
+    // view method to handle the request
+    fn view(&self, _req: axum::extract::Request, _state: S) -> Self::Future {
+        Box::pin(async move {
+            // Here you would implement the logic to retrieve the list of items
+            Ok(serde_json::json!({"message": "ListView is working!"}))
+        })
     }
 }
 

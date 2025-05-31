@@ -7,15 +7,6 @@ use quickapi::view::list::ListView;
 use sea_orm::{EntityTrait, Select};
 use std::pin::Pin;
 use tracing::info;
-// pub async fn filter(
-//     sel: sea_orm::Select<entity::User>,
-//     _req: &mut axum::extract::Request,
-// ) -> Result<sea_orm::Select<entity::User>, ()> {
-//     // Box::pin(async move {
-//     //     // Filtering logic here
-//     Ok(sel)
-//     // })
-// }
 
 pub async fn filter(_s: Select<entity::User>, _: Parts) -> Result<Select<entity::User>, ()> {
     Ok(_s)
@@ -63,11 +54,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // add list view for User entity
     let router = ListView::new("/api/user", Method::GET)
         // add a condition to the view
-        .when((), |view| {
-            // filter by something
-            view.filter(filter).with_serializer::<UserIdOnly>()
-        })
+        .when(
+            (),
+            |view: ListView<entity::User, (), <entity::User as EntityTrait>::Model>| {
+                // filter by something
+                // view.filter(filter).with_serializer::<UserIdOnly>()
+                Ok(view)
+            },
+        )
         .register_axum(router)?;
+
+    // let router = quickapi::ViewSet::new("/api/viewset/user")
+    //     .add_view(ListView::new(
+    //         "/api/viewset/user",
+    //         Method::GET,
+    //     ))
+    //     .register_axum(router)
+    //     .unwrap();
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;
