@@ -3,8 +3,8 @@
 use crate::Error;
 use crate::router::RouterExt;
 use crate::view::View;
-use crate::view::filter::Filter;
-use crate::view::when::{When, WhenView};
+use crate::filter::Filter;
+use crate::when::{When, WhenView};
 use axum::Router;
 use axum::http::Method;
 use axum::http::request::Parts;
