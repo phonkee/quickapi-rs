@@ -51,21 +51,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let router: axum::Router<()> = axum::Router::new();
 
-    // add list view for User entity
-    let router = ListView::<entity::User, (), <entity::User as EntityTrait>::Model>::new(
-        "/api/user",
-        Method::GET,
-    )
-    // add a condition to the view
-    .when(
-        (),
-        |view: ListView<entity::User, (), <entity::User as EntityTrait>::Model>| {
-            // filter by something
-            // view.filter(filter).with_serializer::<UserIdOnly>()
-            Ok(view)
-        },
-    )
-    .register_axum(router)?;
+    // // add list view for User entity
+    // let router = ListView::<entity::User, (), <entity::User as EntityTrait>::Model>::new(
+    //     "/api/user",
+    //     Method::GET,
+    // )
+    // // add a condition to the view
+    // .when(
+    //     (),
+    //     |view: ListView<entity::User, (), <entity::User as EntityTrait>::Model>| {
+    //         // filter by something
+    //         // view.filter(filter).with_serializer::<UserIdOnly>()
+    //         Ok(view)
+    //     },
+    // )
+    // .register_axum(router)?;
 
     let router = quickapi::ViewSet::new("/api/viewset/user")
         .add_view(ListView::<

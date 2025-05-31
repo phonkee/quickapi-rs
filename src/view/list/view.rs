@@ -1,8 +1,10 @@
 #![allow(unused_mut)]
 
+use crate::Error;
 use crate::view::filter::Filter;
 use crate::view::when::{When, WhenView};
 use crate::view::{View, get};
+use axum::Router;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Response};
@@ -163,30 +165,6 @@ where
     }
 }
 
-impl<M, S, O> ListView<M, S, O>
-where
-    M: sea_orm::entity::EntityTrait,
-    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    /// register_axum method to register the ListView with an axum router
-    pub fn register_axum(
-        self,
-        router: axum::Router<S>,
-    ) -> Result<axum::Router<S>, crate::error::Error> {
-        let mf: MethodFilter = self.method.clone().try_into().unwrap();
-
-        debug!(
-            "registering list view at path: {}, method: {}",
-            self.path, self.method
-        );
-
-        // Register the ListView with the axum router
-        Ok(router.route(self.path.clone().as_str(), on(mf, self)))
-    }
-}
-
 impl<M, S, O> View<S> for ListView<M, S, O>
 where
     M: sea_orm::entity::EntityTrait,
@@ -213,17 +191,16 @@ where
     }
 
     /// register_axum method to register the view with an axum router
-    fn register_router(
-        &self,
-        router: axum::Router<S>,
-    ) -> Result<axum::Router<S>, crate::error::Error> {
-        let _mf: MethodFilter = self.method.clone().try_into().map_err(|e| {
-            crate::error::Error::MethodFilter(format!(
-                "Failed to convert method {}: {}",
-                self.method, e
-            ))
-        })?;
-        Ok(router.route(self.path.clone().as_str(), on(_mf, self.clone())))
+    fn register_router(&self, router: Router<S>) -> Result<Router<S>, Error> {
+        let mf: MethodFilter = self.method.clone().try_into().unwrap();
+
+        debug!(
+            "registering list view at path: {}, method: {}",
+            self.path, self.method
+        );
+
+        // Register the ListView with the axum router
+        Ok(router.route(self.path.clone().as_str(), on(mf, self.clone())))
     }
 }
 
