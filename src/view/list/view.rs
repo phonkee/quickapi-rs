@@ -2,6 +2,7 @@
 
 use crate::view::filter::Filter;
 use crate::view::when::{When, WhenView};
+use axum::http::Method;
 use axum::response::{IntoResponse, Response};
 use sea_orm::Select;
 use std::marker::PhantomData;
@@ -32,6 +33,8 @@ where
     >,
     // when condition to apply logic
     when: Vec<WhenView<M, S, O>>,
+    path: String,
+    method: Method,
 }
 
 impl<M, S, O> Clone for ListView<M, S, O>
@@ -43,9 +46,11 @@ where
 {
     fn clone(&self) -> Self {
         ListView {
+            path: self.path.clone(),
             filters: self.filters.clone(),
             when: self.when.clone(),
             phantom_data: PhantomData,
+            method: self.method.clone(),
         }
     }
 }
@@ -57,7 +62,10 @@ where
     S: Clone + Send + Sync + 'static,
 {
     /// new method to create a new ListView instance
-    pub fn new() -> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model>
+    pub fn new(
+        path: &str,
+        method: Method,
+    ) -> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model>
     where
         M: sea_orm::entity::EntityTrait,
         <M as sea_orm::entity::EntityTrait>::Model:
@@ -65,6 +73,8 @@ where
         S: Clone + Send + Sync + 'static,
     {
         ListView::<M, S, <M as sea_orm::entity::EntityTrait>::Model> {
+            path: String::from(path),
+            method,
             filters: Vec::new(),
             when: Vec::new(),
             phantom_data: PhantomData,
@@ -72,7 +82,10 @@ where
     }
 
     /// new method to create a new ListView instance
-    pub fn new_with_serializer<Model, State, Ser>() -> ListView<Model, State, Ser>
+    pub fn new_with_serializer<Model, State, Ser>(
+        path: &str,
+        method: Method,
+    ) -> ListView<Model, State, Ser>
     where
         Model: sea_orm::entity::EntityTrait,
         State: Clone + Send + Sync + 'static,
@@ -80,6 +93,8 @@ where
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
     {
         ListView::<Model, State, Ser> {
+            path: String::from(path),
+            method,
             filters: Vec::new(),
             when: Vec::new(),
             phantom_data: PhantomData,
@@ -102,6 +117,8 @@ where
         <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
     {
         ListView::<M, S, Ser> {
+            path: self.path,
+            method: self.method.clone(),
             filters: self.filters,
             when: self
                 .when
@@ -132,6 +149,21 @@ where
     /// filter method to apply a filter condition
     pub fn filter<X>(mut self, _filter: impl Filter<S, M, X>) -> Self {
         self
+    }
+}
+
+impl<M, S, O> ListView<M, S, O>
+where
+    M: sea_orm::entity::EntityTrait,
+    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    pub fn register_axum(self, router: axum::Router<S>) -> axum::Router<S> {
+        // Register the ListView with the axum router
+        router
+        //
+        // router.route(&self.path, axum::routing::get(self))
     }
 }
 

@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
 
 use axum::extract::Request;
+use axum::http::Method;
 use axum::http::request::Parts;
 use quickapi::view::list::ListView;
 use sea_orm::{EntityTrait, Select};
@@ -57,18 +58,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
-    let router: axum::Router<()> = axum::Router::new().route(
-        "/api/user",
-        quickapi::view::get(
-            // add list view for User entity
-            ListView::new()
-                // add a condition to the view
-                .when((), |view| {
-                    // filter by something
-                    view.filter(filter).with_serializer::<UserIdOnly>()
-                }),
-        ),
-    );
+    let router: axum::Router<()> = axum::Router::new();
+    // add list view for User entity
+    let router = ListView::new("/api/user", Method::GET)
+        // add a condition to the view
+        .when((), |view| {
+            // filter by something
+            view.filter(filter).with_serializer::<UserIdOnly>()
+        })
+        .register_axum(router);
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;
