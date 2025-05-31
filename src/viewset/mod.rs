@@ -62,7 +62,7 @@ where
 
         let mut inner = axum::Router::new();
         for view in self.views {
-            inner = view.register_axum(inner)?;
+            inner = view.register_router(inner)?;
         }
 
         Ok(router.nest(&self.path.clone(), inner))

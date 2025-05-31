@@ -213,7 +213,7 @@ where
     }
 
     /// register_axum method to register the view with an axum router
-    fn register_axum(
+    fn register_router(
         &self,
         router: axum::Router<S>,
     ) -> Result<axum::Router<S>, crate::error::Error> {

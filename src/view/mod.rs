@@ -14,8 +14,8 @@ pub trait View<S> {
     /// list method to retrieve a list of items
     fn view(&self, parts: &mut Parts, state: S) -> Self::Future;
 
-    /// register_axum method to register the view with an axum router
-    fn register_axum(
+    /// register_router method to register the view with an axum router
+    fn register_router(
         &self,
         router: axum::Router<S>,
     ) -> Result<axum::Router<S>, crate::error::Error>;
