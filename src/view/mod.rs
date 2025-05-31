@@ -8,7 +8,14 @@ use axum::routing::{MethodFilter, on};
 
 pub use error::Error;
 
-pub trait View<S> {
+/// View trait for defining a view (List, Get, Delete, Update, Create)
+/// TODO: This trait is still in development and may change in the future.
+/// S is axum state type, which can be any type that implements Send + Sync.
+pub trait View<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    /// Future type for the view method
     type Future: Future<Output = Result<serde_json::Value, crate::error::Error>>;
 
     /// list method to retrieve a list of items
