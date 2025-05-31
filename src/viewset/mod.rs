@@ -69,7 +69,7 @@ where
         router: Router<S>,
         _prefix: &str,
     ) -> Result<Router<S>, Error> {
-        debug!("registering viewset at path: {}", self.path);
+        debug!("viewset: {}", self.path);
 
         let mut inner = axum::Router::new();
         for view in &self.views {
