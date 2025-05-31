@@ -1,9 +1,9 @@
 #![allow(unused_mut)]
 
 use crate::Error;
+use crate::view::View;
 use crate::view::filter::Filter;
 use crate::view::when::{When, WhenView};
-use crate::view::{View, get};
 use axum::Router;
 use axum::http::Method;
 use axum::http::request::Parts;
@@ -192,7 +192,12 @@ where
 
     /// register_axum method to register the view with an axum router
     fn register_router(&self, router: Router<S>) -> Result<Router<S>, Error> {
-        let mf: MethodFilter = self.method.clone().try_into().unwrap();
+        let mf: MethodFilter = self.method.clone().try_into().map_err(|e| {
+            Error::InvalidMethod(format!(
+                "Failed to convert method {} to MethodFilter: {}",
+                self.method, e
+            ))
+        })?;
 
         debug!(
             "registering list view at path: {}, method: {}",

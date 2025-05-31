@@ -1,12 +1,12 @@
 pub mod error;
-mod filter;
+pub mod filter;
 pub mod list;
-pub mod routing;
 pub mod when;
 
 use axum::http::request::Parts;
 use axum::routing::{MethodFilter, on};
-pub use routing::get;
+
+pub use error::Error;
 
 pub trait View<S> {
     type Future: Future<Output = Result<serde_json::Value, crate::error::Error>>;
