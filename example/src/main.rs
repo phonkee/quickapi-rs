@@ -59,6 +59,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .init();
 
     let router: axum::Router<()> = axum::Router::new();
+
     // add list view for User entity
     let router = ListView::new("/api/user", Method::GET)
         // add a condition to the view
