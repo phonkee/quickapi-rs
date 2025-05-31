@@ -65,8 +65,7 @@ where
     pub fn new(
         path: &str,
         method: Method,
-    ) -> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model>
-    {
+    ) -> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model> {
         ListView::<M, S, <M as sea_orm::entity::EntityTrait>::Model> {
             path: String::from(path),
             method,
@@ -179,6 +178,17 @@ where
             // Here you would implement the logic to retrieve the list of items
             Ok(serde_json::json!({"message": "ListView is working!"}))
         })
+    }
+
+    /// register_axum method to register the view with an axum router
+    fn register_axum(
+        &self,
+        router: axum::Router<S>,
+    ) -> Result<axum::Router<S>, crate::error::Error> {
+        let _mf: MethodFilter = self.method.clone().try_into().unwrap();
+        // Register the ListView with the axum router
+        Ok(router)
+        // Ok(router.route(self.path.clone().as_str(), on(mf, self)))
     }
 }
 

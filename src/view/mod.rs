@@ -4,6 +4,7 @@ pub mod list;
 pub mod routing;
 pub mod when;
 
+use axum::routing::{MethodFilter, on};
 pub use routing::get;
 
 pub trait View<S> {
@@ -11,4 +12,10 @@ pub trait View<S> {
 
     /// list method to retrieve a list of items
     fn view(&self, req: axum::extract::Request, state: S) -> Self::Future;
+
+    /// register_axum method to register the view with an axum router
+    fn register_axum(
+        &self,
+        router: axum::Router<S>,
+    ) -> Result<axum::Router<S>, crate::error::Error>;
 }
