@@ -39,7 +39,7 @@ where
         >,
     >,
     // when condition to apply logic
-    when: Vec<WhenView<M, S, O>>,
+    // when: Vec<WhenView<M, S, O>>,
     path: String,
     method: Method,
     fallback: bool,
@@ -56,7 +56,7 @@ where
         ListView {
             path: self.path.clone(),
             filters: self.filters.clone(),
-            when: self.when.clone(),
+            // when: self.when.clone(),
             phantom_data: PhantomData,
             method: self.method.clone(),
             fallback: false,
@@ -80,7 +80,7 @@ where
             path: String::from(path),
             method,
             filters: Vec::new(),
-            when: Vec::new(),
+            // when: Vec::new(),
             phantom_data: PhantomData,
             fallback: false,
         }
@@ -102,7 +102,7 @@ where
         path: String::from(path),
         method,
         filters: Vec::new(),
-        when: Vec::new(),
+        // when: Vec::new(),
         phantom_data: PhantomData,
         fallback: false,
     }
@@ -126,19 +126,19 @@ where
             path: self.path,
             method: self.method.clone(),
             filters: self.filters,
-            when: self
-                .when
-                .clone()
-                .iter()
-                .map(|x| x.clone().with_serializer())
-                .collect(),
+            // when: self
+            //     .when
+            //     .clone()
+            //     .iter()
+            //     .map(|x| x.clone().with_serializer())
+            //     .collect(),
             phantom_data: PhantomData,
             fallback: self.fallback,
         }
     }
 
     /// when method to conditionally apply logic
-    pub fn when<F, Ser>(mut self, _when: impl When, _f: F) -> ListView<M, S, Ser>
+    pub fn when<F, Ser>(mut self, _when: impl When<S>, _f: F) -> ListView<M, S, Ser>
     where
         F: FnOnce(Self) -> Result<ListView<M, S, Ser>, crate::error::Error>,
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
@@ -147,6 +147,7 @@ where
         // TODO: push to when vector?
         let _x = _f(self.clone());
         // self.when.push(Arc::new(Box::new(_x)));
+        // .with_serializer()
 
         // Here you can implement logic to handle the `when` condition
         // For now, we just return self

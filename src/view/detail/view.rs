@@ -3,6 +3,7 @@ use crate::Error;
 use crate::view::View;
 use crate::view::handler::Handler;
 use crate::view::list::ListView;
+use crate::view::when::WhenView;
 use axum::Router;
 use axum::http::Method;
 use axum::http::request::Parts;
@@ -24,7 +25,9 @@ where
 {
     path: String,
     method: Method,
-    ph: PhantomData<(M, S, O)>,
+    ph: PhantomData<(M, S)>,
+    ser: PhantomData<O>,
+    // when: Vec<WhenView<M, S, O>>,
 }
 
 impl<M, S, O> DetailView<M, S, O>
@@ -40,6 +43,7 @@ where
             path: path.to_owned(),
             method,
             ph: PhantomData,
+            ser: PhantomData,
         }
     }
 }
