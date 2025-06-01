@@ -41,7 +41,7 @@ impl From<entity::UserModel> for UserIdOnly {
     }
 }
 
-pub async fn when_condition(
+async fn when_condition(
     _parts: &mut Parts,
     _state: (),
 ) -> Result<(), quickapi::view::when::error::Error> {

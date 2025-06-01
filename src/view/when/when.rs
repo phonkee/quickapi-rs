@@ -16,7 +16,7 @@ where
 }
 
 /// When implementation for a function that takes parts and state and returns a future
-impl<S, F, R> When<S, f32> for F
+impl<S, F, R> When<S, ((),)> for F
 where
     S: Clone + Send + 'static,
     R: Future<Output = Result<(), super::error::Error>> + Send + 'static,
