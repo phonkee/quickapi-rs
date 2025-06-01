@@ -64,13 +64,14 @@ where
     }
 }
 
-impl<M, S> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model>
+impl<M, S, O> ListView<M, S, O>
 where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
+    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    /// new method to create a new ListView instance
     pub fn new(
         path: &str,
         method: Method,
@@ -84,26 +85,26 @@ where
             fallback: false,
         }
     }
+}
 
-    /// new method to create a new ListView instance
-    pub fn new_with_serializer<Model, State, Ser>(
-        path: &str,
-        method: Method,
-    ) -> ListView<Model, State, Ser>
-    where
-        Model: sea_orm::entity::EntityTrait,
-        State: Clone + Send + Sync + 'static,
-        <Model as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
-        Ser: serde::Serialize + Clone + Send + Sync + 'static,
-    {
-        ListView::<Model, State, Ser> {
-            path: String::from(path),
-            method,
-            filters: Vec::new(),
-            when: Vec::new(),
-            phantom_data: PhantomData,
-            fallback: false,
-        }
+/// new method to create a new ListView instance
+pub fn new_with_serializer<Model, State, Ser>(
+    path: &str,
+    method: Method,
+) -> ListView<Model, State, Ser>
+where
+    Model: sea_orm::entity::EntityTrait,
+    State: Clone + Send + Sync + 'static,
+    <Model as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
+    Ser: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    ListView::<Model, State, Ser> {
+        path: String::from(path),
+        method,
+        filters: Vec::new(),
+        when: Vec::new(),
+        phantom_data: PhantomData,
+        fallback: false,
     }
 }
 
