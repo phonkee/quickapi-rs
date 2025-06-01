@@ -148,7 +148,11 @@ where
                 S,
                 T,
                 Future = Pin<
-                    Box<dyn Future<Output = Result<(), crate::view::when::error::Error>> + Send + Sync>,
+                    Box<
+                        dyn Future<Output = Result<(), crate::view::when::error::Error>>
+                            + Send
+                            + Sync,
+                    >,
                 >,
             >,
     {

@@ -4,16 +4,16 @@ use axum::http::request::Parts;
 use sea_orm::Select;
 use std::pin::Pin;
 
-/// When implementation for a no-op condition
-impl<S> When<S, ()> for ()
-where
-    S: Clone + Send + Sync + 'static,
-{
-    type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + 'static>>;
-    fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
-        Box::pin(async { Ok(()) })
-    }
-}
+// /// When implementation for a no-op condition
+// impl<S> When<S, ()> for ()
+// where
+//     S: Clone + Send + Sync + 'static,
+// {
+//     type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + 'static>>;
+//     fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
+//         Box::pin(async { Ok(()) })
+//     }
+// }
 
 /// When implementation for a function that takes parts and state and returns a future
 impl<S, F, R> When<S, ((),)> for F
