@@ -11,7 +11,7 @@ where
 {
     type Future =
         Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static>>;
-    fn when(self, _parts: &Parts, _state: S) -> Self::Future {
+    fn when(self, _parts: Parts, _state: S) -> Self::Future {
         Box::pin(async { Ok(()) })
     }
 }
@@ -25,7 +25,7 @@ where
 {
     type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync>>;
 
-    fn when(self, _parts: &Parts, _state: S) -> Self::Future {
+    fn when(self, _parts: Parts, _state: S) -> Self::Future {
         // let _state = _state.clone();
         // #[allow(unused_mut)]
         // let mut _parts = _parts.clone();
@@ -42,15 +42,15 @@ macro_rules! impl_when_func {
         impl<'a, S, F, R, $($ty,)*> When<'a, S, ($($ty,)*)> for F
         where
             S: Clone + Send + Sync + 'static,
-            R: Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static,
-            F: Fn(&'a Parts, S, $($ty,)*) -> R + Send + Sync + 'static,
+            R: Future<Output = Result<(), super::error::Error>> + Send + Sync,
+            F: Fn(Parts, S, $($ty,)*) -> R + Send + Sync + 'static,
             $(
-                $ty: FromRequestParts<S> + Send + 'static,
+                $ty: FromRequestParts<S> + Send,
             )*
         {
-            type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + 'static>>;
+            type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send>>;
 
-            fn when(self, parts: &'a Parts, state: S) -> Self::Future {
+            fn when(self, parts: Parts, state: S) -> Self::Future {
                 let state = state.clone();
 
                 Box::pin(async move {
@@ -62,7 +62,7 @@ macro_rules! impl_when_func {
                             .map_err(|_| super::error::Error::NoMatch)?;
                     )*
 
-                    self(&parts, state.clone(), $($ty,)*).await
+                    self(parts, state.clone(), $($ty,)*).await
                 })
             }
         }
