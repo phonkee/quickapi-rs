@@ -2,7 +2,6 @@
 
 use crate::Error;
 use crate::router::RouterExt;
-use crate::view::View;
 use crate::view::filter::Filter;
 use crate::view::handler::Handler;
 use crate::view::when::When;
@@ -171,7 +170,7 @@ where
     }
 }
 
-impl<M, S, O> View<S> for ListView<M, S, O>
+impl<M, S, O> crate::view::ViewTrait<S> for ListView<M, S, O>
 where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: Into<O>,

@@ -1,4 +1,4 @@
-use crate::view::View;
+use crate::view::ViewTrait;
 use axum::response::{IntoResponse, Response};
 use sea_orm::Iden;
 use std::marker::PhantomData;
@@ -7,12 +7,12 @@ use std::pin::Pin;
 #[derive(Clone)]
 pub struct Handler<S, V>(V, PhantomData<S>)
 where
-    V: View<S> + Send + Sync + 'static,
+    V: ViewTrait<S> + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static;
 
 impl<S, V> Handler<S, V>
 where
-    V: View<S> + Send + Sync + 'static,
+    V: ViewTrait<S> + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     /// Creates a new Handler instance with the given view and state.
@@ -24,7 +24,7 @@ where
 /// Implementing Handler for DetailView to handle requests.
 impl<S, V> axum::handler::Handler<(), S> for Handler<S, V>
 where
-    V: View<S> + Clone + Send + Sync + 'static,
+    V: ViewTrait<S> + Clone + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     // Future type for the handler

@@ -15,7 +15,7 @@ use std::pin::Pin;
 /// View trait for defining a view (List, Get, Delete, Update, Create)
 /// TODO: This trait is still in development and may change in the future.
 /// S is axum state type, which can be any type that implements Send + Sync.
-pub trait View<S>: RouterExt<S>
+pub trait ViewTrait<S>: RouterExt<S>
 where
     S: Clone + Send + Sync + 'static,
 {

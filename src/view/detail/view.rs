@@ -1,8 +1,7 @@
 use super::lookup::Lookup;
 use crate::Error;
-use crate::view::View;
 use crate::view::handler::Handler;
-use crate::view::list::ListView;
+use crate::view::when::clause::Clauses;
 use axum::Router;
 use axum::http::Method;
 use axum::http::request::Parts;
@@ -26,7 +25,7 @@ where
     method: Method,
     ph: PhantomData<(M, S)>,
     ser: PhantomData<O>,
-    // when: Vec<WhenView<M, S, O>>,
+    when: Clauses<S>,
 }
 
 impl<M, S, O> DetailView<M, S, O>
@@ -43,12 +42,13 @@ where
             method,
             ph: PhantomData,
             ser: PhantomData,
+            when: Clauses::<S>::default(),
         }
     }
 }
 
 /// Implementing View for DetailView to render the detail view.
-impl<M, S, O> View<S> for DetailView<M, S, O>
+impl<M, S, O> crate::view::ViewTrait<S> for DetailView<M, S, O>
 where
     M: EntityTrait,
     <M as EntityTrait>::Model: Into<O>,

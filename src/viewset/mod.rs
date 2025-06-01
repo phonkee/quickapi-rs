@@ -1,4 +1,4 @@
-use crate::view::View;
+use crate::view::ViewTrait;
 use crate::{Error, RouterExt};
 use axum::Router;
 use std::pin::Pin;
@@ -10,7 +10,7 @@ pub struct ViewSet<S> {
     views: Vec<
         Pin<
             Box<
-                dyn View<
+                dyn ViewTrait<
                         S,
                         Future = Pin<
                             Box<
@@ -42,7 +42,7 @@ where
     /// add_view adds a view to the ViewSet.
     pub fn add_view(
         mut self,
-        _view: impl View<
+        _view: impl ViewTrait<
             S,
             Future = Pin<
                 Box<
