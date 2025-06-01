@@ -17,7 +17,7 @@ where
     S: Clone + Send + Sync + 'static,
 {
     /// Future type that will be returned when the condition is met
-    type Future: Future<Output = Result<(), error::Error>> + Send + Sync + 'static;
+    type Future: Future<Output = Result<(), error::Error>> + Send + 'static;
 
     /// when is executed against the request and state
     /// when it succeeds, the view is executed
