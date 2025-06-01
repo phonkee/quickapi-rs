@@ -20,5 +20,5 @@ where
 
     /// when is executed against the request and state
     /// when it succeeds, the view is executed
-    fn when(self, req: &mut axum::extract::Request, _state: S) -> Self::Future;
+    fn when(self, _parts: &mut axum::http::request::Parts, _state: S) -> Self::Future;
 }

@@ -8,7 +8,7 @@ where
     type Future = Pin<
         Box<dyn Future<Output = Result<(), crate::view::error::Error>> + Send + Sync + 'static>,
     >;
-    fn when(self, _req: &mut axum::extract::Request, _state: S) -> Self::Future {
+    fn when(self, _parts: &mut axum::http::request::Parts, _state: S) -> Self::Future {
         Box::pin(async { Ok(()) })
     }
 }
