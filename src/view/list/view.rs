@@ -139,7 +139,7 @@ where
     }
 
     /// when method to conditionally apply logic
-    pub fn when<F, Ser>(mut self, _when: impl When<S>, _f: F) -> ListView<M, S, Ser>
+    pub fn when<F, Ser, T>(mut self, _when: impl When<S, T>, _f: F) -> ListView<M, S, Ser>
     where
         F: FnOnce(Self) -> Result<ListView<M, S, Ser>, crate::error::Error>,
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
