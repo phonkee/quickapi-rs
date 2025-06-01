@@ -1,4 +1,5 @@
 pub mod clause;
+pub mod error;
 pub mod when;
 
 use crate::view::filter::Filter;
@@ -16,7 +17,7 @@ where
     S: Clone + Send + Sync + 'static,
 {
     /// Future type that will be returned when the condition is met
-    type Future: Future<Output = Result<(), crate::view::error::Error>> + Send + Sync + 'static;
+    type Future: Future<Output = Result<(), error::Error>> + Send + Sync + 'static;
 
     /// when is executed against the request and state
     /// when it succeeds, the view is executed
