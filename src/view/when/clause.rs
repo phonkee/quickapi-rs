@@ -8,10 +8,13 @@ pub struct Clause<S>
 where
     S: Clone + Send + Sync + 'static,
     // V: View<S> + Send + Sync + 'static,
-    // W: When<S, Future = F>,
 {
-    // when: W,
-    phantom: PhantomData<S>,
+    // when: Box<
+    //     dyn When<S, (), Future = dyn Future<Output = Result<(), super::error::Error>>>
+    //         + Send
+    //         + Sync,
+    // >,
+    phantom: PhantomData<(S,)>,
 }
 
 #[derive(Clone)]
