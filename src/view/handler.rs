@@ -24,8 +24,8 @@ where
 /// Implementing Handler for DetailView to handle requests.
 impl<S, V> axum::handler::Handler<(), S> for Handler<S, V>
 where
-    V: ViewTrait<S> + Clone + Send + Sync + 'static,
-    S: Clone + Send + Sync + 'static,
+    V: ViewTrait<S> + Clone + Send + Sync,
+    S: Clone + Send + Sync,
 {
     // Future type for the handler
     type Future = Pin<Box<dyn Future<Output = Response> + Send + Sync + 'static>>;

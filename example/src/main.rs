@@ -41,13 +41,10 @@ impl From<entity::UserModel> for UserIdOnly {
     }
 }
 
-pub async fn when_condition<S>(
+pub async fn when_condition(
     _parts: &mut Parts,
-    _state: S,
-) -> Result<(), quickapi::view::when::error::Error>
-where
-    S: Clone + Send + Sync + 'static,
-{
+    _state: (),
+) -> Result<(), quickapi::view::when::error::Error> {
     Ok(())
 }
 
