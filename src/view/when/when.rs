@@ -5,7 +5,7 @@ use sea_orm::Select;
 use std::pin::Pin;
 
 /// When implementation for a no-op condition
-impl<S> When<'_, S, ()> for ()
+impl<S> When<S, ()> for ()
 where
     S: Clone + Send + Sync + 'static,
 {
@@ -17,11 +17,11 @@ where
 }
 
 /// When implementation for a function that takes parts and state and returns a future
-impl<'a, S, F, R> When<'a, S, f32> for F
+impl<S, F, R> When<S, f32> for F
 where
     S: Clone + Send + Sync + 'static,
     R: Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static,
-    F: Fn(&'a Parts, S) -> R + Send + Sync + 'static,
+    F: Fn(Parts, S) -> R + Send + Sync + 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync>>;
 
@@ -30,8 +30,8 @@ where
         // #[allow(unused_mut)]
         // let mut _parts = _parts.clone();
         Box::pin(async move {
-            Err(super::error::Error::NoMatch)
-            // self(&mut _parts, _state).await
+            // Err(super::error::Error::NoMatch)
+            self(_parts, _state).await
         })
     }
 }
@@ -39,7 +39,7 @@ where
 macro_rules! impl_when_func {
     ([$($ty:ident),*]) => {
         #[allow(non_snake_case)]
-        impl<'a, S, F, R, $($ty,)*> When<'a, S, ($($ty,)*)> for F
+        impl<S, F, R, $($ty,)*> When<S, ($($ty,)*)> for F
         where
             S: Clone + Send + Sync + 'static,
             R: Future<Output = Result<(), super::error::Error>> + Send + Sync,

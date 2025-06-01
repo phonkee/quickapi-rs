@@ -12,7 +12,7 @@ use std::sync::Arc;
 pub use when::*;
 
 /// When trait for defining conditions that must be met before executing a view
-pub trait When<'a, S, T>: Send
+pub trait When<S, T>: Send
 where
     S: Clone + Send,
 {

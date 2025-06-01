@@ -144,7 +144,7 @@ where
         F: FnOnce(Self) -> Result<ListView<M, S, Ser>, crate::error::Error>,
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
         <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
-        W: When<'a, S, T>
+        W: When<S, T>
     {
         // TODO: push to when vector?
         let _x = _f(self.clone());
