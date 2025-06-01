@@ -5,6 +5,7 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use quickapi::router::RouterExt;
 use quickapi::view::detail::DetailView;
+use quickapi::view::when::*;
 use sea_orm::{EntityTrait, Select};
 use std::pin::Pin;
 use tracing::info;
@@ -40,6 +41,16 @@ impl From<entity::UserModel> for UserIdOnly {
     }
 }
 
+pub async fn when_condition<S>(
+    _parts: &mut Parts,
+    _state: S,
+) -> Result<(), quickapi::view::when::error::Error>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // prepare tracing subscriber
@@ -54,25 +65,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router: axum::Router<()> = axum::Router::new();
 
     // add list view for User entity
-    let router =
-        quickapi::view::list::ListView::<entity::User, (), <entity::User as EntityTrait>::Model>::new(
-            "/api/user",
-            Method::GET,
-        )
-        // add a condition to the view
-        .when(
+    let router = quickapi::view::list::ListView::<
+        entity::User,
+        (),
+        <entity::User as EntityTrait>::Model,
+    >::new("/api/user", Method::GET)
+    // add a condition to the view
+    .when(
+        when_condition,
+        |view: quickapi::view::list::ListView<
+            entity::User,
             (),
-            |view: quickapi::view::list::ListView<
-                entity::User,
-                (),
-                <entity::User as EntityTrait>::Model,
-            >| {
-                // filter by something
-                // view.filter(filter).with_serializer::<UserIdOnly>()
-                Ok(view)
-            },
-        )
-        .register_router(router)?;
+            <entity::User as EntityTrait>::Model,
+        >| {
+            // filter by something
+            // view.filter(filter).with_serializer::<UserIdOnly>()
+            Ok(view)
+        },
+    )
+    .register_router(router)?;
 
     // add viewset for User entity
     let router = quickapi::ViewSet::new("/api/viewset/user")
