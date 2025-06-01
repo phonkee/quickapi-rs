@@ -71,10 +71,10 @@ macro_rules! impl_when_func {
 
 // implement When for functions with 1 to 8 parameters
 impl_when_func!([T1]);
-// impl_when_func!([T1, T2]);
-// impl_when_func!([T1, T2, T3]);
-// impl_when_func!([T1, T2, T3, T4]);
-// impl_when_func!([T1, T2, T3, T4, T5]);
-// impl_when_func!([T1, T2, T3, T4, T5, T6]);
-// impl_when_func!([T1, T2, T3, T4, T5, T6, T7]);
-// impl_when_func!([T1, T2, T3, T4, T5, T6, T7, T8]);
+impl_when_func!([T1, T2]);
+impl_when_func!([T1, T2, T3]);
+impl_when_func!([T1, T2, T3, T4]);
+impl_when_func!([T1, T2, T3, T4, T5]);
+impl_when_func!([T1, T2, T3, T4, T5, T6]);
+impl_when_func!([T1, T2, T3, T4, T5, T6, T7]);
+impl_when_func!([T1, T2, T3, T4, T5, T6, T7, T8]);
