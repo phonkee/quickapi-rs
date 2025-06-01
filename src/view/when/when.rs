@@ -4,6 +4,7 @@ use axum::http::request::Parts;
 use sea_orm::Select;
 use std::pin::Pin;
 
+/// When implementation for a no-op condition
 impl<S> When<S, ()> for ()
 where
     S: Clone + Send + Sync + 'static,
@@ -14,19 +15,7 @@ where
     }
 }
 
-pub struct WhenHeaderValue(pub String, pub String);
-
-impl<S> When<S, axum::http::HeaderName> for WhenHeaderValue
-where
-    S: Clone + Send + Sync + 'static,
-{
-    type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + 'static>>;
-
-    fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
-        Box::pin(async move { Err(super::error::Error::NoMatch) })
-    }
-}
-
+/// When implementation for a function that takes parts and state and returns a future
 impl<S, F, R> When<S, f32> for F
 where
     S: Clone + Send + Sync + 'static,
@@ -75,6 +64,7 @@ macro_rules! impl_when_func {
     }
 }
 
+// implement When for functions with 1 to 8 parameters
 impl_when_func!([T1]);
 impl_when_func!([T1, T2]);
 impl_when_func!([T1, T2, T3]);
