@@ -5,7 +5,7 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use quickapi::router::RouterExt;
 use quickapi::view::detail::DetailView;
-use quickapi::view::when::*;
+use quickapi::view::when::when::*;
 use sea_orm::{EntityTrait, Select};
 use std::pin::Pin;
 use tracing::info;

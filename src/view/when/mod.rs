@@ -12,9 +12,9 @@ use std::sync::Arc;
 pub use when::*;
 
 /// When trait for defining conditions that must be met before executing a view
-pub trait When<S, T>: Send + Sync
+pub trait When<S, T>: Send
 where
-    S: Clone + Send + Sync + 'static,
+    S: Clone + Send + 'static,
 {
     /// Future type that will be returned when the condition is met
     type Future: Future<Output = Result<(), error::Error>> + Send + 'static;
