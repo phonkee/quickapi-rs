@@ -12,7 +12,7 @@ use std::sync::Arc;
 pub use when::*;
 
 /// When trait for defining conditions that must be met before executing a view
-pub trait When<S, T>: Send
+pub trait When<'a, S, T>: Send
 where
     S: Clone + Send,
 {
@@ -21,5 +21,5 @@ where
 
     /// when is executed against the request and state
     /// when it succeeds, the view is executed
-    fn when(self, _parts: axum::http::request::Parts, _state: S) -> Self::Future;
+    fn when(self, _parts: &'a mut axum::http::request::Parts, _state: S) -> Self::Future;
 }

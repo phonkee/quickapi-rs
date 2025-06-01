@@ -5,27 +5,27 @@ use sea_orm::Select;
 use std::pin::Pin;
 
 /// When implementation for a no-op condition
-impl<S> When<S, ()> for ()
+impl<S> When<'_, S, ()> for ()
 where
     S: Clone + Send + Sync + 'static,
 {
     type Future =
         Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static>>;
-    fn when(self, _parts: Parts, _state: S) -> Self::Future {
+    fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
         Box::pin(async { Ok(()) })
     }
 }
 
 /// When implementation for a function that takes parts and state and returns a future
-impl<S, F, R> When<S, f32> for F
+impl<'a, S, F, R> When<'a, S, f32> for F
 where
     S: Clone + Send + Sync + 'static,
     R: Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static,
-    F: Fn(Parts, S) -> R + Send + Sync + 'static,
+    F: Fn(&'a mut Parts, S) -> R + Send + Sync + 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync>>;
 
-    fn when(self, _parts: Parts, _state: S) -> Self::Future {
+    fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
         // let _state = _state.clone();
         // #[allow(unused_mut)]
         // let mut _parts = _parts.clone();
