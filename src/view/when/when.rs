@@ -4,16 +4,17 @@ use axum::http::request::Parts;
 use sea_orm::Select;
 use std::pin::Pin;
 
-// /// When implementation for a no-op condition
-// impl<S> When<S, ()> for ()
-// where
-//     S: Clone + Send + Sync + 'static,
-// {
-//     type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + 'static>>;
-//     fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
-//         Box::pin(async { Ok(()) })
-//     }
-// }
+/// When implementation for a no-op condition
+impl<S> When<S, ()> for ()
+where
+    S: Clone + Send + Sync + 'static,
+{
+    type Future =
+        Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static>>;
+    fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
+        Box::pin(async { Ok(()) })
+    }
+}
 
 /// When implementation for a function that takes parts and state and returns a future
 impl<S, F, R> When<S, ((),)> for F
@@ -25,9 +26,13 @@ where
     type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync>>;
 
     fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
-        let _state = _state.clone();
-        let mut _parts = _parts.clone();
-        Box::pin(async move { self(&mut _parts, _state).await })
+        // let _state = _state.clone();
+        // #[allow(unused_mut)]
+        // let mut _parts = _parts.clone();
+        Box::pin(async move {
+            Err(super::error::Error::NoMatch)
+            // self(&mut _parts, _state).await
+        })
     }
 }
 
