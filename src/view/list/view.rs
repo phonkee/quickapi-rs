@@ -5,7 +5,8 @@ use crate::router::RouterExt;
 use crate::view::View;
 use crate::view::filter::Filter;
 use crate::view::handler::Handler;
-use crate::view::when::{When, WhenView};
+use crate::view::when::When;
+use crate::view::when::clause::Clauses;
 use axum::Router;
 use axum::http::Method;
 use axum::http::request::Parts;
@@ -39,7 +40,7 @@ where
         >,
     >,
     // when condition to apply logic
-    // when: Vec<WhenView<M, S, O>>,
+    when: Clauses<S>,
     path: String,
     method: Method,
     fallback: bool,
@@ -56,7 +57,7 @@ where
         ListView {
             path: self.path.clone(),
             filters: self.filters.clone(),
-            // when: self.when.clone(),
+            when: Clauses::<S>::default(),
             phantom_data: PhantomData,
             method: self.method.clone(),
             fallback: false,
@@ -80,7 +81,7 @@ where
             path: String::from(path),
             method,
             filters: Vec::new(),
-            // when: Vec::new(),
+            when: Clauses::<S>::default(),
             phantom_data: PhantomData,
             fallback: false,
         }
@@ -102,7 +103,7 @@ where
         path: String::from(path),
         method,
         filters: Vec::new(),
-        // when: Vec::new(),
+        when: Clauses::<State>::default(),
         phantom_data: PhantomData,
         fallback: false,
     }
@@ -126,6 +127,7 @@ where
             path: self.path,
             method: self.method.clone(),
             filters: self.filters,
+            when: Clauses::<S>::default(),
             // when: self
             //     .when
             //     .clone()

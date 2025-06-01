@@ -3,7 +3,6 @@ use crate::Error;
 use crate::view::View;
 use crate::view::handler::Handler;
 use crate::view::list::ListView;
-use crate::view::when::WhenView;
 use axum::Router;
 use axum::http::Method;
 use axum::http::request::Parts;
