@@ -11,7 +11,7 @@ where
 {
     type Future =
         Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static>>;
-    fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
+    fn when(self, _parts: &Parts, _state: S) -> Self::Future {
         Box::pin(async { Ok(()) })
     }
 }
@@ -21,11 +21,11 @@ impl<'a, S, F, R> When<'a, S, f32> for F
 where
     S: Clone + Send + Sync + 'static,
     R: Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static,
-    F: Fn(&'a mut Parts, S) -> R + Send + Sync + 'static,
+    F: Fn(&'a Parts, S) -> R + Send + Sync + 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync>>;
 
-    fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
+    fn when(self, _parts: &Parts, _state: S) -> Self::Future {
         // let _state = _state.clone();
         // #[allow(unused_mut)]
         // let mut _parts = _parts.clone();
@@ -36,41 +36,41 @@ where
     }
 }
 
-// macro_rules! impl_when_func {
-//     ([$($ty:ident),*]) => {
-//         #[allow(non_snake_case)]
-//         impl<S, F, R, $($ty,)*> When<S, ($($ty,)*)> for F
-//         where
-//             S: Clone + Send + Sync + 'static,
-//             R: Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static,
-//             F: Fn(Parts, S, $($ty,)*) -> R + Send + Sync + 'static,
-//             $(
-//                 $ty: FromRequestParts<S> + Send + 'static,
-//             )*
-//         {
-//             type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + 'static>>;
-//
-//             fn when(self, parts: Parts, state: S) -> Self::Future {
-//                 let mut parts = parts.clone();
-//                 let state = state.clone();
-//
-//                 Box::pin(async move {
-//                     $(
-//                         // create T1 from request parts
-//                         let $ty = $ty::from_request_parts(&mut parts, &state)
-//                             .await
-//                             .map_err(|_| super::error::Error::NoMatch)?;
-//                     )*
-//
-//                     self(parts, state.clone(), $($ty,)*).await
-//                 })
-//             }
-//         }
-//     }
-// }
-//
-// // implement When for functions with 1 to 8 parameters
-// impl_when_func!([T1]);
+macro_rules! impl_when_func {
+    ([$($ty:ident),*]) => {
+        #[allow(non_snake_case)]
+        impl<'a, S, F, R, $($ty,)*> When<'a, S, ($($ty,)*)> for F
+        where
+            S: Clone + Send + Sync + 'static,
+            R: Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static,
+            F: Fn(&'a Parts, S, $($ty,)*) -> R + Send + Sync + 'static,
+            $(
+                $ty: FromRequestParts<S> + Send + 'static,
+            )*
+        {
+            type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + 'static>>;
+
+            fn when(self, parts: &'a Parts, state: S) -> Self::Future {
+                let state = state.clone();
+
+                Box::pin(async move {
+                    let mut _parts = parts.clone();
+                    $(
+                        // create T1 from request parts
+                        let $ty = $ty::from_request_parts(&mut _parts, &state)
+                            .await
+                            .map_err(|_| super::error::Error::NoMatch)?;
+                    )*
+
+                    self(&parts, state.clone(), $($ty,)*).await
+                })
+            }
+        }
+    }
+}
+
+// implement When for functions with 1 to 8 parameters
+impl_when_func!([T1]);
 // impl_when_func!([T1, T2]);
 // impl_when_func!([T1, T2, T3]);
 // impl_when_func!([T1, T2, T3, T4]);
