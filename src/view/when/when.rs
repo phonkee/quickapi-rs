@@ -18,11 +18,11 @@ where
 /// When implementation for a function that takes parts and state and returns a future
 impl<S, F, R> When<S, ((),)> for F
 where
-    S: Clone + Send + 'static,
-    R: Future<Output = Result<(), super::error::Error>> + Send + 'static,
-    F: Fn(&mut Parts, S) -> R + Send + 'static,
+    S: Clone + Send + Sync + 'static,
+    R: Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static,
+    F: Fn(&mut Parts, S) -> R + Send + Sync + 'static,
 {
-    type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send>>;
+    type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync>>;
 
     fn when(self, _parts: &mut Parts, _state: S) -> Self::Future {
         let _state = _state.clone();
