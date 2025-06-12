@@ -4,8 +4,8 @@ use axum::extract::Request;
 use axum::http::Method;
 use axum::http::request::Parts;
 use quickapi::router::RouterExt;
-use quickapi::view::detail::DetailView;
 use quickapi::view::when::when::*;
+use quickapi::view::{DetailView, ListView};
 use sea_orm::{EntityTrait, Select};
 use std::pin::Pin;
 use tracing::info;
@@ -62,19 +62,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router: axum::Router<()> = axum::Router::new();
 
     // add list view for User entity
-    let router = quickapi::view::list::ListView::<
-        entity::User,
-        (),
-        <entity::User as EntityTrait>::Model,
-    >::new("/api/user", Method::GET)
+    let router = ListView::<entity::User, <entity::User as EntityTrait>::Model, ()>::new(
+        "/api/user",
+        Method::GET,
+    )
     // add a condition to the view
     .when(
         when_condition,
-        |view: quickapi::view::list::ListView<
-            entity::User,
-            (),
-            <entity::User as EntityTrait>::Model,
-        >| {
+        |view: ListView<entity::User, <entity::User as EntityTrait>::Model, ()>| {
             // filter by something
             // view.filter(filter).with_serializer::<UserIdOnly>()
             Ok(view)
@@ -84,15 +79,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // add viewset for User entity
     let router = quickapi::ViewSet::new("/api/viewset/user")
-        .add_view(quickapi::view::list::ListView::<
+        .add_view(ListView::<
             entity::User,
-            (),
             <entity::User as EntityTrait>::Model,
+            (),
         >::new("/", Method::GET))
         .add_view(DetailView::<
             entity::User,
-            (),
             <entity::User as EntityTrait>::Model,
+            (),
         >::new("/{id}", Method::GET, "id".to_string()))
         .register_router(router)?;
 

@@ -18,7 +18,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 use tracing::debug;
 
-pub struct ListView<M, S, O>
+pub struct ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
@@ -45,7 +45,7 @@ where
     fallback: bool,
 }
 
-impl<M, S, O> Clone for ListView<M, S, O>
+impl<M, O, S> Clone for ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
@@ -64,7 +64,7 @@ where
     }
 }
 
-impl<M, S, O> ListView<M, S, O>
+impl<M, O, S> ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
@@ -75,8 +75,8 @@ where
     pub fn new(
         path: &str,
         method: Method,
-    ) -> ListView<M, S, <M as sea_orm::entity::EntityTrait>::Model> {
-        ListView::<M, S, <M as sea_orm::entity::EntityTrait>::Model> {
+    ) -> ListView<M, <M as sea_orm::entity::EntityTrait>::Model, S> {
+        ListView::<M, <M as sea_orm::entity::EntityTrait>::Model, S> {
             path: String::from(path),
             method,
             filters: Vec::new(),
@@ -87,7 +87,7 @@ where
     }
 }
 
-impl<M, S, O> ListView<M, S, O>
+impl<M, O, S> ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
@@ -95,23 +95,23 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// new method to create a new ListView instance
-    pub fn new_with_path(_path: &str) -> Result<ListView<M, S, O>, Error> {
+    pub fn new_with_path(_path: &str) -> Result<ListView<M, O, S>, Error> {
         Err(Error::ImproperlyConfigured("hello".to_string()))
     }
 }
 
 /// new method to create a new ListView instance
-pub fn new_with_serializer<Model, State, Ser>(
+pub fn new_with_serializer<Model, Ser, State>(
     path: &str,
     method: Method,
-) -> ListView<Model, State, Ser>
+) -> ListView<Model, Ser, State>
 where
     Model: sea_orm::entity::EntityTrait,
     State: Clone + Send + Sync + 'static,
     <Model as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
     Ser: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    ListView::<Model, State, Ser> {
+    ListView::<Model, Ser, State> {
         path: String::from(path),
         method,
         filters: Vec::new(),
@@ -122,7 +122,7 @@ where
 }
 
 /// ListView struct for handling list views of entities
-impl<M, S, O> ListView<M, S, O>
+impl<M, O, S> ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
@@ -130,12 +130,12 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// with_serializer method to set a custom serializer
-    pub fn with_serializer<Ser>(mut self) -> ListView<M, S, Ser>
+    pub fn with_serializer<Ser>(mut self) -> ListView<M, Ser, S>
     where
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
         <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
     {
-        ListView::<M, S, Ser> {
+        ListView::<M, Ser, S> {
             path: self.path,
             method: self.method.clone(),
             filters: self.filters,
@@ -152,9 +152,9 @@ where
     }
 
     /// when method to conditionally apply logic
-    pub fn when<'a, F, Ser, T, W>(mut self, _when: W, _f: F) -> ListView<M, S, Ser>
+    pub fn when<'a, F, Ser, T, W>(mut self, _when: W, _f: F) -> ListView<M, Ser, S>
     where
-        F: FnOnce(Self) -> Result<ListView<M, S, Ser>, crate::error::Error>,
+        F: FnOnce(Self) -> Result<ListView<M, Ser, S>, Error>,
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
         <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
         W: When<S, T>,
@@ -184,7 +184,7 @@ where
     }
 }
 
-impl<M, S, O> crate::view::ViewTrait<S> for ListView<M, S, O>
+impl<M, O, S> crate::view::ViewTrait<S> for ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
@@ -210,7 +210,7 @@ where
     }
 }
 
-impl<M, S, O> RouterExt<S> for ListView<M, S, O>
+impl<M, O, S> RouterExt<S> for ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
     <M as sea_orm::entity::EntityTrait>::Model: Into<O>,

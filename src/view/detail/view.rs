@@ -14,7 +14,7 @@ use tracing::debug;
 
 /// DetailView is a view for displaying details of a single entity.
 #[derive(Clone)]
-pub struct DetailView<M, S, O>
+pub struct DetailView<M, O, S>
 where
     M: EntityTrait,
     <M as EntityTrait>::Model: Into<O>,
@@ -28,7 +28,7 @@ where
     when: Clauses<S>,
 }
 
-impl<M, S, O> DetailView<M, S, O>
+impl<M, O, S> DetailView<M, O, S>
 where
     M: EntityTrait,
     <M as EntityTrait>::Model: Into<O>,
@@ -48,7 +48,7 @@ where
 }
 
 /// Implementing View for DetailView to render the detail view.
-impl<M, S, O> crate::view::ViewTrait<S> for DetailView<M, S, O>
+impl<M, O, S> crate::view::ViewTrait<S> for DetailView<M, O, S>
 where
     M: EntityTrait,
     <M as EntityTrait>::Model: Into<O>,
@@ -71,7 +71,7 @@ where
 }
 
 /// Implementing RouterExt for DetailView to register the router.
-impl<M, S, O> crate::RouterExt<S> for DetailView<M, S, O>
+impl<M, O, S> crate::RouterExt<S> for DetailView<M, O, S>
 where
     M: EntityTrait,
     <M as EntityTrait>::Model: Into<O>,

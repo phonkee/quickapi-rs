@@ -46,7 +46,7 @@ where
             S,
             Future = Pin<
                 Box<
-                    dyn Future<Output = Result<serde_json::Value, crate::error::Error>>
+                    dyn Future<Output = Result<serde_json::Value, Error>>
                         + Send
                         + Sync
                         + 'static,
