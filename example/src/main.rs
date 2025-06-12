@@ -56,17 +56,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
+    // router instance
     let router: axum::Router<()> = axum::Router::new();
 
     // add list view for User entity
-    let _router = view::list::new::<entity::User, ()>("/api/user", Method::GET);
-
-    // add list view for User entity
-    let router =
-        view::list::ListView::<entity::User, <entity::User as EntityTrait>::Model, ()>::new(
-            "/api/user",
-            Method::GET,
-        )
+    let router = view::list::new::<entity::User, ()>("/api/user", Method::GET)
         // add a condition to the view
         .when(
             when_condition,
@@ -78,19 +72,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         )
         .register_router(router)?;
 
-    // add viewset for User entity
-    let router = quickapi::ViewSet::new("/api/viewset/user")
-        .add_view(view::list::ListView::<
-            entity::User,
-            <entity::User as EntityTrait>::Model,
-            (),
-        >::new("/", Method::GET))
-        .add_view(view::detail::DetailView::<
-            entity::User,
-            <entity::User as EntityTrait>::Model,
-            (),
-        >::new("/{id}", Method::GET, "id".to_string()))
-        .register_router(router)?;
+    // // add list view for User entity
+    // let router =
+    //     view::list::ListView::<entity::User, <entity::User as EntityTrait>::Model, ()>::new(
+    //         "/api/user",
+    //         Method::GET,
+    //     )
+    //     // add a condition to the view
+    //     .when(
+    //         when_condition,
+    //         |view: view::list::ListView<entity::User, <entity::User as EntityTrait>::Model, ()>| {
+    //             // filter by something
+    //             // view.filter(filter).with_serializer::<UserIdOnly>()
+    //             Ok(view)
+    //         },
+    //     )
+    //     .register_router(router)?;
+
+    // // add viewset for User entity
+    // let router = quickapi::ViewSet::new("/api/viewset/user")
+    //     .add_view(view::list::ListView::<
+    //         entity::User,
+    //         <entity::User as EntityTrait>::Model,
+    //         (),
+    //     >::new("/", Method::GET))
+    //     .add_view(view::detail::DetailView::<
+    //         entity::User,
+    //         <entity::User as EntityTrait>::Model,
+    //         (),
+    //     >::new("/{id}", Method::GET, "id".to_string()))
+    //     .register_router(router)?;
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;

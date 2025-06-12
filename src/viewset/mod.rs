@@ -45,12 +45,7 @@ where
         _view: impl ViewTrait<
             S,
             Future = Pin<
-                Box<
-                    dyn Future<Output = Result<serde_json::Value, Error>>
-                        + Send
-                        + Sync
-                        + 'static,
-                >,
+                Box<dyn Future<Output = Result<serde_json::Value, Error>> + Send + Sync + 'static>,
             >,
         > + 'static,
     ) -> Self {
@@ -76,6 +71,6 @@ where
         }
 
         // return nested router
-        Ok(router.nest(&self.path.clone(), inner))
+        Ok(router.clone().nest(&self.path.clone(), inner))
     }
 }
