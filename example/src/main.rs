@@ -4,8 +4,8 @@ use axum::extract::Request;
 use axum::http::Method;
 use axum::http::request::Parts;
 use quickapi::router::RouterExt;
+use quickapi::view;
 use quickapi::view::when::when::*;
-use quickapi::view::{DetailView, ListView};
 use sea_orm::{EntityTrait, Select};
 use std::pin::Pin;
 use tracing::info;
@@ -41,10 +41,7 @@ impl From<entity::UserModel> for UserIdOnly {
     }
 }
 
-pub async fn when_condition(
-    _parts: Parts,
-    _state: (),
-) -> Result<(), quickapi::view::when::error::Error> {
+pub async fn when_condition(_parts: Parts, _state: ()) -> Result<(), view::when::error::Error> {
     Ok(())
 }
 
@@ -62,29 +59,33 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router: axum::Router<()> = axum::Router::new();
 
     // add list view for User entity
-    let router = ListView::<entity::User, <entity::User as EntityTrait>::Model, ()>::new(
-        "/api/user",
-        Method::GET,
-    )
-    // add a condition to the view
-    .when(
-        when_condition,
-        |view: ListView<entity::User, <entity::User as EntityTrait>::Model, ()>| {
-            // filter by something
-            // view.filter(filter).with_serializer::<UserIdOnly>()
-            Ok(view)
-        },
-    )
-    .register_router(router)?;
+    let _router = view::list::new::<entity::User, ()>("/api/user", Method::GET);
+
+    // add list view for User entity
+    let router =
+        view::list::ListView::<entity::User, <entity::User as EntityTrait>::Model, ()>::new(
+            "/api/user",
+            Method::GET,
+        )
+        // add a condition to the view
+        .when(
+            when_condition,
+            |view: view::list::ListView<entity::User, <entity::User as EntityTrait>::Model, ()>| {
+                // filter by something
+                // view.filter(filter).with_serializer::<UserIdOnly>()
+                Ok(view)
+            },
+        )
+        .register_router(router)?;
 
     // add viewset for User entity
     let router = quickapi::ViewSet::new("/api/viewset/user")
-        .add_view(ListView::<
+        .add_view(view::list::ListView::<
             entity::User,
             <entity::User as EntityTrait>::Model,
             (),
         >::new("/", Method::GET))
-        .add_view(DetailView::<
+        .add_view(view::detail::DetailView::<
             entity::User,
             <entity::User as EntityTrait>::Model,
             (),
