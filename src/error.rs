@@ -2,6 +2,9 @@ use axum::routing::MethodFilter;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
+    #[error("Improperly configured: {0}")]
+    ImproperlyConfigured(String),
+
     #[error("Invalid method: {0}")]
     InvalidMethod(String),
 

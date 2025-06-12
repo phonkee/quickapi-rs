@@ -11,8 +11,8 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{MethodFilter, on};
-use sea_orm::Select;
 use sea_orm::sea_query::ColumnSpec::Default;
+use sea_orm::{Iden, Select};
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -87,6 +87,19 @@ where
     }
 }
 
+impl<M, S, O> ListView<M, S, O>
+where
+    M: sea_orm::entity::EntityTrait,
+    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    /// new method to create a new ListView instance
+    pub fn new_with_path(_path: &str) -> Result<ListView<M, S, O>, Error> {
+        Err(Error::ImproperlyConfigured("hello".to_string()))
+    }
+}
+
 /// new method to create a new ListView instance
 pub fn new_with_serializer<Model, State, Ser>(
     path: &str,
@@ -144,7 +157,7 @@ where
         F: FnOnce(Self) -> Result<ListView<M, S, Ser>, crate::error::Error>,
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
         <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
-        W: When<S, T>
+        W: When<S, T>,
     {
         // TODO: push to when vector?
         let _x = _f(self.clone());
