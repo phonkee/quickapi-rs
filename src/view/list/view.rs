@@ -48,7 +48,7 @@ where
 {
     filters: SelectFilters,
     // when condition to apply logic
-    when: WhenViews<S, dyn ListViewTrait<M, S> + Send + Sync + 'static>,
+    when: WhenViews<S, Arc<dyn ListViewTrait<M, S> + Send + Sync + 'static>>,
     path: String,
     method: Method,
     fallback: bool,
@@ -68,7 +68,7 @@ where
         ListView {
             path: self.path.clone(),
             filters: self.filters.clone(),
-            when: WhenViews::<S>::new(),
+            when: WhenViews::<S, Arc<dyn ListViewTrait<M, S> + Send + Sync + 'static>>::new(),
             _phantom_data: PhantomData,
             method: self.method.clone(),
             fallback: false,
@@ -107,7 +107,7 @@ where
             path: String::from(path),
             method,
             filters: Default::default(),
-            when: WhenViews::<S>::new(),
+            when: WhenViews::<S, Arc<dyn ListViewTrait<M, S> + Send + Sync + 'static>>::new(),
             _phantom_data: PhantomData,
             fallback: false,
             ser: ModelSerializerJson::<O>::new(),

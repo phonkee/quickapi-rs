@@ -1,5 +1,4 @@
 use crate::view::when::When;
-use sea_orm::EntityTrait;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
@@ -15,24 +14,25 @@ where
 }
 
 #[derive(Clone, Default)]
+#[allow(dead_code)]
 pub struct WhenViews<S, V>
 where
     S: Clone + Send + Sync + 'static,
     V: Send + Sync + 'static + ?Sized,
 {
     views: Vec<WhenView<S, V>>,
-    // phantom_data: PhantomData<(S, V)>,
+    phantom_data: PhantomData<(S, V)>,
 }
 
 impl<S, V> WhenViews<S, V>
 where
     S: Clone + Send + Sync + 'static,
-    V: Default + Send + Sync + 'static,
+    V: Clone + Send + Sync + 'static,
 {
     pub fn new() -> Self {
         Self {
             views: Vec::new(),
-            // phantom_data: PhantomData,
+            phantom_data: PhantomData,
         }
     }
 

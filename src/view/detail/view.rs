@@ -74,7 +74,7 @@ where
     /// TODO: remove clone
     fn clone_without_when(&self) -> Self {
         Self {
-            when: WhenViews::new(),
+            when: self.when.clone(),
             ..self.clone()
         }
     }
