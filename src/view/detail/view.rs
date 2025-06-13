@@ -29,6 +29,7 @@ where
     ser: PhantomData<O>,
     when: Clauses<S>,
     lookup: Arc<dyn Lookup<M, S>>,
+    filters: crate::filter::SelectFilters,
 }
 
 impl<M, O, S> DetailView<M, O, S>
@@ -47,6 +48,7 @@ where
             ser: PhantomData,
             when: Clauses::<S>::default(),
             lookup: Arc::new(_lookup),
+            filters: Default::default(),
         }
     }
 
@@ -59,6 +61,12 @@ where
     /// with_lookup sets the lookup for the DetailView.
     pub fn with_lookup(mut self, lookup: impl Lookup<M, S> + 'static) -> Self {
         self.lookup = Arc::new(lookup);
+        self
+    }
+
+    /// with_filter sets a filter for the DetailView.
+    pub fn with_filter<F, T>(mut self, filter: impl crate::filter::SelectFilter<M, S, T>) -> Self {
+        self.filters.push(Arc::new(filter));
         self
     }
 }

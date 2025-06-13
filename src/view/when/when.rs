@@ -1,80 +1,72 @@
+use crate::all_the_tuples;
 use crate::view::when::When;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use sea_orm::Select;
 use std::pin::Pin;
 
-/// When implementation for a no-op condition
-impl<S> When<S, ()> for ()
-where
-    S: Clone + Send + Sync + 'static,
-{
-    type Future =
-        Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static>>;
-    fn when(self, _parts: Parts, _state: S) -> Self::Future {
-        Box::pin(async { Ok(()) })
+/// When static condition
+#[async_trait::async_trait]
+impl<S, F, Fut> When<S, ()> for bool {
+    async fn when(self, parts: Parts, state: S) -> Result<(), super::error::Error> {
+        if self {
+            Ok(())
+        } else {
+            Err(super::error::Error::NoMatch)
+        }
     }
 }
 
-/// When implementation for a function that takes parts and state and returns a future
-impl<S, F, R> When<S, f32> for F
+/// When tuple condition
+#[async_trait::async_trait]
+impl<S, F, Fut> When<S, ()> for F
 where
     S: Clone + Send + Sync + 'static,
-    R: Future<Output = Result<(), super::error::Error>> + Send + Sync + 'static,
-    F: Fn(Parts, S) -> R + Send + Sync + 'static,
+    F: Fn(Parts, S) -> Fut + Send + Sync + 'static,
+    Fut: Future<Output = Result<(), super::error::Error>> + Send + 'static,
 {
-    type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send + Sync>>;
+    async fn when(self, parts: Parts, state: S) -> Result<(), super::error::Error> {
+        let state = state.clone();
+        let mut _parts = parts.clone();
 
-    fn when(self, _parts: Parts, _state: S) -> Self::Future {
-        // let _state = _state.clone();
-        // #[allow(unused_mut)]
-        // let mut _parts = _parts.clone();
-        Box::pin(async move {
-            // Err(super::error::Error::NoMatch)
-            self(_parts, _state).await
-        })
+        self(parts, state.clone()).await
     }
 }
 
+
+/// Implementation of When trait for tuples of different types
 macro_rules! impl_when_func {
-    ([$($ty:ident),*]) => {
+    ([$($ty:ident),*], $last:ident) => {
         #[allow(non_snake_case)]
-        impl<S, F, R, $($ty,)*> When<S, ($($ty,)*)> for F
+        #[async_trait::async_trait]
+        impl<S, F, Fut, $($ty,)* $last> When<S, ($($ty,)* $last,)> for F
         where
             S: Clone + Send + Sync + 'static,
-            R: Future<Output = Result<(), super::error::Error>> + Send + Sync,
-            F: Fn(Parts, S, $($ty,)*) -> R + Send + Sync + 'static,
             $(
-                $ty: FromRequestParts<S> + Send,
+                $ty: FromRequestParts<S> + Send + Sync + 'static,
             )*
+            $last: FromRequestParts<S> + Send + Sync + 'static,
+            F: Fn(Parts, S, $($ty,)* $last) -> Fut + Send + Sync + 'static,
+            Fut: Future<Output = Result<(), super::error::Error>> + Send + 'static,
         {
-            type Future = Pin<Box<dyn Future<Output = Result<(), super::error::Error>> + Send>>;
-
-            fn when(self, parts: Parts, state: S) -> Self::Future {
+            async fn when(self, parts: Parts, state: S) -> Result<(), super::error::Error> {
                 let state = state.clone();
 
-                Box::pin(async move {
-                    let mut _parts = parts.clone();
-                    $(
-                        // create T1 from request parts
-                        let $ty = $ty::from_request_parts(&mut _parts, &state)
-                            .await
-                            .map_err(|_| super::error::Error::NoMatch)?;
-                    )*
+                let mut _parts = parts.clone();
+                $(
+                    // create T1 from request parts
+                    let $ty = $ty::from_request_parts(&mut _parts, &state)
+                        .await
+                        .map_err(|_| super::error::Error::NoMatch)?;
+                )*
+                let $last = $last::from_request_parts(&mut _parts, &state)
+                    .await
+                    .map_err(|_| super::error::Error::NoMatch)?;
 
-                    self(parts, state.clone(), $($ty,)*).await
-                })
+                self(parts, state.clone(), $($ty,)* $last).await
             }
         }
     }
 }
 
-// implement When for functions with 1 to 8 parameters
-impl_when_func!([T1]);
-impl_when_func!([T1, T2]);
-impl_when_func!([T1, T2, T3]);
-impl_when_func!([T1, T2, T3, T4]);
-impl_when_func!([T1, T2, T3, T4, T5]);
-impl_when_func!([T1, T2, T3, T4, T5, T6]);
-impl_when_func!([T1, T2, T3, T4, T5, T6, T7]);
-impl_when_func!([T1, T2, T3, T4, T5, T6, T7, T8]);
+all_the_tuples!(impl_when_func);
