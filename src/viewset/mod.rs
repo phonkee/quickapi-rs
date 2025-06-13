@@ -5,6 +5,14 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug;
 
+/// new creates a new ViewSet with the given path.
+pub fn new<S>(path: impl Into<String>) -> ViewSet<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    ViewSet::new(path)
+}
+
 /// ViewSet is a collection of views that can be registered with an axum router.
 pub struct ViewSet<S> {
     path: String,
@@ -30,7 +38,7 @@ where
     #[allow(unused_mut)]
     pub fn add_view(mut self, _view: impl ViewTrait<S> + Send + Sync + 'static) -> Self {
         // TODO: add view to the ViewSet
-        // self.views.push(Arc::new(_view));
+        self.views.push(Arc::new(_view));
         self
     }
 }
