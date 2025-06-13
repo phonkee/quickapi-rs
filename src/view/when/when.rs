@@ -7,8 +7,11 @@ use std::pin::Pin;
 
 /// When static condition
 #[async_trait::async_trait]
-impl<S, F, Fut> When<S, ()> for bool {
-    async fn when(self, parts: Parts, state: S) -> Result<(), super::error::Error> {
+impl<S> When<S, ()> for bool
+where
+    S: Clone + Send + Sync + 'static,
+{
+    async fn when(self, _parts: Parts, _state: S) -> Result<(), super::error::Error> {
         if self {
             Ok(())
         } else {
@@ -32,7 +35,6 @@ where
         self(parts, state.clone()).await
     }
 }
-
 
 /// Implementation of When trait for tuples of different types
 macro_rules! impl_when_func {
