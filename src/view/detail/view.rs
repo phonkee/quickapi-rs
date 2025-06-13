@@ -1,8 +1,9 @@
 use super::lookup::Lookup;
-use crate::Error;
 use crate::view::handler::Handler;
 use crate::view::when::clause::Clauses;
+use crate::{Error, JsonResponse};
 use axum::Router;
+use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Response};
@@ -10,6 +11,7 @@ use axum::routing::{MethodFilter, on};
 use sea_orm::EntityTrait;
 use std::marker::PhantomData;
 use std::pin::Pin;
+use std::sync::Arc;
 use tracing::debug;
 
 /// DetailView is a view for displaying details of a single entity.
@@ -26,6 +28,8 @@ where
     ph: PhantomData<(M, S)>,
     ser: PhantomData<O>,
     when: Clauses<S>,
+    // lookup: Arc<dyn Lookup<M, S>>,
+    lookup: (),
 }
 
 impl<M, O, S> DetailView<M, O, S>
@@ -43,6 +47,8 @@ where
             ph: PhantomData,
             ser: PhantomData,
             when: Clauses::<S>::default(),
+            lookup: (),
+            // lookup: Default::default(),
         }
     }
 
@@ -62,17 +68,12 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     type Future = Pin<
-        Box<
-            dyn Future<Output = Result<serde_json::Value, crate::error::Error>>
-                + Send
-                + Sync
-                + 'static,
-        >,
+        Box<dyn Future<Output = Result<JsonResponse, crate::error::Error>> + Send + Sync + 'static>,
     >;
 
     /// view method to render the detail view.
-    fn handle_view(&self, _parts: &mut Parts, _state: S) -> Self::Future {
-        todo!()
+    fn handle_view(&self, _parts: &mut Parts, _state: S, _body: Body) -> Self::Future {
+        Box::pin(async { Ok(JsonResponse::default()) })
     }
 }
 
@@ -98,7 +99,7 @@ where
         })?;
 
         debug!(
-            "list view: {}{}, method: {}",
+            "detail view: {}{}, method: {}",
             prefix, self.path, self.method
         );
 

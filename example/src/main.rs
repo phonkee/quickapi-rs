@@ -37,21 +37,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // router instance
     let router: axum::Router<()> = axum::Router::new();
 
-    // add list view for User entity
-    let router = view::list::new::<entity::User, ()>("/api/user")
-        .with_method(Method::GET)
-        // add a condition to the view
-        .when(
-            when_condition,
-            |view: view::list::ListView<entity::User, <entity::User as EntityTrait>::Model, ()>| {
-                // filter by something
-                // view.filter(filter).with_serializer::<UserIdOnly>()
-                Ok(view)
-            },
-        )
-        .register_router(router)?;
+    // // add list view for User entity
+    // let router = view::list::new::<entity::User, ()>("/api/user")
+    //     .with_method(Method::GET)
+    //     // add a condition to the view
+    //     .when(
+    //         when_condition,
+    //         |view: view::list::ListView<entity::User, <entity::User as EntityTrait>::Model, ()>| {
+    //             // filter by something
+    //             // view.filter(filter).with_serializer::<UserIdOnly>()
+    //             Ok(view)
+    //         },
+    //     )
+    //     .register_router(router)?;
 
-    let _ = view::detail::new::<entity::User, ()>("/api/user/{id}", "id".to_string());
+    let router =
+        view::detail::new::<entity::User, ()>("/api/user/{id}", "id").register_router(router)?;
 
     // // add list view for User entity
     // let router =

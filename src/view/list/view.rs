@@ -1,18 +1,18 @@
 #![allow(unused_mut)]
-
-use crate::Error;
 use crate::router::RouterExt;
 use crate::view::filter::Filter;
 use crate::view::handler::Handler;
 use crate::view::when::When;
 use crate::view::when::clause::Clauses;
+use crate::{Error, JsonResponse};
 use axum::Router;
+use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{MethodFilter, on};
-use sea_orm::sea_query::ColumnSpec::Default;
 use sea_orm::{Iden, Select};
+use std::default::Default;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -149,18 +149,23 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     type Future =
-        Pin<Box<dyn Future<Output = Result<serde_json::Value, Error>> + Send + Sync + 'static>>;
+        Pin<Box<dyn Future<Output = Result<JsonResponse, Error>> + Send + Sync + 'static>>;
 
     // view method to handle the request
     #[allow(unused_variables)]
-    fn handle_view(&self, parts: &mut Parts, _state: S) -> Self::Future {
+    fn handle_view(&self, parts: &mut Parts, _state: S, _body: Body) -> Self::Future {
         Box::pin(async move {
             // Here you would implement the logic to retrieve the list of items
-            Ok(serde_json::json!({"message": "ListView is working!"}))
+            Ok(JsonResponse {
+                data: serde_json::Value::Null,
+                ..Default::default()
+            })
         })
     }
 }
 
+/// Implementing RouterExt for ListView to register the router
+/// This trait allows the ListView to be registered with an axum router.
 impl<M, O, S> RouterExt<S> for ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
@@ -168,7 +173,7 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    // register_router_with_prefix method to register the ListView with an axum router
+    /// register_router_with_prefix method to register the ListView with an axum router
     fn register_router_with_prefix(
         &self,
         router: Router<S>,

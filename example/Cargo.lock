@@ -1403,6 +1403,7 @@ dependencies = [
 name = "quickapi"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "axum",
  "sea-orm",
  "serde",
