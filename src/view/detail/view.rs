@@ -1,4 +1,5 @@
 use super::lookup::Lookup;
+use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use crate::view::view::ModelViewTrait;
 use crate::view::when::{CloneWithoutWhen, WhenViews};
@@ -8,10 +9,42 @@ use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::{MethodFilter, on};
-use sea_orm::EntityTrait;
+use sea_orm::Iterable;
+use sea_orm::{EntityTrait, Iden};
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug;
+
+// new DetailView function that creates a new DetailView instance with default serializer
+pub fn new<M, S>(path: &str) -> Result<DetailView<M, S, M::Model>, Error>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    new_with_method(path, Method::GET)
+}
+
+/// new_with_method function that creates a new DetailView instance with a specified HTTP method
+pub fn new_with_method<M, S>(
+    path: &str,
+    method: Method,
+) -> Result<DetailView<M, S, M::Model>, Error>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    // Get the first primary key column name as a string
+    let primary_key = M::PrimaryKey::iter()
+        .next()
+        .ok_or(Error::ImproperlyConfigured(
+            "No primary key found for entity".to_string(),
+        ))?
+        .to_string();
+
+    Ok(DetailView::<M, S, M::Model>::new(path, method, primary_key))
+}
 
 /// DetailView is a view for displaying details of a single entity.
 #[derive(Clone)]
@@ -25,7 +58,7 @@ where
     path: String,
     method: Method,
     ph: PhantomData<(M, S, O)>,
-    when: WhenViews<M, S>,
+    when: WhenViews<S, Arc<dyn DetailViewTrait<M, S>>>,
     lookup: Arc<dyn Lookup<M, S>>,
     filters: crate::filter::SelectFilters,
 }

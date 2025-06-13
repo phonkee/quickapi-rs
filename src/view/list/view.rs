@@ -3,6 +3,7 @@ use crate::filter::queryset::SelectFilters;
 use crate::router::RouterExt;
 use crate::serializer::ModelSerializerJson;
 use crate::view::handler::Handler;
+use crate::view::list::ListViewTrait;
 use crate::view::view::ModelViewTrait;
 use crate::view::when::{CloneWithoutWhen, When, WhenViews};
 use crate::{Error, JsonResponse};
@@ -12,10 +13,31 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::{MethodFilter, on};
 use sea_orm::EntityTrait;
+use serde::Serialize;
 use std::default::Default;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug;
+
+// new ListView function that creates a new ListView instance with default serializer
+pub fn new<M, S>(path: &str) -> ListView<M, S, M::Model>
+where
+    M: sea_orm::entity::EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    <M as sea_orm::entity::EntityTrait>::Model: Serialize + Clone + Send + Sync + 'static,
+{
+    new_with_method(path, Method::GET)
+}
+
+/// new_with_method function that creates a new ListView instance with a specified HTTP method
+pub fn new_with_method<M, S>(path: &str, method: Method) -> ListView<M, S, M::Model>
+where
+    M: sea_orm::entity::EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    <M as sea_orm::entity::EntityTrait>::Model: Serialize + Clone + Send + Sync + 'static,
+{
+    ListView::<M, S, M::Model>::new(path, method)
+}
 
 /// ListView is a view for displaying a list of entities.
 pub struct ListView<M, S, O>
@@ -26,7 +48,7 @@ where
 {
     filters: SelectFilters,
     // when condition to apply logic
-    when: WhenViews<M, S>,
+    when: WhenViews<S, dyn ListViewTrait<M, S> + 'static>,
     path: String,
     method: Method,
     fallback: bool,
@@ -46,7 +68,7 @@ where
         ListView {
             path: self.path.clone(),
             filters: self.filters.clone(),
-            when: WhenViews::<M, S>::new(),
+            when: WhenViews::<S>::new(),
             _phantom_data: PhantomData,
             method: self.method.clone(),
             fallback: false,
@@ -85,7 +107,7 @@ where
             path: String::from(path),
             method,
             filters: Default::default(),
-            when: WhenViews::<M, S>::new(),
+            when: WhenViews::<S>::new(),
             _phantom_data: PhantomData,
             fallback: false,
             ser: ModelSerializerJson::<O>::new(),

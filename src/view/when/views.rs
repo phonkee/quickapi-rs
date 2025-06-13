@@ -5,38 +5,42 @@ use std::sync::Arc;
 
 #[allow(dead_code)]
 #[derive(Clone)]
-pub struct WhenView<M, S> {
+pub struct WhenView<S, V>
+where
+    S: Clone + Send + Sync + 'static,
+    V: Send + Sync + 'static,
+{
     pub when: Arc<dyn When<S, ()> + Send + Sync>,
-    pub phantom_data: PhantomData<(M, S)>,
+    pub phantom_data: PhantomData<(S, V)>,
 }
 
 #[derive(Clone, Default)]
-pub struct WhenViews<M, S>
+pub struct WhenViews<S, V>
 where
-    M: EntityTrait,
     S: Clone + Send + Sync + 'static,
+    V: Send + Sync  + 'static,
 {
-    views: Vec<WhenView<M, S>>,
-    phantom_data: PhantomData<(M, S)>,
+    views: Vec<WhenView<S, V>>,
+    // phantom_data: PhantomData<(S, V)>,
 }
 
-impl<M, S> WhenViews<M, S>
+impl<S, V> WhenViews<S, V>
 where
-    M: EntityTrait,
     S: Clone + Send + Sync + 'static,
+    V: Default + Send + Sync + 'static,
 {
     pub fn new() -> Self {
         Self {
             views: Vec::new(),
-            phantom_data: PhantomData,
+            // phantom_data: PhantomData,
         }
     }
 
-    pub fn add_view(&mut self, view: WhenView<M, S>) {
-        self.views.push(view);
-    }
-
-    pub fn views(&self) -> &[WhenView<M, S>] {
-        &self.views
-    }
+    // pub fn add_view<T>(&mut self, when: impl When<S, T>, view: WhenView<S>) {
+    //     self.views.push(view);
+    // }
+    //
+    // pub fn views(&self) -> &[WhenView<S>] {
+    //     &self.views
+    // }
 }
