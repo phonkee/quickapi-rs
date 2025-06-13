@@ -144,7 +144,7 @@ where
         F: Fn(ListView<M, S, O>) -> Result<ListView<M, S, Ser>, Error>,
     {
         let mut _result = _f(self.clone_without_when())?;
-        // self.when.add_view(_when, Arc::new(_result));
+        self.when.add_view(_when, Arc::new(_result));
         Ok(self)
     }
 
@@ -228,4 +228,14 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     // Additional methods specific to ModelViewTrait can be implemented here
+}
+
+#[async_trait::async_trait]
+impl<M, S, O> ListViewTrait<M, S> for ListView<M, S, O>
+where
+    M: sea_orm::entity::EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    // Additional methods specific to ListViewTrait can be implemented here
 }
