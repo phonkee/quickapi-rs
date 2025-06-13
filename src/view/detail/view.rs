@@ -202,7 +202,7 @@ where
         mut _parts: &mut Parts,
         _state: S,
         _body: Body,
-    ) -> Result<JsonResponse, crate::error::Error> {
+    ) -> Result<JsonResponse, Error> {
         let lookup = self.lookup.clone();
         let _select = M::find();
         let _select = lookup.lookup(&mut _parts, _state.clone(), _select).await?;

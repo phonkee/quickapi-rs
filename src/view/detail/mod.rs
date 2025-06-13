@@ -4,7 +4,7 @@ pub mod view;
 pub use view::{DetailView, new, new_with_method};
 
 #[async_trait::async_trait]
-pub trait DetailViewTrait<M, S>: Send + Sync + 'static
+pub trait DetailViewTrait<M, S>: crate::view::ViewTrait<S> + Send + Sync + 'static
 where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
