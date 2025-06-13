@@ -10,7 +10,11 @@ pub fn new<S>(path: impl Into<String>) -> ViewSet<S>
 where
     S: Clone + Send + Sync + 'static,
 {
-    ViewSet::new(path)
+    ViewSet {
+        path: path.into(),
+        views: vec![],
+        phantom_data: PhantomData,
+    }
 }
 
 /// ViewSet is a collection of views that can be registered with an axum router.
@@ -25,15 +29,6 @@ impl<S> ViewSet<S>
 where
     S: Clone + Send + Sync + 'static,
 {
-    /// new creates a new ViewSet with the given path.
-    pub fn new(path: impl Into<String>) -> Self {
-        Self {
-            path: path.into(),
-            views: Vec::new(),
-            phantom_data: PhantomData,
-        }
-    }
-
     /// add_view adds a view to the ViewSet.
     #[allow(unused_mut)]
     pub fn add_view(mut self, _view: impl ViewTrait<S> + Send + Sync + 'static) -> Self {
