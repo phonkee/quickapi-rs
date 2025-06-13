@@ -1,5 +1,6 @@
 pub mod view;
 
+use axum::http::Method;
 use serde::Serialize;
 
 pub use view::ListView;
@@ -11,5 +12,15 @@ where
     S: Clone + Send + Sync + 'static,
     <M as sea_orm::entity::EntityTrait>::Model: Serialize + Clone + Send + Sync + 'static,
 {
-    ListView::<M, S>::new(path)
+    new_with_method(path, Method::GET)
+}
+
+/// new_with_method function that creates a new ListView instance with a specified HTTP method
+pub fn new_with_method<M, S>(path: &str, method: Method) -> ListView<M, S>
+where
+    M: sea_orm::entity::EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    <M as sea_orm::entity::EntityTrait>::Model: Serialize + Clone + Send + Sync + 'static,
+{
+    ListView::<M, S>::new(path, method)
 }

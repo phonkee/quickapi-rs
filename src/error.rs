@@ -16,4 +16,7 @@ pub enum Error {
 
     #[error("No query filter match")]
     NoQueryFilterMatch,
+
+    #[error("Serialization error: {0}")]
+    SerializationError(#[from] serde_json::Error),
 }

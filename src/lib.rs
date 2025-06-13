@@ -7,6 +7,7 @@ pub mod viewset;
 
 #[macro_use]
 pub mod macros;
+mod serializer;
 
 pub use error::Error;
 pub use router::RouterExt;

@@ -1,6 +1,7 @@
 #![allow(unused_mut)]
 use crate::filter::queryset::SelectFilters;
 use crate::router::RouterExt;
+use crate::serializer::{SerializerJson, default_serializer, model_serializer};
 use crate::view::handler::Handler;
 use crate::view::when::When;
 use crate::view::when::clause::Clauses;
@@ -27,6 +28,7 @@ where
     method: Method,
     fallback: bool,
     phantom_data2: PhantomData<M>,
+    // ser: Arc<dyn SerializerJson<M, S>>,
 }
 
 impl<M, S> Clone for ListView<M, S>
@@ -43,6 +45,7 @@ where
             phantom_data2: PhantomData,
             method: self.method.clone(),
             fallback: false,
+            // ser: self.ser.clone(),
         }
     }
 }
@@ -50,24 +53,20 @@ where
 impl<M, S> ListView<M, S>
 where
     M: sea_orm::entity::EntityTrait,
+    <M as sea_orm::entity::EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     /// new method to create a new ListView instance
-    pub fn new(path: &str) -> ListView<M, S> {
+    pub fn new(path: &str, method: Method) -> ListView<M, S> {
         ListView::<M, S> {
             path: String::from(path),
-            method: Method::GET,
+            method,
             filters: Default::default(),
             when: Clauses::<S>::default(),
             phantom_data2: PhantomData,
             fallback: false,
+            // ser: Arc::new(model_serializer::<M>()),
         }
-    }
-
-    /// with_method method to set the HTTP method for the ListView
-    pub fn with_method(mut self, method: Method) -> Self {
-        self.method = method;
-        self
     }
 
     /// with_serializer method to set a custom serializer
