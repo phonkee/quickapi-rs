@@ -1,4 +1,5 @@
 use crate::Error;
+use crate::all_the_tuples;
 use async_trait::async_trait;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
@@ -57,36 +58,36 @@ where
 }
 
 macro_rules! impl_filter_tuple {
-    ([$($ty:ident),*]) => {
-        #[async_trait::async_trait]
-        #[allow(non_snake_case)]
-        #[allow(missing_docs)]
-        impl<F, M, S, $($ty,)*> SelectFilter<M, S, ($($ty,)*)> for F
-        where
-            M: sea_orm::EntityTrait + Send + Sync + 'static,
-            S: Sync + Send + Clone + 'static,
-            $(
-                $ty: FromRequestParts<S> + Send + Sync + 'static,
-            )*
-            F: Fn(&mut Parts, S, Select<M>, $($ty,)*) -> Result<Select<M>, Error> + Send + Sync + 'static,
-        {
-            async fn filter_queryset(
-                &self,
-                parts: &mut Parts,
-                state: S,
-                query: Select<M>,
-            ) -> Result<Select<M>, Error> {
-
-                $(
-                let $ty = $ty::from_request_parts(parts, &state)
-                    .await
-                    .map_err(|_| Error::NoQueryFilterMatch)?;
-                )*
-
-                (self)(parts, state, query, $($ty,)*)
-            }
-        }
-    }
+    ([$($ty:ident),*], $last:ident) => {
+        // #[async_trait::async_trait]
+        // #[allow(non_snake_case)]
+        // #[allow(missing_docs)]
+        // impl<F, M, S, $($ty,)*> SelectFilter<M, S, ($($ty,)*)> for F
+        // where
+        //     M: sea_orm::EntityTrait + Send + Sync + 'static,
+        //     S: Sync + Send + Clone + 'static,
+        //     $(
+        //         $ty: FromRequestParts<S> + Send + Sync + 'static,
+        //     )*
+        //     F: Fn(&mut Parts, S, Select<M>, $($ty,)*) -> Result<Select<M>, Error> + Send + Sync + 'static,
+        // {
+        //     async fn filter_queryset(
+        //         &self,
+        //         parts: &mut Parts,
+        //         state: S,
+        //         query: Select<M>,
+        //     ) -> Result<Select<M>, Error> {
+        //
+        //         $(
+        //         let $ty = $ty::from_request_parts(parts, &state)
+        //             .await
+        //             .map_err(|_| Error::NoQueryFilterMatch)?;
+        //         )*
+        //
+        //         (self)(parts, state, query, $($ty,)*)
+        //     }
+        // }
+    };
 }
 
-impl_filter_tuple!([T1, T2]);
+all_the_tuples!(impl_filter_tuple);

@@ -4,7 +4,7 @@ use axum::http::Request;
 use axum::response::{IntoResponse, Response};
 use std::pin::Pin;
 
-#[rustfmt::skip]
+#[macro_export]
 macro_rules! all_the_tuples {
     ($name:ident) => {
         $name!([], T1);
@@ -41,7 +41,7 @@ macro_rules! impl_handler {
         //     $last: FromRequest<S, M> + Send,
         // {
         //     type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
-        // 
+        //
         //     fn call(self, req: Request, state: S) -> Self::Future {
         //         let (mut parts, body) = req.into_parts();
         //         Box::pin(async move {
@@ -51,14 +51,14 @@ macro_rules! impl_handler {
         //                     Err(rejection) => return rejection.into_response(),
         //                 };
         //             )*
-        // 
+        //
         //             let req = Request::from_parts(parts, body);
-        // 
+        //
         //             let $last = match $last::from_request(req, &state).await {
         //                 Ok(value) => value,
         //                 Err(rejection) => return rejection.into_response(),
         //             };
-        // 
+        //
         //             self($($ty,)* $last,).await.into_response()
         //         })
         //     }

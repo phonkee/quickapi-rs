@@ -1,11 +1,13 @@
 #![allow(dead_code, unused_imports)]
 mod error;
+pub mod filter;
 pub mod response;
 pub mod router;
 pub mod view;
 pub mod viewset;
-pub mod filter;
-mod macros;
+
+#[macro_use]
+pub mod macros;
 
 pub use error::Error;
 pub use router::RouterExt;
