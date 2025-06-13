@@ -57,6 +57,13 @@ where
         self.method = method;
         self
     }
+
+    /// with_lookup sets the lookup for the DetailView.
+    pub fn with_lookup(self, _lookup: impl Lookup<M, S>) -> Self {
+        // self.lookup = Arc::new(lookup);
+        // self.lookup = lookup;
+        self
+    }
 }
 
 /// Implementing View for DetailView to render the detail view.
