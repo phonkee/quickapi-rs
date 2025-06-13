@@ -22,9 +22,9 @@ use tracing::debug;
 // new ListView function that creates a new ListView instance with default serializer
 pub fn new<M, S>(path: &str) -> ListView<M, S, M::Model>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    <M as sea_orm::entity::EntityTrait>::Model: Serialize + Clone + Send + Sync + 'static,
+    <M as EntityTrait>::Model: Serialize + Clone + Send + Sync + 'static,
 {
     new_with_method(path, Method::GET)
 }
@@ -32,9 +32,9 @@ where
 /// new_with_method function that creates a new ListView instance with a specified HTTP method
 pub fn new_with_method<M, S>(path: &str, method: Method) -> ListView<M, S, M::Model>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    <M as sea_orm::entity::EntityTrait>::Model: Serialize + Clone + Send + Sync + 'static,
+    <M as EntityTrait>::Model: Serialize + Clone + Send + Sync + 'static,
 {
     ListView::<M, S, M::Model>::new(path, method)
 }
@@ -42,7 +42,7 @@ where
 /// ListView is a view for displaying a list of entities.
 pub struct ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -59,7 +59,7 @@ where
 /// Implementing Clone for ListView to allow cloning of the view.
 impl<M, S, O> Clone for ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -97,7 +97,7 @@ where
 /// Implementing ListView for various functionalities.
 impl<M, S, O> ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -170,7 +170,7 @@ where
 /// This trait allows the ListView to be registered with an axum router.
 impl<M, S, O> RouterExt<S> for ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -203,7 +203,7 @@ where
 #[async_trait::async_trait]
 impl<M, S, O> crate::view::ViewTrait<S> for ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -233,7 +233,7 @@ where
 #[async_trait::async_trait]
 impl<M, S, O> ListViewTrait<M, S> for ListView<M, S, O>
 where
-    M: sea_orm::entity::EntityTrait,
+    M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
