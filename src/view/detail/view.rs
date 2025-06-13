@@ -99,6 +99,22 @@ where
         }
     }
 
+    /// when adds a condition to the DetailView.
+    #[allow(unused_mut)]
+    pub fn when<F, T, Ser>(
+        mut self,
+        _when: impl crate::view::when::When<S, T> + Send + Sync + 'static,
+        _f: F,
+    ) -> Result<Self, Error>
+    where
+        Ser: Clone + serde::Serialize + Send + Sync + 'static,
+        F: Fn(DetailView<M, S, O>) -> Result<DetailView<M, S, Ser>, Error>,
+    {
+        let mut _result = _f(self.clone())?;
+        // self.when.add_view(_when, _result);
+        Ok(self)
+    }
+
     /// with_lookup sets the lookup for the DetailView.
     pub fn with_lookup(mut self, lookup: impl Lookup<M, S> + 'static) -> Self {
         self.lookup = Arc::new(lookup);

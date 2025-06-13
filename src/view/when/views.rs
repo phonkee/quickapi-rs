@@ -40,5 +40,4 @@ where
     pub fn add_view<T>(&mut self, _when: impl When<S, T>, view: WhenView<S, V>) {
         self.views.push(view);
     }
-
 }

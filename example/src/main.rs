@@ -53,6 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let router = view::detail::new::<entity::User, ()>("/api/user/{id}")?
         .with_lookup("id")
+        .when(when_condition, |v| Ok(v))?
         .register_router(router)?;
 
     // // add list view for User entity
