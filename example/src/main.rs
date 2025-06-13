@@ -54,7 +54,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .register_router(router)?;
 
     // add viewset for Order entity
-    let router = quickapi::viewset::new("/api/order").register_router(router)?;
+    let router = quickapi::viewset::new("/api/order")
+        .add_view(view::detail::new::<entity::User, ()>("/{id}")?.with_lookup("id"))
+        .register_router(router)?;
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;
