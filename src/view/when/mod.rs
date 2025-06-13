@@ -18,3 +18,9 @@ where
     /// when it succeeds, the view is executed
     async fn when(self, _parts: axum::http::request::Parts, _state: S) -> Result<(), error::Error>;
 }
+
+/// CloneWithoutWhen trait for cloning objects without the When list
+pub trait CloneWithoutWhen {
+    /// Clone the object without the When trait
+    fn clone_without_when(&self) -> Self;
+}

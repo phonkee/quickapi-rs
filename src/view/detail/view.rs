@@ -1,6 +1,6 @@
 use super::lookup::Lookup;
 use crate::view::handler::Handler;
-use crate::view::when::clause::Clauses;
+use crate::view::when::{CloneWithoutWhen, WhenViews};
 use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;
@@ -15,23 +15,36 @@ use tracing::debug;
 
 /// DetailView is a view for displaying details of a single entity.
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct DetailView<M, S>
 where
     M: EntityTrait,
-    // <M as EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    // O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     path: String,
     method: Method,
     ph: PhantomData<(M, S)>,
-    // ser: Arc<dyn Any + Send + Sync>,
-    #[allow(dead_code)]
-    when: Clauses<S>,
+    when: WhenViews<M, S>,
     lookup: Arc<dyn Lookup<M, S>>,
     filters: crate::filter::SelectFilters,
 }
 
+impl<M, S> CloneWithoutWhen for DetailView<M, S>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+{
+    /// clone_without_when creates a clone of the DetailView without the WhenViews.
+    /// TODO: remove clone
+    fn clone_without_when(&self) -> Self {
+        Self {
+            when: WhenViews::new(),
+            ..self.clone()
+        }
+    }
+}
+
+/// Implementing DetailView for creating a new instance.
 impl<M, S> DetailView<M, S>
 where
     M: EntityTrait,
@@ -43,7 +56,7 @@ where
             path: path.to_owned(),
             method: Method::GET,
             ph: PhantomData,
-            when: Clauses::<S>::default(),
+            when: WhenViews::new(),
             lookup: Arc::new(_lookup),
             filters: Default::default(),
         }
@@ -72,9 +85,7 @@ where
 impl<M, S> crate::view::ViewTrait<S> for DetailView<M, S>
 where
     M: EntityTrait,
-    // <M as EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    // O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     type Future = Pin<
         Box<dyn Future<Output = Result<JsonResponse, crate::error::Error>> + Send + Sync + 'static>,
