@@ -10,7 +10,22 @@ where
     V: Send + Sync + 'static + ?Sized,
 {
     pub when: Arc<dyn When<S, ()> + Send + Sync>,
+    pub view: Arc<V>,
     pub phantom_data: PhantomData<(S, V)>,
+}
+
+impl<S, V> WhenView<S, V>
+where
+    S: Clone + Send + Sync + 'static,
+    V: Clone + Send + Sync + 'static,
+{
+    pub fn new(when: Arc<dyn When<S, ()> + Send + Sync>, view: V) -> Self {
+        Self {
+            when,
+            view: view.into(),
+            phantom_data: PhantomData,
+        }
+    }
 }
 
 #[derive(Clone, Default)]
@@ -37,7 +52,7 @@ where
     }
 
     /// Adds a view with a condition to the WhenViews.
-    pub fn add_view<T>(&mut self, _when: impl When<S, T>, view: WhenView<S, V>) {
-        self.views.push(view);
+    pub fn add_view<T>(&mut self, _when: impl When<S, T> + Sync + Send, _view: V) {
+        //self.views.push(WhenView::new(Arc::new(_when), view.into()));
     }
 }

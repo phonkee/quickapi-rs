@@ -111,7 +111,7 @@ where
         F: Fn(DetailView<M, S, O>) -> Result<DetailView<M, S, Ser>, Error>,
     {
         let mut _result = _f(self.clone_without_when())?;
-        // self.when.add_view(_when, _result);
+        self.when.add_view(_when, Arc::new(_result));
         Ok(self)
     }
 
@@ -126,6 +126,14 @@ where
         self.filters.push(Arc::new(filter));
         self
     }
+}
+
+impl<M, S, O> DetailViewTrait<M, S> for DetailView<M, S, O>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
 }
 
 /// Implementing RouterExt for DetailView to register the router.
