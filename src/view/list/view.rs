@@ -3,19 +3,21 @@ use crate::filter::queryset::SelectFilters;
 use crate::router::RouterExt;
 use crate::serializer::ModelSerializerJson;
 use crate::view::handler::Handler;
-use crate::view::when::When;
-use crate::view::when::clause::Clauses;
+use crate::view::view::ModelViewTrait;
+use crate::view::when::{CloneWithoutWhen, When, WhenViews};
 use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::{MethodFilter, on};
+use sea_orm::EntityTrait;
 use std::default::Default;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug;
 
+/// ListView is a view for displaying a list of entities.
 pub struct ListView<M, S, O>
 where
     M: sea_orm::entity::EntityTrait,
@@ -24,7 +26,7 @@ where
 {
     filters: SelectFilters,
     // when condition to apply logic
-    when: Clauses<S>,
+    when: WhenViews<M, S>,
     path: String,
     method: Method,
     fallback: bool,
@@ -32,6 +34,7 @@ where
     ser: ModelSerializerJson<O>,
 }
 
+/// Implementing Clone for ListView to allow cloning of the view.
 impl<M, S, O> Clone for ListView<M, S, O>
 where
     M: sea_orm::entity::EntityTrait,
@@ -43,7 +46,7 @@ where
         ListView {
             path: self.path.clone(),
             filters: self.filters.clone(),
-            when: Clauses::<S>::default(),
+            when: WhenViews::<M, S>::new(),
             _phantom_data: PhantomData,
             method: self.method.clone(),
             fallback: false,
@@ -52,6 +55,24 @@ where
     }
 }
 
+/// Implementing CloneWithoutWhen for DetailView to clone without WhenViews.
+impl<M, S, O> CloneWithoutWhen for ListView<M, S, O>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    /// clone_without_when creates a clone of the DetailView without the WhenViews.
+    /// TODO: remove clone
+    fn clone_without_when(&self) -> Self {
+        Self {
+            when: WhenViews::new(),
+            ..self.clone()
+        }
+    }
+}
+
+/// Implementing ListView for various functionalities.
 impl<M, S, O> ListView<M, S, O>
 where
     M: sea_orm::entity::EntityTrait,
@@ -64,27 +85,10 @@ where
             path: String::from(path),
             method,
             filters: Default::default(),
-            when: Clauses::<S>::default(),
+            when: WhenViews::<M, S>::new(),
             _phantom_data: PhantomData,
             fallback: false,
             ser: ModelSerializerJson::<O>::new(),
-        }
-    }
-
-    /// with_serializer method to set a custom serializer
-    pub fn with_serializer<Ser>(mut self) -> ListView<M, S, Ser>
-    where
-        Ser: serde::Serialize + Clone + Send + Sync + 'static,
-        <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
-    {
-        ListView::<M, S, Ser> {
-            path: self.path,
-            method: self.method.clone(),
-            filters: self.filters,
-            when: self.when.clone(),
-            _phantom_data: PhantomData,
-            fallback: self.fallback,
-            ser: ModelSerializerJson::<Ser>::new(),
         }
     }
 
@@ -123,25 +127,22 @@ where
         // For now, we just return self
         self.with_serializer()
     }
-}
 
-#[async_trait::async_trait]
-impl<M, S, O> crate::view::ViewTrait<S> for ListView<M, S, O>
-where
-    M: sea_orm::entity::EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    async fn handle_view(
-        &self,
-        _parts: &mut Parts,
-        _state: S,
-        _body: Body,
-    ) -> Result<JsonResponse, Error> {
-        Ok(JsonResponse {
-            data: serde_json::Value::Null,
-            ..Default::default()
-        })
+    /// with_serializer method to set a custom serializer
+    pub fn with_serializer<Ser>(mut self) -> ListView<M, S, Ser>
+    where
+        Ser: serde::Serialize + Clone + Send + Sync + 'static,
+        <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
+    {
+        ListView::<M, S, Ser> {
+            path: self.path,
+            method: self.method.clone(),
+            filters: self.filters,
+            when: self.when.clone(),
+            _phantom_data: PhantomData,
+            fallback: self.fallback,
+            ser: ModelSerializerJson::<Ser>::new(),
+        }
     }
 }
 
@@ -177,4 +178,34 @@ where
             on(mf, Handler::new(self.clone())),
         ))
     }
+}
+
+#[async_trait::async_trait]
+impl<M, S, O> crate::view::ViewTrait<S> for ListView<M, S, O>
+where
+    M: sea_orm::entity::EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    async fn handle_view(
+        &self,
+        _parts: &mut Parts,
+        _state: S,
+        _body: Body,
+    ) -> Result<JsonResponse, Error> {
+        Ok(JsonResponse {
+            data: serde_json::Value::Null,
+            ..Default::default()
+        })
+    }
+}
+
+#[async_trait::async_trait]
+impl<M, S, O> ModelViewTrait<M, S> for ListView<M, S, O>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    // Additional methods specific to ModelViewTrait can be implemented here
 }

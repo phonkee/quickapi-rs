@@ -1,5 +1,6 @@
 use super::lookup::Lookup;
 use crate::view::handler::Handler;
+use crate::view::view::ModelViewTrait;
 use crate::view::when::{CloneWithoutWhen, WhenViews};
 use crate::{Error, JsonResponse};
 use axum::Router;
@@ -29,6 +30,7 @@ where
     filters: crate::filter::SelectFilters,
 }
 
+/// Implementing CloneWithoutWhen for DetailView to clone without WhenViews.
 impl<M, S, O> CloneWithoutWhen for DetailView<M, S, O>
 where
     M: EntityTrait,
@@ -53,13 +55,13 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
-    pub fn new(path: &str, method: Method, _lookup: impl Lookup<M, S> + 'static) -> Self {
+    pub fn new(path: &str, method: Method, lookup: impl Lookup<M, S> + 'static) -> Self {
         Self {
             path: path.to_owned(),
             method,
             ph: PhantomData,
             when: WhenViews::new(),
-            lookup: Arc::new(_lookup),
+            lookup: Arc::new(lookup),
             filters: Default::default(),
         }
     }
@@ -74,28 +76,6 @@ where
     pub fn with_filter<F, T>(mut self, filter: impl crate::filter::SelectFilter<M, S, T>) -> Self {
         self.filters.push(Arc::new(filter));
         self
-    }
-}
-
-/// Implementing View for DetailView to render the detail view.
-#[async_trait::async_trait]
-impl<M, S, O> crate::view::ViewTrait<S> for DetailView<M, S, O>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    async fn handle_view(
-        &self,
-        mut _parts: &mut Parts,
-        _state: S,
-        _body: Body,
-    ) -> Result<JsonResponse, crate::error::Error> {
-        let lookup = self.lookup.clone();
-        let _select = M::find();
-        let _select = lookup.lookup(&mut _parts, _state.clone(), _select).await?;
-        debug!("DetailView: lookup completed");
-        Ok(JsonResponse::default())
     }
 }
 
@@ -130,4 +110,35 @@ where
             on(mf, Handler::new(self.clone())),
         ))
     }
+}
+
+/// Implementing View for DetailView to render the detail view.
+#[async_trait::async_trait]
+impl<M, S, O> crate::view::ViewTrait<S> for DetailView<M, S, O>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    async fn handle_view(
+        &self,
+        mut _parts: &mut Parts,
+        _state: S,
+        _body: Body,
+    ) -> Result<JsonResponse, crate::error::Error> {
+        let lookup = self.lookup.clone();
+        let _select = M::find();
+        let _select = lookup.lookup(&mut _parts, _state.clone(), _select).await?;
+        debug!("DetailView: lookup completed");
+        Ok(JsonResponse::default())
+    }
+}
+
+/// Implementing ModelViewTrait for DetailView to define the model view behavior.
+impl<M, S, O> ModelViewTrait<M, S> for DetailView<M, S, O>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
 }

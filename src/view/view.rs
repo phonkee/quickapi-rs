@@ -11,11 +11,20 @@ pub trait ViewTrait<S>: RouterExt<S> + Sync
 where
     S: Clone + Send + Sync + 'static,
 {
-    /// Future type for the view method
+    /// handle_view runs the view logic.
     async fn handle_view(
         &self,
         parts: &mut Parts,
         state: S,
         body: Body,
     ) -> Result<crate::response::JsonResponse, crate::error::Error>;
+}
+
+#[async_trait::async_trait]
+#[allow(dead_code)]
+pub trait ModelViewTrait<M, S>: ViewTrait<S>
+where
+    M: sea_orm::entity::EntityTrait,
+    S: Clone + Send + Sync + 'static,
+{
 }

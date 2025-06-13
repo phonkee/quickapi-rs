@@ -1,9 +1,8 @@
-pub mod clause;
 pub mod error;
 mod views;
 pub mod when;
 
-pub use views::WhenViews;
+pub use views::{WhenView, WhenViews};
 
 /// When trait for defining conditions that must be met before executing a view
 #[async_trait::async_trait]
