@@ -48,7 +48,7 @@ where
 {
     filters: SelectFilters,
     // when condition to apply logic
-    when: WhenViews<S, dyn ListViewTrait<M, S> + 'static>,
+    when: WhenViews<S, dyn ListViewTrait<M, S> + Send + Sync + 'static>,
     path: String,
     method: Method,
     fallback: bool,

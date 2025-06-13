@@ -8,7 +8,7 @@ use std::sync::Arc;
 pub struct WhenView<S, V>
 where
     S: Clone + Send + Sync + 'static,
-    V: Send + Sync + 'static,
+    V: Send + Sync + 'static + ?Sized,
 {
     pub when: Arc<dyn When<S, ()> + Send + Sync>,
     pub phantom_data: PhantomData<(S, V)>,
@@ -18,7 +18,7 @@ where
 pub struct WhenViews<S, V>
 where
     S: Clone + Send + Sync + 'static,
-    V: Send + Sync  + 'static,
+    V: Send + Sync + 'static + ?Sized,
 {
     views: Vec<WhenView<S, V>>,
     // phantom_data: PhantomData<(S, V)>,
