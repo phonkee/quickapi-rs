@@ -4,9 +4,32 @@ use async_trait::async_trait;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use sea_orm::Select;
+use std::any::Any;
+use std::ops::{Deref, DerefMut};
+use std::sync::Arc;
+
+/// SelectFilters holds a vector of filters that can be applied to a Select query.
+#[derive(Clone, Debug, Default)]
+pub struct SelectFilters(pub Vec<Arc<dyn Any + Send + Sync>>);
+
+/// Allows immutable access to the inner vector of filters.
+impl Deref for SelectFilters {
+    type Target = Vec<Arc<dyn Any + Send + Sync>>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+/// Allows mutable access to the inner vector of filters.
+impl DerefMut for SelectFilters {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
 #[async_trait::async_trait]
-pub trait SelectFilter<M, S, T>: Sync
+pub trait SelectFilter<M, S, T>: Sync + Send + 'static
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
@@ -36,57 +59,39 @@ where
     }
 }
 
-#[async_trait::async_trait]
-impl<F, M, S, T> SelectFilter<M, S, (T,)> for F
-where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
-    S: Sync + Send + Clone + 'static,
-    T: FromRequestParts<S> + Send + Sync + 'static,
-    F: Fn(&mut Parts, S, Select<M>, T) -> Result<Select<M>, Error> + Send + Sync + 'static,
-{
-    async fn filter_queryset(
-        &self,
-        parts: &mut Parts,
-        state: S,
-        query: Select<M>,
-    ) -> Result<Select<M>, Error> {
-        let t = T::from_request_parts(parts, &state)
-            .await
-            .map_err(|_| Error::NoQueryFilterMatch)?;
-        (self)(parts, state, query, t)
-    }
-}
-
 macro_rules! impl_filter_tuple {
     ([$($ty:ident),*], $last:ident) => {
-        // #[async_trait::async_trait]
-        // #[allow(non_snake_case)]
-        // #[allow(missing_docs)]
-        // impl<F, M, S, $($ty,)*> SelectFilter<M, S, ($($ty,)*)> for F
-        // where
-        //     M: sea_orm::EntityTrait + Send + Sync + 'static,
-        //     S: Sync + Send + Clone + 'static,
-        //     $(
-        //         $ty: FromRequestParts<S> + Send + Sync + 'static,
-        //     )*
-        //     F: Fn(&mut Parts, S, Select<M>, $($ty,)*) -> Result<Select<M>, Error> + Send + Sync + 'static,
-        // {
-        //     async fn filter_queryset(
-        //         &self,
-        //         parts: &mut Parts,
-        //         state: S,
-        //         query: Select<M>,
-        //     ) -> Result<Select<M>, Error> {
-        //
-        //         $(
-        //         let $ty = $ty::from_request_parts(parts, &state)
-        //             .await
-        //             .map_err(|_| Error::NoQueryFilterMatch)?;
-        //         )*
-        //
-        //         (self)(parts, state, query, $($ty,)*)
-        //     }
-        // }
+        #[async_trait::async_trait]
+        #[allow(missing_docs, non_snake_case)]
+        impl<F, M, S, $($ty,)* $last> SelectFilter<M, S, ($($ty,)* $last,)> for F
+        where
+            M: sea_orm::EntityTrait + Send + Sync + 'static,
+            S: Sync + Send + Clone + 'static,
+            $(
+                $ty: FromRequestParts<S> + Send + Sync + 'static,
+            )*
+            $last: FromRequestParts<S> + Send + Sync + 'static,
+            F: Fn(&mut Parts, S, Select<M>, $($ty,)* $last) -> Result<Select<M>, Error> + Send + Sync + 'static,
+        {
+            async fn filter_queryset(
+                &self,
+                parts: &mut Parts,
+                state: S,
+                query: Select<M>,
+            ) -> Result<Select<M>, Error> {
+
+                $(
+                let $ty = $ty::from_request_parts(parts, &state)
+                    .await
+                    .map_err(|_| Error::NoQueryFilterMatch)?;
+                )*
+                let $last = $last::from_request_parts(parts, &state)
+                    .await
+                    .map_err(|_| Error::NoQueryFilterMatch)?;
+
+                (self)(parts, state, query, $($ty,)* $last,)
+            }
+        }
     };
 }
 

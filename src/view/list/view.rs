@@ -1,6 +1,7 @@
 #![allow(unused_mut)]
+use crate::filter::queryset::SelectFilter;
+use crate::filter::queryset::SelectFilters;
 use crate::router::RouterExt;
-use crate::filter::Filter;
 use crate::view::handler::Handler;
 use crate::view::when::When;
 use crate::view::when::clause::Clauses;
@@ -12,6 +13,7 @@ use axum::http::request::Parts;
 use axum::response::{IntoResponse, Response};
 use axum::routing::{MethodFilter, on};
 use sea_orm::{Iden, Select};
+use std::any::Any;
 use std::default::Default;
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -25,24 +27,14 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    phantom_data: PhantomData<O>,
-    // a list of filters to apply to the query
-    filters: Vec<
-        Arc<
-            Box<
-                dyn Filter<
-                        S,
-                        M,
-                        Future = Pin<Box<dyn Future<Output = Result<Select<M>, ()>> + Send + Sync>>,
-                    >,
-            >,
-        >,
-    >,
+    filters: SelectFilters,
     // when condition to apply logic
     when: Clauses<S>,
     path: String,
     method: Method,
     fallback: bool,
+    phantom_data: PhantomData<O>,
+    phantom_data2: PhantomData<M>,
 }
 
 impl<M, O, S> Clone for ListView<M, O, S>
@@ -59,6 +51,7 @@ where
             filters: self.filters.clone(),
             when: Clauses::<S>::default(),
             phantom_data: PhantomData,
+            phantom_data2: PhantomData,
             method: self.method.clone(),
             fallback: false,
         }
@@ -78,9 +71,10 @@ where
         ListView::<M, O, S> {
             path: String::from(path),
             method: Method::GET,
-            filters: Vec::new(),
+            filters: Default::default(),
             when: Clauses::<S>::default(),
             phantom_data: PhantomData,
+            phantom_data2: PhantomData,
             fallback: false,
         }
     }
@@ -103,6 +97,7 @@ where
             filters: self.filters,
             when: self.when.clone(),
             phantom_data: PhantomData,
+            phantom_data2: PhantomData,
             fallback: self.fallback,
         }
     }
@@ -117,7 +112,11 @@ where
     }
 
     /// filter method to apply a filter condition
-    pub fn filter<X>(mut self, _filter: impl Filter<S, M, X>) -> Self {
+    pub fn filter<X>(
+        mut self,
+        _filter: impl crate::filter::queryset::SelectFilter<M, S, X>,
+    ) -> Self {
+        self.filters.push(Arc::new(_filter));
         self
     }
 

@@ -1,4 +1,4 @@
-mod queryset;
+pub mod queryset;
 
 use axum::extract::FromRequestParts;
 use axum::extract::Request;
