@@ -110,7 +110,7 @@ where
         Ser: Clone + serde::Serialize + Send + Sync + 'static,
         F: Fn(DetailView<M, S, O>) -> Result<DetailView<M, S, Ser>, Error>,
     {
-        let mut _result = _f(self.clone())?;
+        let mut _result = _f(self.clone_without_when())?;
         // self.when.add_view(_when, _result);
         Ok(self)
     }
