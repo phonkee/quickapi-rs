@@ -29,9 +29,7 @@ where
     S: Clone + Send + Sync + 'static,
 {
     /// add_view adds a view to the ViewSet.
-    #[allow(unused_mut)]
     pub fn add_view(mut self, _view: impl ViewTrait<S> + Send + Sync + 'static) -> Self {
-        // TODO: add view to the ViewSet
         self.views.push(Arc::new(_view));
         self
     }
