@@ -8,7 +8,7 @@ use sea_orm::Iterable;
 pub use view::DetailView;
 
 // new DetailView function that creates a new DetailView instance with default serializer
-pub fn new<M, S>(path: &str) -> Result<DetailView<M, S>, Error>
+pub fn new<M, S>(path: &str) -> Result<DetailView<M, S, M::Model>, Error>
 where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
@@ -18,7 +18,10 @@ where
 }
 
 /// new_with_method function that creates a new DetailView instance with a specified HTTP method
-pub fn new_with_method<M, S>(path: &str, method: Method) -> Result<DetailView<M, S>, Error>
+pub fn new_with_method<M, S>(
+    path: &str,
+    method: Method,
+) -> Result<DetailView<M, S, M::Model>, Error>
 where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
@@ -32,5 +35,5 @@ where
         ))?
         .to_string();
 
-    Ok(DetailView::<M, S>::new(path, method, primary_key))
+    Ok(DetailView::<M, S, M::Model>::new(path, method, primary_key))
 }

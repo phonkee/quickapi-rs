@@ -28,7 +28,7 @@ where
     path: String,
     method: Method,
     fallback: bool,
-    phantom_data2: PhantomData<(M, O)>,
+    _phantom_data: PhantomData<M>,
     ser: ModelSerializerJson<O>,
 }
 
@@ -44,7 +44,7 @@ where
             path: self.path.clone(),
             filters: self.filters.clone(),
             when: Clauses::<S>::default(),
-            phantom_data2: PhantomData,
+            _phantom_data: PhantomData,
             method: self.method.clone(),
             fallback: false,
             ser: self.ser.clone(),
@@ -65,7 +65,7 @@ where
             method,
             filters: Default::default(),
             when: Clauses::<S>::default(),
-            phantom_data2: PhantomData,
+            _phantom_data: PhantomData,
             fallback: false,
             ser: ModelSerializerJson::<O>::new(),
         }
@@ -82,7 +82,7 @@ where
             method: self.method.clone(),
             filters: self.filters,
             when: self.when.clone(),
-            phantom_data2: PhantomData,
+            _phantom_data: PhantomData,
             fallback: self.fallback,
             ser: ModelSerializerJson::<Ser>::new(),
         }

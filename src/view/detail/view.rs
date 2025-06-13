@@ -15,23 +15,25 @@ use tracing::debug;
 /// DetailView is a view for displaying details of a single entity.
 #[derive(Clone)]
 #[allow(dead_code)]
-pub struct DetailView<M, S>
+pub struct DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     path: String,
     method: Method,
-    ph: PhantomData<(M, S)>,
+    ph: PhantomData<(M, S, O)>,
     when: WhenViews<M, S>,
     lookup: Arc<dyn Lookup<M, S>>,
     filters: crate::filter::SelectFilters,
 }
 
-impl<M, S> CloneWithoutWhen for DetailView<M, S>
+impl<M, S, O> CloneWithoutWhen for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// clone_without_when creates a clone of the DetailView without the WhenViews.
     /// TODO: remove clone
@@ -44,10 +46,11 @@ where
 }
 
 /// Implementing DetailView for creating a new instance.
-impl<M, S> DetailView<M, S>
+impl<M, S, O> DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
     pub fn new(path: &str, method: Method, _lookup: impl Lookup<M, S> + 'static) -> Self {
@@ -76,10 +79,11 @@ where
 
 /// Implementing View for DetailView to render the detail view.
 #[async_trait::async_trait]
-impl<M, S> crate::view::ViewTrait<S> for DetailView<M, S>
+impl<M, S, O> crate::view::ViewTrait<S> for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     async fn handle_view(
         &self,
@@ -96,10 +100,11 @@ where
 }
 
 /// Implementing RouterExt for DetailView to register the router.
-impl<M, S> crate::RouterExt<S> for DetailView<M, S>
+impl<M, S, O> crate::RouterExt<S> for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// register_router_with_prefix method to register the DetailView with an axum router.
     fn register_router_with_prefix(
