@@ -35,6 +35,7 @@ where
     }
 }
 
+/// Implementing RouterExt for ViewSet to register the views with the axum router.
 impl<S> RouterExt<S> for ViewSet<S>
 where
     S: Clone + Send + Sync + 'static,
