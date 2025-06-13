@@ -132,22 +132,20 @@ where
         self
     }
 
-    /// when method to conditionally apply logic
-    pub fn when<'a, F, Ser, T, W>(mut self, _when: W, _f: F) -> ListView<M, S, Ser>
+    /// when adds a condition to the DetailView.
+    #[allow(unused_mut)]
+    pub fn when<F, T, Ser>(
+        mut self,
+        _when: impl When<S, T> + Send + Sync + 'static,
+        _f: F,
+    ) -> Result<Self, Error>
     where
-        F: FnOnce(Self) -> Result<ListView<M, S, O>, Error>,
-        Ser: serde::Serialize + Clone + Send + Sync + 'static,
-        <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
-        W: When<S, T>,
+        Ser: Clone + serde::Serialize + Send + Sync + 'static,
+        F: Fn(ListView<M, S, O>) -> Result<ListView<M, S, Ser>, Error>,
     {
-        // TODO: push to when vector?
-        let _x = _f(self.clone());
-        // self.when.push(Arc::new(Box::new(_x)));
-        // .with_serializer()
-
-        // Here you can implement logic to handle the `when` condition
-        // For now, we just return self
-        self.with_serializer()
+        // let mut _result = _f(self.clone_without_when())?;
+        // self.when.add_view(_when, Arc::new(_result));
+        Ok(self)
     }
 
     /// with_serializer method to set a custom serializer
