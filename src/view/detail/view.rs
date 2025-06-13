@@ -90,6 +90,7 @@ where
         let lookup = self.lookup.clone();
         let _select = M::find();
         let _select = lookup.lookup(&mut _parts, _state.clone(), _select).await?;
+        debug!("DetailView: lookup completed");
         Ok(JsonResponse::default())
     }
 }
