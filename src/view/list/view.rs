@@ -85,11 +85,15 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// clone_without_when creates a clone of the DetailView without the WhenViews.
-    /// TODO: remove clone
     fn clone_without_when(&self) -> Self {
         Self {
             when: WhenViews::new(),
-            ..self.clone()
+            path: self.path.clone(),
+            method: self.method.clone(),
+            filters: self.filters.clone(),
+            _phantom_data: PhantomData,
+            fallback: self.fallback,
+            ser: self.ser.clone(),
         }
     }
 }
