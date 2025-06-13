@@ -4,6 +4,7 @@ pub mod handler;
 pub mod list;
 mod view;
 pub mod when;
+pub mod program;
 
 pub use error::Error;
 pub use view::ViewTrait;
