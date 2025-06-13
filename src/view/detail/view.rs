@@ -59,7 +59,7 @@ where
     path: String,
     method: Method,
     ph: PhantomData<(M, S, O)>,
-    when: WhenViews<S, Arc<dyn DetailViewTrait<M, S>>>,
+    when: WhenViews<S, Arc<dyn DetailViewTrait<M, S> + Send + Sync + 'static>>,
     lookup: Arc<dyn Lookup<M, S>>,
     filters: crate::filter::SelectFilters,
     ser: ModelSerializerJson<O>,
