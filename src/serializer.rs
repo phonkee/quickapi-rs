@@ -18,6 +18,7 @@ where
     }
 
     /// serializes the provided data into a JSON value.
+    #[allow(dead_code)]
     fn serialize_json(&self, data: impl Into<S>) -> Result<serde_json::Value, crate::error::Error> {
         let model: S = data.into();
         Ok(serde_json::to_value(model)?)
