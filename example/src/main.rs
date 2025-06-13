@@ -60,28 +60,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // add views from tuple
     let router = (
-        view::list::new::<entity::User, ()>("/api/internal/user").when(when_condition, |v| {
-            // filter by something
-            Ok(v.with_serializer::<serializers::SimpleUser>())
-        })?,
-        view::detail::new::<entity::User, ()>("/api/internal/user/{id}")?
-            .with_lookup("id")
-            .when(when_condition, |mut v| {
-                Ok(v.with_serializer::<serializers::SimpleUser>())
-            })?,
+        view::list::new::<entity::User, ()>("/api/internal/user"),
+        view::detail::new::<entity::User, ()>("/api/internal/user/{id}")?,
         (
-            view::list::new::<entity::User, ()>("/api/external/user").when(
-                when_condition,
-                |v| {
-                    // filter by something
-                    Ok(v.with_serializer::<serializers::SimpleUser>())
-                },
-            )?,
-            view::detail::new::<entity::User, ()>("/api/external/user/{id}")?
-                .with_lookup("id")
-                .when(when_condition, |mut v| {
-                    Ok(v.with_serializer::<serializers::SimpleUser>())
-                })?,
+            view::list::new::<entity::User, ()>("/api/external/user"),
+            view::detail::new::<entity::User, ()>("/api/external/user/{id}")?,
         ),
     )
         .register_router(router)?;
