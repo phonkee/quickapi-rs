@@ -20,6 +20,7 @@ where
     ) -> Result<Select<M>, crate::error::Error>;
 }
 
+/// String implementation of Lookup trait. It does lookup by a primary key.
 #[async_trait::async_trait]
 impl<M, S> Lookup<M, S> for String
 where
@@ -39,6 +40,7 @@ where
     }
 }
 
+/// &str implementation of Lookup trait. It does lookup by a primary key.
 #[async_trait::async_trait]
 impl<M, S> Lookup<M, S> for &str
 where

@@ -9,7 +9,6 @@ use axum::http::request::Parts;
 use axum::routing::{MethodFilter, on};
 use sea_orm::EntityTrait;
 use std::marker::PhantomData;
-use std::pin::Pin;
 use std::sync::Arc;
 use tracing::debug;
 
@@ -51,21 +50,15 @@ where
     S: Clone + Send + Sync + 'static,
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
-    pub fn new(path: &str, _lookup: impl Lookup<M, S> + 'static) -> Self {
+    pub fn new(path: &str, method: Method, _lookup: impl Lookup<M, S> + 'static) -> Self {
         Self {
             path: path.to_owned(),
-            method: Method::GET,
+            method,
             ph: PhantomData,
             when: WhenViews::new(),
             lookup: Arc::new(_lookup),
             filters: Default::default(),
         }
-    }
-
-    /// with_method sets the HTTP method for the DetailView.
-    pub fn with_method(mut self, method: Method) -> Self {
-        self.method = method;
-        self
     }
 
     /// with_lookup sets the lookup for the DetailView.
@@ -82,18 +75,22 @@ where
 }
 
 /// Implementing View for DetailView to render the detail view.
+#[async_trait::async_trait]
 impl<M, S> crate::view::ViewTrait<S> for DetailView<M, S>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
-    type Future = Pin<
-        Box<dyn Future<Output = Result<JsonResponse, crate::error::Error>> + Send + Sync + 'static>,
-    >;
-
-    /// view method to render the detail view.
-    fn handle_view(&self, _parts: &mut Parts, _state: S, _body: Body) -> Self::Future {
-        Box::pin(async { Ok(JsonResponse::default()) })
+    async fn handle_view(
+        &self,
+        mut _parts: &mut Parts,
+        _state: S,
+        _body: Body,
+    ) -> Result<JsonResponse, crate::error::Error> {
+        let lookup = self.lookup.clone();
+        let _select = M::find();
+        let _select = lookup.lookup(&mut _parts, _state.clone(), _select).await?;
+        Ok(JsonResponse::default())
     }
 }
 

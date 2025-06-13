@@ -12,7 +12,6 @@ use axum::http::request::Parts;
 use axum::routing::{MethodFilter, on};
 use std::default::Default;
 use std::marker::PhantomData;
-use std::pin::Pin;
 use std::sync::Arc;
 use tracing::debug;
 
@@ -135,7 +134,7 @@ where
     }
 }
 
-/// Implementing the ViewTrait for ListView
+#[async_trait::async_trait]
 impl<M, O, S> crate::view::ViewTrait<S> for ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
@@ -143,18 +142,15 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    type Future =
-        Pin<Box<dyn Future<Output = Result<JsonResponse, Error>> + Send + Sync + 'static>>;
-
-    // view method to handle the request
-    #[allow(unused_variables)]
-    fn handle_view(&self, parts: &mut Parts, _state: S, _body: Body) -> Self::Future {
-        Box::pin(async move {
-            // Here you would implement the logic to retrieve the list of items
-            Ok(JsonResponse {
-                data: serde_json::Value::Null,
-                ..Default::default()
-            })
+    async fn handle_view(
+        &self,
+        _parts: &mut Parts,
+        _state: S,
+        _body: Body,
+    ) -> Result<JsonResponse, Error> {
+        Ok(JsonResponse {
+            data: serde_json::Value::Null,
+            ..Default::default()
         })
     }
 }

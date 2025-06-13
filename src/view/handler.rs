@@ -24,7 +24,6 @@ where
 impl<S, V> axum::handler::Handler<(), S> for Handler<S, V>
 where
     V: ViewTrait<S> + Clone + Send + Sync,
-    <V as ViewTrait<S>>::Future: Send,
     S: Clone + Send + Sync,
 {
     // Only require Send, not Sync

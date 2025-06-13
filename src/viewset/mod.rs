@@ -1,29 +1,15 @@
 use crate::view::ViewTrait;
 use crate::{Error, RouterExt};
 use axum::Router;
-use std::pin::Pin;
+use std::marker::PhantomData;
+use std::sync::Arc;
 use tracing::debug;
 
 /// ViewSet is a collection of views that can be registered with an axum router.
 pub struct ViewSet<S> {
     path: String,
-    views: Vec<
-        Pin<
-            Box<
-                dyn ViewTrait<
-                        S,
-                        Future = Pin<
-                            Box<
-                                dyn Future<Output = Result<serde_json::Value, Error>>
-                                    + Send
-                                    + Sync
-                                    + 'static,
-                            >,
-                        >,
-                    >,
-            >,
-        >,
-    >,
+    views: Vec<Arc<dyn ViewTrait<S>>>,
+    phantom_data: PhantomData<S>,
 }
 
 #[allow(unused_mut)]
@@ -36,20 +22,15 @@ where
         Self {
             path: path.into(),
             views: Vec::new(),
+            phantom_data: PhantomData,
         }
     }
 
     /// add_view adds a view to the ViewSet.
-    pub fn add_view(
-        mut self,
-        _view: impl ViewTrait<
-            S,
-            Future = Pin<
-                Box<dyn Future<Output = Result<serde_json::Value, Error>> + Send + Sync + 'static>,
-            >,
-        > + 'static,
-    ) -> Self {
-        self.views.push(Box::pin(_view));
+    #[allow(unused_mut)]
+    pub fn add_view(mut self, _view: impl ViewTrait<S> + Send + Sync + 'static) -> Self {
+        // TODO: add view to the ViewSet
+        // self.views.push(Arc::new(_view));
         self
     }
 }
