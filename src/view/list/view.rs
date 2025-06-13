@@ -15,12 +15,10 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug;
 
-pub struct ListView<M, O, S>
+pub struct ListView<M, S>
 where
     M: sea_orm::entity::EntityTrait,
-    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     filters: SelectFilters,
     // when condition to apply logic
@@ -28,16 +26,13 @@ where
     path: String,
     method: Method,
     fallback: bool,
-    phantom_data: PhantomData<O>,
     phantom_data2: PhantomData<M>,
 }
 
-impl<M, O, S> Clone for ListView<M, O, S>
+impl<M, S> Clone for ListView<M, S>
 where
     M: sea_orm::entity::EntityTrait,
-    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// Custom clone implementation for ListView
     fn clone(&self) -> Self {
@@ -45,7 +40,6 @@ where
             path: self.path.clone(),
             filters: self.filters.clone(),
             when: Clauses::<S>::default(),
-            phantom_data: PhantomData,
             phantom_data2: PhantomData,
             method: self.method.clone(),
             fallback: false,
@@ -53,22 +47,18 @@ where
     }
 }
 
-impl<M, O, S> ListView<M, O, S>
+impl<M, S> ListView<M, S>
 where
     M: sea_orm::entity::EntityTrait,
-    <M as sea_orm::entity::EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
-    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// new method to create a new ListView instance
-    pub fn new(path: &str) -> ListView<M, O, S> {
-        ListView::<M, O, S> {
+    pub fn new(path: &str) -> ListView<M, S> {
+        ListView::<M, S> {
             path: String::from(path),
             method: Method::GET,
             filters: Default::default(),
             when: Clauses::<S>::default(),
-            phantom_data: PhantomData,
             phantom_data2: PhantomData,
             fallback: false,
         }
@@ -81,17 +71,16 @@ where
     }
 
     /// with_serializer method to set a custom serializer
-    pub fn with_serializer<Ser>(mut self) -> ListView<M, Ser, S>
+    pub fn with_serializer<Ser>(mut self) -> ListView<M, S>
     where
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
         <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
     {
-        ListView::<M, Ser, S> {
+        ListView::<M, S> {
             path: self.path,
             method: self.method.clone(),
             filters: self.filters,
             when: self.when.clone(),
-            phantom_data: PhantomData,
             phantom_data2: PhantomData,
             fallback: self.fallback,
         }
@@ -116,9 +105,9 @@ where
     }
 
     /// when method to conditionally apply logic
-    pub fn when<'a, F, Ser, T, W>(mut self, _when: W, _f: F) -> ListView<M, Ser, S>
+    pub fn when<'a, F, Ser, T, W>(mut self, _when: W, _f: F) -> ListView<M, S>
     where
-        F: FnOnce(Self) -> Result<ListView<M, Ser, S>, Error>,
+        F: FnOnce(Self) -> Result<ListView<M, S>, Error>,
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
         <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
         W: When<S, T>,
@@ -135,12 +124,10 @@ where
 }
 
 #[async_trait::async_trait]
-impl<M, O, S> crate::view::ViewTrait<S> for ListView<M, O, S>
+impl<M, S> crate::view::ViewTrait<S> for ListView<M, S>
 where
     M: sea_orm::entity::EntityTrait,
-    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     async fn handle_view(
         &self,
@@ -157,12 +144,10 @@ where
 
 /// Implementing RouterExt for ListView to register the router
 /// This trait allows the ListView to be registered with an axum router.
-impl<M, O, S> RouterExt<S> for ListView<M, O, S>
+impl<M, S> RouterExt<S> for ListView<M, S>
 where
     M: sea_orm::entity::EntityTrait,
-    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// register_router_with_prefix method to register the ListView with an axum router
     fn register_router_with_prefix(
