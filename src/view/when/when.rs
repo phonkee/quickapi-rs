@@ -2,8 +2,6 @@ use crate::all_the_tuples;
 use crate::view::when::When;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
-use sea_orm::Select;
-use std::pin::Pin;
 
 /// When static condition
 #[async_trait::async_trait]

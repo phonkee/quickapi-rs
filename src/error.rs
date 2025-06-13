@@ -1,5 +1,4 @@
 use axum::extract::rejection::PathRejection;
-use axum::routing::MethodFilter;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {

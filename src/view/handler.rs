@@ -1,6 +1,5 @@
 use crate::view::ViewTrait;
 use axum::response::{IntoResponse, Response};
-use sea_orm::Iden;
 use std::marker::PhantomData;
 use std::pin::Pin;
 

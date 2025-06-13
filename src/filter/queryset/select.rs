@@ -1,6 +1,5 @@
 use crate::Error;
 use crate::all_the_tuples;
-use async_trait::async_trait;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use sea_orm::Select;

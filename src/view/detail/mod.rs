@@ -1,17 +1,13 @@
 pub mod lookup;
 pub mod view;
 
-use axum::routing::get;
 use crate::Error;
-use log::debug;
 use sea_orm::Iden;
 use sea_orm::Iterable;
 pub use view::DetailView;
 
 // new DetailView function that creates a new DetailView instance with default serializer
-pub fn new<M, S>(
-    path: &str,
-) -> Result<DetailView<M, <M as sea_orm::entity::EntityTrait>::Model, S>, Error>
+pub fn new<M, S>(path: &str) -> Result<DetailView<M, S>, Error>
 where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
@@ -26,6 +22,7 @@ where
         .to_string();
 
     // TODO: check pk_name in path?
+    // <M as sea_orm::entity::EntityTrait>::Model
 
-    Ok(DetailView::<M, <M as sea_orm::entity::EntityTrait>::Model, S>::new(path, primary_key))
+    Ok(DetailView::<M, S>::new(path, primary_key))
 }

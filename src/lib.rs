@@ -1,4 +1,3 @@
-#![allow(dead_code, unused_imports)]
 mod error;
 pub mod filter;
 pub mod response;
@@ -17,8 +16,7 @@ use std::pin::Pin;
 pub use response::JsonResponse;
 pub use viewset::ViewSet;
 
-use axum::handler::Handler;
-
+#[allow(dead_code)]
 pub struct ViewFuture<S> {
     pub(crate) inner: Pin<Box<dyn Future<Output = Result<serde_json::Value, Error>> + Send + Sync>>,
     pub(crate) _phantom: PhantomData<S>,

@@ -1,6 +1,5 @@
 pub mod view;
 
-use axum::http::Method;
 use serde::Serialize;
 
 pub use view::ListView;

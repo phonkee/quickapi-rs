@@ -1,9 +1,7 @@
 use axum::extract::FromRequestParts;
 use axum::extract::Path;
 use axum::http::request::Parts;
-use sea_orm::prelude::async_trait::async_trait;
 use sea_orm::{EntityTrait, Select};
-use std::marker::PhantomData;
 use tracing::debug;
 
 /// Lookup for primary key or other unique identifier in the database.

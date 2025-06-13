@@ -1,5 +1,3 @@
-use crate::view::ViewTrait;
-use crate::view::when::When;
 use std::marker::PhantomData;
 
 /// Clause struct that represents a condition to be met before executing a view
@@ -18,6 +16,7 @@ where
 }
 
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct Clauses<S>(Vec<Clause<S>>)
 where
     S: Clone + Send + Sync + 'static;

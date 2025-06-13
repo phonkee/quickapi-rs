@@ -6,7 +6,6 @@ use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
-use axum::response::{IntoResponse, Response};
 use axum::routing::{MethodFilter, on};
 use sea_orm::EntityTrait;
 use std::marker::PhantomData;
@@ -16,28 +15,27 @@ use tracing::debug;
 
 /// DetailView is a view for displaying details of a single entity.
 #[derive(Clone)]
-pub struct DetailView<M, O, S>
+pub struct DetailView<M, S>
 where
     M: EntityTrait,
-    <M as EntityTrait>::Model: Into<O>,
+    // <M as EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
+    // O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     path: String,
     method: Method,
     ph: PhantomData<(M, S)>,
-    ser: PhantomData<O>,
+    // ser: Arc<dyn Any + Send + Sync>,
+    #[allow(dead_code)]
     when: Clauses<S>,
     lookup: Arc<dyn Lookup<M, S>>,
     filters: crate::filter::SelectFilters,
 }
 
-impl<M, O, S> DetailView<M, O, S>
+impl<M, S> DetailView<M, S>
 where
     M: EntityTrait,
-    <M as EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
     pub fn new(path: &str, _lookup: impl Lookup<M, S> + 'static) -> Self {
@@ -45,7 +43,6 @@ where
             path: path.to_owned(),
             method: Method::GET,
             ph: PhantomData,
-            ser: PhantomData,
             when: Clauses::<S>::default(),
             lookup: Arc::new(_lookup),
             filters: Default::default(),
@@ -72,12 +69,12 @@ where
 }
 
 /// Implementing View for DetailView to render the detail view.
-impl<M, O, S> crate::view::ViewTrait<S> for DetailView<M, O, S>
+impl<M, S> crate::view::ViewTrait<S> for DetailView<M, S>
 where
     M: EntityTrait,
-    <M as EntityTrait>::Model: Into<O>,
+    // <M as EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
+    // O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     type Future = Pin<
         Box<dyn Future<Output = Result<JsonResponse, crate::error::Error>> + Send + Sync + 'static>,
@@ -90,12 +87,10 @@ where
 }
 
 /// Implementing RouterExt for DetailView to register the router.
-impl<M, O, S> crate::RouterExt<S> for DetailView<M, O, S>
+impl<M, S> crate::RouterExt<S> for DetailView<M, S>
 where
     M: EntityTrait,
-    <M as EntityTrait>::Model: Into<O>,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// register_router_with_prefix method to register the DetailView with an axum router.
     fn register_router_with_prefix(

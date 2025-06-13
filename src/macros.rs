@@ -1,9 +1,3 @@
-use axum::extract::{FromRequest, FromRequestParts};
-use axum::handler::Handler;
-use axum::http::Request;
-use axum::response::{IntoResponse, Response};
-use std::pin::Pin;
-
 #[macro_export]
 macro_rules! all_the_tuples {
     ($name:ident) => {

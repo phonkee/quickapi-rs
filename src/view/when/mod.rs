@@ -1,15 +1,9 @@
 pub mod clause;
 pub mod error;
+mod views;
 pub mod when;
-mod whens;
 
-use axum::body::Body;
-use sea_orm::Select;
-use std::marker::PhantomData;
-use std::pin::Pin;
-use std::sync::Arc;
-
-pub use when::*;
+pub use views::WhenViews;
 
 /// When trait for defining conditions that must be met before executing a view
 #[async_trait::async_trait]
