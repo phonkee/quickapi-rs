@@ -38,4 +38,6 @@ where
     pub(crate) when: WhenViews<S, Arc<dyn ProgramViewTrait<S> + Send + Sync + 'static>>,
 }
 
+/// ProgramViewTrait is a trait that defines the behavior of a program view.
 impl<S> ProgramViewTrait<S> for ProgramView<S> where S: Clone + Send + Sync + 'static {}
+

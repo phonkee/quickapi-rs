@@ -36,11 +36,9 @@ where
         }
     }
 
-    // pub fn add_view<T>(&mut self, when: impl When<S, T>, view: WhenView<S>) {
-    //     self.views.push(view);
-    // }
-    //
-    // pub fn views(&self) -> &[WhenView<S>] {
-    //     &self.views
-    // }
+    /// Adds a view with a condition to the WhenViews.
+    pub fn add_view<T>(&mut self, _when: impl When<S, T>, view: WhenView<S, V>) {
+        self.views.push(view);
+    }
+
 }
