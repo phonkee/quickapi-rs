@@ -1405,6 +1405,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum",
+ "log",
  "sea-orm",
  "serde",
  "serde_json",

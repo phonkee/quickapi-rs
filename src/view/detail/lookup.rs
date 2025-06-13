@@ -7,20 +7,22 @@ use std::marker::PhantomData;
 use tracing::debug;
 
 /// Lookup for primary key or other unique identifier in the database.
-pub trait Lookup<M, S>
+#[async_trait::async_trait]
+pub trait Lookup<M, S>: Send + Sync
 where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     // lookup method filters the query based on the provided parts and state.
-    fn lookup(
+    async fn lookup(
         &self,
         parts: &mut Parts,
         _s: S,
         q: Select<M>,
-    ) -> impl Future<Output = Result<Select<M>, crate::error::Error>>;
+    ) -> Result<Select<M>, crate::error::Error>;
 }
 
+#[async_trait::async_trait]
 impl<M, S> Lookup<M, S> for String
 where
     M: EntityTrait + Send + Sync + 'static,
@@ -39,6 +41,7 @@ where
     }
 }
 
+#[async_trait::async_trait]
 impl<M, S> Lookup<M, S> for &str
 where
     M: EntityTrait + Send + Sync + 'static,

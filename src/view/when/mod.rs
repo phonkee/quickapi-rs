@@ -2,7 +2,7 @@ pub mod clause;
 pub mod error;
 pub mod when;
 
-use crate::view::filter::Filter;
+use crate::filter::Filter;
 use axum::body::Body;
 use sea_orm::Select;
 use std::marker::PhantomData;

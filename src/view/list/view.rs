@@ -1,6 +1,6 @@
 #![allow(unused_mut)]
 use crate::router::RouterExt;
-use crate::view::filter::Filter;
+use crate::filter::Filter;
 use crate::view::handler::Handler;
 use crate::view::when::When;
 use crate::view::when::clause::Clauses;

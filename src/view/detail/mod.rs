@@ -1,15 +1,31 @@
 pub mod lookup;
 pub mod view;
 
+use axum::routing::get;
+use crate::Error;
+use log::debug;
+use sea_orm::Iden;
+use sea_orm::Iterable;
 pub use view::DetailView;
 
 // new DetailView function that creates a new DetailView instance with default serializer
-pub fn new<M, S>(path: &str) -> DetailView<M, <M as sea_orm::entity::EntityTrait>::Model, S>
+pub fn new<M, S>(
+    path: &str,
+) -> Result<DetailView<M, <M as sea_orm::entity::EntityTrait>::Model, S>, Error>
 where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
     <M as sea_orm::entity::EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    // get primary key column name from entity trait
-    DetailView::<M, <M as sea_orm::entity::EntityTrait>::Model, S>::new(path, "id")
+    // Get the first primary key column name as a string
+    let primary_key = M::PrimaryKey::iter()
+        .next()
+        .ok_or(Error::ImproperlyConfigured(
+            "No primary key found for entity".to_string(),
+        ))?
+        .to_string();
+
+    // TODO: check pk_name in path?
+
+    Ok(DetailView::<M, <M as sea_orm::entity::EntityTrait>::Model, S>::new(path, primary_key))
 }

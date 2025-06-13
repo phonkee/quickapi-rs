@@ -29,7 +29,7 @@ where
     ser: PhantomData<O>,
     when: Clauses<S>,
     // lookup: Arc<dyn Lookup<M, S>>,
-    lookup: (),
+    lookup: Arc<dyn Lookup<M, S>>,
 }
 
 impl<M, O, S> DetailView<M, O, S>
@@ -40,15 +40,14 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
-    pub fn new(path: &str, _lookup: impl Lookup<M, S>) -> Self {
+    pub fn new(path: &str, _lookup: impl Lookup<M, S> + 'static) -> Self {
         Self {
             path: path.to_owned(),
             method: Method::GET,
             ph: PhantomData,
             ser: PhantomData,
             when: Clauses::<S>::default(),
-            lookup: (),
-            // lookup: Default::default(),
+            lookup: Arc::new(_lookup),
         }
     }
 
@@ -59,9 +58,8 @@ where
     }
 
     /// with_lookup sets the lookup for the DetailView.
-    pub fn with_lookup(self, _lookup: impl Lookup<M, S>) -> Self {
-        // self.lookup = Arc::new(lookup);
-        // self.lookup = lookup;
+    pub fn with_lookup(mut self, lookup: impl Lookup<M, S> + 'static) -> Self {
+        self.lookup = Arc::new(lookup);
         self
     }
 }

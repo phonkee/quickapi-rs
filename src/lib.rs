@@ -4,6 +4,7 @@ pub mod response;
 pub mod router;
 pub mod view;
 pub mod viewset;
+pub mod filter;
 
 pub use error::Error;
 pub use router::RouterExt;
