@@ -1,3 +1,4 @@
+use axum::extract::rejection::PathRejection;
 use axum::routing::MethodFilter;
 
 #[derive(Debug, thiserror::Error)]
@@ -10,4 +11,7 @@ pub enum Error {
 
     #[error("View error: {0}")]
     View(#[from] crate::view::Error),
+
+    #[error("Lookup error: {0}")]
+    Lookup(#[from] PathRejection),
 }

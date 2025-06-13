@@ -1,3 +1,5 @@
+use axum::extract::FromRequestParts;
+use axum::extract::Path;
 use axum::http::request::Parts;
 use sea_orm::{EntityTrait, Select};
 use std::marker::PhantomData;
@@ -10,7 +12,8 @@ where
 {
     fn lookup(
         &self,
-        parts: Parts,
+        parts: &mut Parts,
+        _s: S,
         q: Select<M>,
     ) -> impl Future<Output = Result<Select<M>, crate::error::Error>> + Send;
 }
@@ -20,7 +23,14 @@ where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    async fn lookup(&self, _parts: Parts, q: Select<M>) -> Result<Select<M>, crate::error::Error> {
+    async fn lookup(
+        &self,
+        _parts: &mut Parts,
+        _s: S,
+        q: Select<M>,
+    ) -> Result<Select<M>, crate::error::Error> {
+        let _: Path<String> = Path::from_request_parts(_parts, &_s).await?;
+
         Ok(q)
     }
 }

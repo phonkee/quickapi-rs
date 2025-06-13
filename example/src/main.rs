@@ -1,5 +1,7 @@
 #![allow(unused_imports)]
 
+mod serializers;
+
 use axum::extract::Request;
 use axum::http::Method;
 use axum::http::request::Parts;
@@ -14,32 +16,6 @@ use tracing::info;
 /// Filter user
 pub async fn filter_user(_s: Select<entity::User>, _: Parts) -> Result<Select<entity::User>, ()> {
     Ok(_s)
-}
-
-#[derive(Debug, Default, Clone, serde::Serialize)]
-pub struct SimpleUser {
-    pub id: i32,
-    pub username: String,
-}
-
-impl From<entity::UserModel> for SimpleUser {
-    fn from(user: entity::UserModel) -> Self {
-        SimpleUser {
-            id: user.id,
-            username: user.username,
-        }
-    }
-}
-
-#[derive(Debug, Default, Clone, serde::Serialize)]
-pub struct UserIdOnly {
-    pub id: i32,
-}
-
-impl From<entity::UserModel> for UserIdOnly {
-    fn from(user: entity::UserModel) -> Self {
-        UserIdOnly { id: user.id }
-    }
 }
 
 /// when_condition is a condition that will be checked before applying the view
