@@ -6,7 +6,8 @@ use axum::http::request::Parts;
 use quickapi::router::RouterExt;
 use quickapi::view;
 use quickapi::view::when::when::*;
-use sea_orm::{EntityTrait, Select};
+use sea_orm::{EntityTrait, Iden, Select};
+use std::marker::PhantomData;
 use std::pin::Pin;
 use tracing::info;
 
@@ -41,6 +42,7 @@ impl From<entity::UserModel> for UserIdOnly {
     }
 }
 
+/// when_condition is a condition that will be checked before applying the view
 pub async fn when_condition(_parts: Parts, _state: ()) -> Result<(), view::when::error::Error> {
     Ok(())
 }
@@ -60,7 +62,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router: axum::Router<()> = axum::Router::new();
 
     // add list view for User entity
-    let router = view::list::new::<entity::User, ()>("/api/user", Method::GET)
+    let router = view::list::new::<entity::User, ()>("/api/user")
+        .with_method(Method::GET)
         // add a condition to the view
         .when(
             when_condition,
@@ -71,6 +74,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             },
         )
         .register_router(router)?;
+
+    let _ = view::detail::new::<entity::User, ()>("/api/user/{id}", "id".to_string());
 
     // // add list view for User entity
     // let router =

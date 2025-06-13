@@ -52,6 +52,7 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    /// Custom clone implementation for ListView
     fn clone(&self) -> Self {
         ListView {
             path: self.path.clone(),
@@ -72,63 +73,24 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    pub fn new(
-        path: &str,
-        method: Method,
-    ) -> ListView<M, <M as sea_orm::entity::EntityTrait>::Model, S> {
-        ListView::<M, <M as sea_orm::entity::EntityTrait>::Model, S> {
+    /// new method to create a new ListView instance
+    pub fn new(path: &str) -> ListView<M, O, S> {
+        ListView::<M, O, S> {
             path: String::from(path),
-            method,
+            method: Method::GET,
             filters: Vec::new(),
             when: Clauses::<S>::default(),
             phantom_data: PhantomData,
             fallback: false,
         }
     }
-}
 
-impl<M, O, S> ListView<M, O, S>
-where
-    M: sea_orm::entity::EntityTrait,
-    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    /// new method to create a new ListView instance
-    pub fn new_with_path(_path: &str) -> Result<ListView<M, O, S>, Error> {
-        Err(Error::ImproperlyConfigured("hello".to_string()))
+    /// with_method method to set the HTTP method for the ListView
+    pub fn with_method(mut self, method: Method) -> Self {
+        self.method = method;
+        self
     }
-}
 
-/// new method to create a new ListView instance
-pub fn new_with_serializer<Model, Ser, State>(
-    path: &str,
-    method: Method,
-) -> ListView<Model, Ser, State>
-where
-    Model: sea_orm::entity::EntityTrait,
-    State: Clone + Send + Sync + 'static,
-    <Model as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
-    Ser: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    ListView::<Model, Ser, State> {
-        path: String::from(path),
-        method,
-        filters: Vec::new(),
-        when: Clauses::<State>::default(),
-        phantom_data: PhantomData,
-        fallback: false,
-    }
-}
-
-/// ListView struct for handling list views of entities
-impl<M, O, S> ListView<M, O, S>
-where
-    M: sea_orm::entity::EntityTrait,
-    <M as sea_orm::entity::EntityTrait>::Model: Into<O>,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
-{
     /// with_serializer method to set a custom serializer
     pub fn with_serializer<Ser>(mut self) -> ListView<M, Ser, S>
     where
@@ -139,16 +101,24 @@ where
             path: self.path,
             method: self.method.clone(),
             filters: self.filters,
-            when: Clauses::<S>::default(),
-            // when: self
-            //     .when
-            //     .clone()
-            //     .iter()
-            //     .map(|x| x.clone().with_serializer())
-            //     .collect(),
+            when: self.when.clone(),
             phantom_data: PhantomData,
             fallback: self.fallback,
         }
+    }
+
+    /// fallback method to handle fallback logic
+    pub fn fallback<F>(mut self, _fallback: F) -> Self
+    where
+        F: FnOnce(Self) -> Result<Self, crate::error::Error>,
+    {
+        self.fallback = true;
+        self
+    }
+
+    /// filter method to apply a filter condition
+    pub fn filter<X>(mut self, _filter: impl Filter<S, M, X>) -> Self {
+        self
     }
 
     /// when method to conditionally apply logic
@@ -168,22 +138,9 @@ where
         // For now, we just return self
         self.with_serializer()
     }
-
-    /// filter method to apply a filter condition
-    pub fn filter<X>(mut self, _filter: impl Filter<S, M, X>) -> Self {
-        self
-    }
-
-    /// fallback method to handle fallback logic
-    pub fn fallback<F>(mut self, _fallback: F) -> Self
-    where
-        F: FnOnce(Self) -> Result<Self, crate::error::Error>,
-    {
-        self.fallback = true;
-        self
-    }
 }
 
+/// Implementing the ViewTrait for ListView
 impl<M, O, S> crate::view::ViewTrait<S> for ListView<M, O, S>
 where
     M: sea_orm::entity::EntityTrait,
@@ -191,14 +148,8 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    type Future = Pin<
-        Box<
-            dyn Future<Output = Result<serde_json::Value, crate::error::Error>>
-                + Send
-                + Sync
-                + 'static,
-        >,
-    >;
+    type Future =
+        Pin<Box<dyn Future<Output = Result<serde_json::Value, Error>> + Send + Sync + 'static>>;
 
     // view method to handle the request
     #[allow(unused_variables)]
@@ -217,7 +168,7 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    /// register_axum method to register the view with an axum router
+    // register_router_with_prefix method to register the ListView with an axum router
     fn register_router_with_prefix(
         &self,
         router: Router<S>,
