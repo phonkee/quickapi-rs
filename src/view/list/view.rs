@@ -152,7 +152,7 @@ where
     pub fn with_serializer<Ser>(mut self) -> ListView<M, S, Ser>
     where
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
-        <M as sea_orm::entity::EntityTrait>::Model: Into<Ser>,
+        <M as EntityTrait>::Model: Into<Ser>,
     {
         ListView::<M, S, Ser> {
             path: self.path,

@@ -1,4 +1,5 @@
 use super::lookup::Lookup;
+use crate::serializer::ModelSerializerJson;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use crate::view::view::ModelViewTrait;
@@ -61,6 +62,7 @@ where
     when: WhenViews<S, Arc<dyn DetailViewTrait<M, S>>>,
     lookup: Arc<dyn Lookup<M, S>>,
     filters: crate::filter::SelectFilters,
+    ser: ModelSerializerJson<O>,
 }
 
 /// Implementing CloneWithoutWhen for DetailView to clone without WhenViews.
@@ -96,6 +98,7 @@ where
             when: WhenViews::new(),
             lookup: Arc::new(lookup),
             filters: Default::default(),
+            ser: ModelSerializerJson::<O>::new(),
         }
     }
 
@@ -125,6 +128,22 @@ where
     pub fn with_filter<F, T>(mut self, filter: impl crate::filter::SelectFilter<M, S, T>) -> Self {
         self.filters.push(Arc::new(filter));
         self
+    }
+
+    /// with_serializer creates a new DetailView with a specified serializer.
+    pub fn with_serializer<Ser>(&mut self) -> DetailView<M, S, Ser>
+    where
+        Ser: serde::Serialize + Clone + Send + Sync + 'static,
+    {
+        DetailView::<M, S, Ser> {
+            path: self.path.clone(),
+            method: self.method.clone(),
+            ph: PhantomData,
+            when: self.when.clone(),
+            lookup: self.lookup.clone(),
+            filters: self.filters.clone(),
+            ser: ModelSerializerJson::<Ser>::new(),
+        }
     }
 }
 
