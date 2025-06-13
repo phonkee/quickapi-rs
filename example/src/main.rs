@@ -58,6 +58,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_view(view::detail::new::<entity::User, ()>("/{id}")?.with_lookup("id"))
         .register_router(router)?;
 
+    // add views from tuple
+    let router = (
+        view::list::new::<entity::User, ()>("/api/internal/user").when(when_condition, |v| {
+            // filter by something
+            Ok(v.with_serializer::<serializers::SimpleUser>())
+        })?,
+        view::detail::new::<entity::User, ()>("/api/internal/user/{id}")?
+            .with_lookup("id")
+            .when(when_condition, |mut v| {
+                Ok(v.with_serializer::<serializers::SimpleUser>())
+            })?,
+    )
+        .register_router(router)?;
+
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;
 

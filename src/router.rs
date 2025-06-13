@@ -1,6 +1,7 @@
 use crate::{Error, all_the_tuples};
 use axum::Router;
 
+/// RouterExt is a trait that allows for registering views with an axum router.
 pub trait RouterExt<S> {
     /// register_router registers the views in the ViewSet with the given axum router.
     fn register_router(&self, router: axum::Router<S>) -> Result<axum::Router<S>, crate::Error> {
