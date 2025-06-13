@@ -14,4 +14,7 @@ pub enum Error {
 
     #[error("Lookup error: {0}")]
     Lookup(#[from] PathRejection),
+
+    #[error("No query filter match")]
+    NoQueryFilterMatch,
 }
