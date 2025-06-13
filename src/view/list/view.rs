@@ -68,7 +68,7 @@ where
         ListView {
             path: self.path.clone(),
             filters: self.filters.clone(),
-            when: WhenViews::<S, Arc<dyn ListViewTrait<M, S> + Send + Sync + 'static>>::new(),
+            when: WhenViews::new(),
             _phantom_data: PhantomData,
             method: self.method.clone(),
             fallback: false,
@@ -107,7 +107,7 @@ where
             path: String::from(path),
             method,
             filters: Default::default(),
-            when: WhenViews::<S, Arc<dyn ListViewTrait<M, S> + Send + Sync + 'static>>::new(),
+            when: WhenViews::new(),
             _phantom_data: PhantomData,
             fallback: false,
             ser: ModelSerializerJson::<O>::new(),
@@ -143,7 +143,7 @@ where
         Ser: Clone + serde::Serialize + Send + Sync + 'static,
         F: Fn(ListView<M, S, O>) -> Result<ListView<M, S, Ser>, Error>,
     {
-        // let mut _result = _f(self.clone_without_when())?;
+        let mut _result = _f(self.clone_without_when())?;
         // self.when.add_view(_when, Arc::new(_result));
         Ok(self)
     }
