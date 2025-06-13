@@ -53,7 +53,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let router = view::detail::new::<entity::User, ()>("/api/user/{id}")?
         .with_lookup("id")
-        .when(when_condition, |mut v| Ok(v.with_serializer::<serializers::SimpleUser>()))?
+        .when(when_condition, |mut v| {
+            Ok(v.with_serializer::<serializers::SimpleUser>())
+        })?
+        .register_router(router)?;
+
+    let router = view::list::new::<entity::User, ()>("/api/user")
+        .when(when_condition, |v| {
+            // filter by something
+            Ok(v)
+        })?
         .register_router(router)?;
 
     // // add list view for User entity
