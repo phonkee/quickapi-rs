@@ -147,6 +147,7 @@ where
     }
 }
 
+/// Implementing DetailViewTrait for DetailView to define the detail view behavior.
 impl<M, S, O> DetailViewTrait<M, S> for DetailView<M, S, O>
 where
     M: EntityTrait,
