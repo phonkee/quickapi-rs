@@ -28,7 +28,6 @@ where
     ph: PhantomData<(M, S)>,
     ser: PhantomData<O>,
     when: Clauses<S>,
-    // lookup: Arc<dyn Lookup<M, S>>,
     lookup: Arc<dyn Lookup<M, S>>,
 }
 
