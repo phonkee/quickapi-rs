@@ -1,9 +1,9 @@
 use crate::serializer::ModelSerializerJson;
+use crate::view::Lookup;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
 use crate::view::view::ModelViewTrait;
-use crate::view::{Lookup, detail};
 use crate::when::{CloneNoWhen, WhenViews};
 use crate::{Error, JsonResponse};
 use axum::Router;
@@ -17,8 +17,8 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug;
 
+/// View to create detail views in the application.
 pub struct View<S> {
-    pub(crate) path: String,
     pub(crate) db: DatabaseConnection,
     pub(crate) _marker: PhantomData<S>,
 }

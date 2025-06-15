@@ -53,7 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router: axum::Router<()> = axum::Router::new();
 
     // try new api
-    let _hello = api.view().detail()?::<entity::User>("/hello");
+    let _hello = api.view().detail().new::<entity::User>("/hello");
 
     // // add detail view for User entity
     // let router = view::detail::new::<entity::User, ()>("/api/user/{id}")?

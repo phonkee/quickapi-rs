@@ -1,9 +1,7 @@
 use crate::RouterExt;
-use crate::view::{DetailView, detail};
+use crate::view::detail;
 use axum::body::Body;
-use axum::http::Method;
 use axum::http::request::Parts;
-use sea_orm::EntityTrait;
 
 /// View trait for defining a view (List, Get, Delete, Update, Create)
 /// S is axum state type, which can be any type that implements Send + Sync.
@@ -49,13 +47,13 @@ impl<S> View<S> {
     }
 
     /// detail creates a new DetailView for the specified path using the GET method.
-    pub fn detail(&self, path: impl AsRef<str>) -> Result<detail::View<S>, crate::Error>
+    pub fn detail(&self) -> detail::View<S>
     where
         S: Clone + Send + Sync + 'static,
     {
-        Ok(detail::View {
+        detail::View {
             db: self.db.clone(),
             _marker: std::marker::PhantomData,
-        })
+        }
     }
 }
