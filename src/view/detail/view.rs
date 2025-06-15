@@ -3,7 +3,7 @@ use crate::view::Lookup;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use crate::view::view::ModelViewTrait;
-use crate::when::{CloneWithoutWhen, WhenViews};
+use crate::when::{CloneNoWhen, WhenViews};
 use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;
@@ -59,14 +59,14 @@ where
     path: String,
     method: Method,
     ph: PhantomData<(M, S, O)>,
-    when: WhenViews<S, Arc<dyn DetailViewTrait<M, S> + Send + Sync + 'static>>,
+    when: WhenViews<S>,
     lookup: Arc<dyn Lookup<M, S>>,
     filters: crate::filter::select::model::Filters,
     ser: ModelSerializerJson<O>,
 }
 
 /// Implementing CloneWithoutWhen for DetailView to clone without WhenViews.
-impl<M, S, O> CloneWithoutWhen for DetailView<M, S, O>
+impl<M, S, O> CloneNoWhen for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,

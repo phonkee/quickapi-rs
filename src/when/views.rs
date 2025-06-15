@@ -1,25 +1,29 @@
+use crate::view::ViewTrait;
 use crate::when::When;
 use std::marker::PhantomData;
 use std::sync::Arc;
 
 #[allow(dead_code)]
 #[derive(Clone)]
-pub struct WhenView<S, V>
+pub struct WhenView<S>
 where
     S: Clone + Send + Sync + 'static,
-    V: Send + Sync + 'static + ?Sized,
+    // V: Send + Sync + 'static + ?Sized,
 {
     pub when: Arc<dyn When<S, ()> + Send + Sync>,
-    pub view: Arc<V>,
-    pub phantom_data: PhantomData<(S, V)>,
+    pub view: Arc<dyn ViewTrait<S> + Send + Sync + 'static>,
+    pub phantom_data: PhantomData<(S,)>,
 }
 
-impl<S, V> WhenView<S, V>
+impl<S> WhenView<S>
 where
     S: Clone + Send + Sync + 'static,
-    V: Clone + Send + Sync + 'static,
+    // V: Clone + Send + Sync + 'static,
 {
-    pub fn new(when: Arc<dyn When<S, ()> + Send + Sync>, view: V) -> Self {
+    pub fn new(
+        when: Arc<dyn When<S, ()> + Send + Sync>,
+        view: Arc<dyn ViewTrait<S> + Send + Sync + 'static>,
+    ) -> Self {
         Self {
             when,
             view: view.into(),
@@ -30,19 +34,19 @@ where
 
 #[derive(Clone, Default)]
 #[allow(dead_code)]
-pub struct WhenViews<S, V>
+pub struct WhenViews<S>
 where
     S: Clone + Send + Sync + 'static,
-    V: Send + Sync + 'static + ?Sized,
+    // V: Send + Sync + 'static + ?Sized,
 {
-    views: Vec<WhenView<S, V>>,
-    phantom_data: PhantomData<(S, V)>,
+    views: Vec<WhenView<S>>,
+    phantom_data: PhantomData<(S,)>,
 }
 
-impl<S, V> WhenViews<S, V>
+impl<S> WhenViews<S>
 where
     S: Clone + Send + Sync + 'static,
-    V: Clone + Send + Sync + 'static,
+    // V: Clone + Send + Sync + 'static,
 {
     pub fn new() -> Self {
         Self {
@@ -52,7 +56,11 @@ where
     }
 
     /// Adds a view with a condition to the WhenViews.
-    pub fn add_view<T>(&mut self, _when: impl When<S, T> + Sync + Send, _view: V) {
+    pub fn add_view<T>(
+        &mut self,
+        _when: impl When<S, T> + Sync + Send,
+        _view: Arc<dyn ViewTrait<S> + Send + Sync + 'static>,
+    ) {
         //self.views.push(WhenView::new(Arc::new(_when), view.into()));
     }
 }

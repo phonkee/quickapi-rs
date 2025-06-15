@@ -1,7 +1,6 @@
 use crate::view::program::ProgramViewTrait;
 use crate::when::WhenViews;
 use axum::http::Method;
-use std::sync::Arc;
 
 /// new creates a new ProgramView with the specified path and defaults to the GET method.
 pub fn new<S>(path: impl Into<String>, _what: impl ProgramViewTrait<S>) -> ProgramView<S>
@@ -23,7 +22,7 @@ where
     ProgramView::<S> {
         path: path.into(),
         method,
-        when: WhenViews::<S, Arc<dyn ProgramViewTrait<S> + Sync + Send + 'static>>::new(),
+        when: WhenViews::<S>::new(),
     }
 }
 
@@ -35,9 +34,8 @@ where
 {
     pub(crate) path: String,
     pub(crate) method: Method,
-    pub(crate) when: WhenViews<S, Arc<dyn ProgramViewTrait<S> + Send + Sync + 'static>>,
+    pub(crate) when: WhenViews<S>,
 }
 
 /// ProgramViewTrait is a trait that defines the behavior of a program view.
 impl<S> ProgramViewTrait<S> for ProgramView<S> where S: Clone + Send + Sync + 'static {}
-

@@ -6,7 +6,7 @@ use crate::view::ViewTrait;
 use crate::view::handler::Handler;
 use crate::view::list::ListViewTrait;
 use crate::view::view::ModelViewTrait;
-use crate::when::{CloneWithoutWhen, When, WhenViews};
+use crate::when::{CloneNoWhen, When, WhenViews};
 use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;
@@ -49,7 +49,7 @@ where
 {
     filters: Filters,
     // when condition to apply logic
-    when: WhenViews<S, Arc<dyn ListViewTrait<M, S> + Send + Sync + 'static>>,
+    when: WhenViews<S>,
     path: String,
     method: Method,
     fallback: bool,
@@ -79,7 +79,7 @@ where
 }
 
 /// Implementing CloneWithoutWhen for DetailView to clone without WhenViews.
-impl<M, S, O> CloneWithoutWhen for ListView<M, S, O>
+impl<M, S, O> CloneNoWhen for ListView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
