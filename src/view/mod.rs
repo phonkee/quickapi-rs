@@ -6,7 +6,7 @@ mod http;
 pub mod list;
 mod lookup;
 pub mod program;
-mod view;
+pub mod view;
 
 pub use error::Error;
 pub use view::{ModelViewTrait, View, ViewTrait};

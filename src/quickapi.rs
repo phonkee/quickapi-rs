@@ -21,6 +21,9 @@ impl<S> QuickApi<S> {
     /// view returns object to create views in the application.
     /// view is single endpoint in api.
     pub fn view(&self) -> crate::view::View<S> {
-        crate::view::View::<S>::new(self.db.clone())
+        crate::view::View {
+            db: self.db.clone(),
+            _marker: std::marker::PhantomData,
+        }
     }
 }

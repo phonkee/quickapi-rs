@@ -1,6 +1,6 @@
 pub mod view;
 
-pub use view::DetailView;
+pub use view::{DetailView, View};
 
 #[async_trait::async_trait]
 pub trait DetailViewTrait<M, S>: crate::view::ViewTrait<S>

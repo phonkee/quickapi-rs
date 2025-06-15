@@ -1,9 +1,9 @@
 use crate::serializer::ModelSerializerJson;
-use crate::view::Lookup;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
 use crate::view::view::ModelViewTrait;
+use crate::view::{Lookup, detail};
 use crate::when::{CloneNoWhen, WhenViews};
 use crate::{Error, JsonResponse};
 use axum::Router;
@@ -17,45 +17,49 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug;
 
-// new DetailView function that creates a new DetailView instance with default serializer
-#[allow(dead_code)]
-pub(crate) fn new<M, S>(
-    db: DatabaseConnection,
-    path: &str,
-) -> Result<DetailView<M, S, M::Model>, Error>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    new_with_method(db, path, Method::GET)
+pub struct View<S> {
+    pub(crate) path: String,
+    pub(crate) db: DatabaseConnection,
+    pub(crate) _marker: PhantomData<S>,
 }
 
-/// new_with_method function that creates a new DetailView instance with a specified HTTP method
-pub(crate) fn new_with_method<M, S>(
-    db: DatabaseConnection,
-    path: impl AsRef<str>,
-    method: Method,
-) -> Result<DetailView<M, S, M::Model>, Error>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    // Get the first primary key column name as a string
-    let primary_key = M::PrimaryKey::iter()
-        .next()
-        .ok_or(Error::ImproperlyConfigured(
-            "No primary key found for entity".to_string(),
-        ))?
-        .to_string();
+/// View implements methods
+impl<S> View<S> {
+    pub fn new<M>(&self, path: impl AsRef<str>) -> Result<DetailView<M, S, M::Model>, Error>
+    where
+        M: EntityTrait,
+        S: Clone + Send + Sync + 'static,
+        <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
+    {
+        self.new_with_method(path, Method::GET)
+    }
 
-    Ok(DetailView::<M, S, M::Model>::new(
-        db,
-        path,
-        method,
-        primary_key,
-    ))
+    /// new_with_method function that creates a new DetailView instance with a specified HTTP method
+    pub fn new_with_method<M>(
+        &self,
+        path: impl AsRef<str>,
+        method: Method,
+    ) -> Result<DetailView<M, S, M::Model>, Error>
+    where
+        M: EntityTrait,
+        S: Clone + Send + Sync + 'static,
+        <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
+    {
+        // Get the first primary key column name as a string
+        let primary_key = M::PrimaryKey::iter()
+            .next()
+            .ok_or(Error::ImproperlyConfigured(
+                "No primary key found for entity".to_string(),
+            ))?
+            .to_string();
+
+        Ok(DetailView::<M, S, M::Model>::new(
+            self.db.clone(),
+            path,
+            method,
+            primary_key,
+        ))
+    }
 }
 
 /// DetailView is a view for displaying details of a single entity.
