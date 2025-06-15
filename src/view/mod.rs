@@ -9,7 +9,7 @@ pub mod program;
 mod view;
 
 pub use error::Error;
-pub use view::{ModelViewTrait, ViewTrait};
+pub use view::{ModelViewTrait, View, ViewTrait};
 
 pub use detail::DetailView;
 pub use list::ListView;
