@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use crate::serializer::ModelSerializerJson;
-use crate::view::detail::lookup::Lookup;
+use crate::view::lookup::Lookup;
 use crate::view::handler::Handler;
 use crate::view::{ModelViewTrait, ViewTrait};
 use crate::when::WhenViews;

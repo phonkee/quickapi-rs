@@ -3,6 +3,7 @@ pub mod detail;
 pub mod error;
 pub mod handler;
 pub mod list;
+mod lookup;
 pub mod program;
 mod view;
 
@@ -11,3 +12,5 @@ pub use view::{ModelViewTrait, ViewTrait};
 
 pub use detail::DetailView;
 pub use list::ListView;
+
+pub use lookup::Lookup;

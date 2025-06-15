@@ -1,5 +1,5 @@
-use super::lookup::Lookup;
 use crate::serializer::ModelSerializerJson;
+use crate::view::Lookup;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use crate::view::view::ModelViewTrait;
