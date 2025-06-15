@@ -6,10 +6,12 @@ use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
+use axum::response::{IntoResponse, Response};
 use axum::routing::{MethodFilter, on};
 use sea_orm::Iden;
 use sea_orm::Iterable;
 use std::marker::PhantomData;
+use std::pin::Pin;
 use std::sync::Arc;
 use tracing::debug;
 
@@ -126,5 +128,27 @@ where
             self.path.clone().as_str(),
             on(mf, Handler::new(self.clone())),
         ))
+    }
+}
+
+/// Implementing Handler for DetailView to handle requests.
+impl<M, S> axum::handler::Handler<(), S> for DeleteView<M, S>
+where
+    M: sea_orm::EntityTrait,
+    S: Clone + Send + Sync,
+{
+    // Only require Send, not Sync
+    type Future = Pin<Box<dyn Future<Output = Response> + Send + 'static>>;
+
+    fn call(self, _req: axum::extract::Request, _state: S) -> Self::Future {
+        let (mut parts, body) = _req.into_parts();
+        let state = _state.clone();
+
+        Box::pin(async move {
+            self.handle_view(&mut parts, state, body)
+                .await
+                .unwrap()
+                .into_response()
+        })
     }
 }
