@@ -2,6 +2,7 @@
 use crate::filter::queryset::SelectFilters;
 use crate::router::RouterExt;
 use crate::serializer::ModelSerializerJson;
+use crate::view::ViewTrait;
 use crate::view::handler::Handler;
 use crate::view::list::ListViewTrait;
 use crate::view::view::ModelViewTrait;
@@ -204,13 +205,15 @@ where
     }
 }
 
+/// Implementing ViewTrait for ListView to handle view logic
 #[async_trait::async_trait]
-impl<M, S, O> crate::view::ViewTrait<S> for ListView<M, S, O>
+impl<M, S, O> ViewTrait<S> for ListView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    /// handle_view method to process the view request
     async fn handle_view(
         &self,
         _parts: &mut Parts,
