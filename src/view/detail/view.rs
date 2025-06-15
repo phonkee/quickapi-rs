@@ -2,6 +2,7 @@ use crate::serializer::ModelSerializerJson;
 use crate::view::Lookup;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
+use crate::view::http::as_method_filter;
 use crate::view::view::ModelViewTrait;
 use crate::when::{CloneNoWhen, WhenViews};
 use crate::{Error, JsonResponse};
@@ -176,12 +177,7 @@ where
         router: Router<S>,
         prefix: &str,
     ) -> Result<Router<S>, Error> {
-        let mf: MethodFilter = self.method.clone().try_into().map_err(|e| {
-            Error::InvalidMethod(format!(
-                "Failed to convert method {} to MethodFilter: {}",
-                self.method, e
-            ))
-        })?;
+        let mf = as_method_filter(&self.method)?;
 
         debug!(
             path = format!("{}{}", prefix, self.path),

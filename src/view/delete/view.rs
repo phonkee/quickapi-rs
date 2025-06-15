@@ -1,4 +1,5 @@
 use crate::view::handler::Handler;
+use crate::view::http::as_method_filter;
 use crate::view::lookup::Lookup;
 use crate::view::{ModelViewTrait, ViewTrait};
 use crate::{Error, JsonResponse};
@@ -7,7 +8,7 @@ use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Response};
-use axum::routing::{MethodFilter, on};
+use axum::routing::on;
 use sea_orm::Iden;
 use sea_orm::Iterable;
 use std::marker::PhantomData;
@@ -110,12 +111,7 @@ where
         router: Router<S>,
         prefix: &str,
     ) -> Result<Router<S>, Error> {
-        let mf: MethodFilter = self.method.clone().try_into().map_err(|e| {
-            Error::InvalidMethod(format!(
-                "Failed to convert method {} to MethodFilter: {}",
-                self.method, e
-            ))
-        })?;
+        let mf = as_method_filter(&self.method)?;
 
         debug!(
             path = format!("{}{}", prefix, self.path),
