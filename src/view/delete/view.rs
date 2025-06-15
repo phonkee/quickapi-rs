@@ -73,6 +73,12 @@ where
             _phantom_data: Default::default(),
         }
     }
+
+    /// with_lookup sets the lookup for the DeleteView.
+    pub fn with_lookup(mut self, lookup: impl Lookup<M, S> + 'static) -> Self {
+        self.lookup = Arc::new(lookup);
+        self
+    }
 }
 
 /// Implement the ViewTrait for DeleteView
