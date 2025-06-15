@@ -11,7 +11,7 @@ use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
-use sea_orm::Iterable;
+use sea_orm::{DatabaseConnection, Iterable};
 use sea_orm::{EntityTrait, Iden};
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -19,17 +19,21 @@ use tracing::debug;
 
 // new DetailView function that creates a new DetailView instance with default serializer
 #[allow(dead_code)]
-pub(crate) fn new<M, S>(path: &str) -> Result<DetailView<M, S, M::Model>, Error>
+pub(crate) fn new<M, S>(
+    db: DatabaseConnection,
+    path: &str,
+) -> Result<DetailView<M, S, M::Model>, Error>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    new_with_method(path, Method::GET)
+    new_with_method(db, path, Method::GET)
 }
 
 /// new_with_method function that creates a new DetailView instance with a specified HTTP method
 pub(crate) fn new_with_method<M, S>(
+    db: DatabaseConnection,
     path: impl AsRef<str>,
     method: Method,
 ) -> Result<DetailView<M, S, M::Model>, Error>
@@ -46,7 +50,12 @@ where
         ))?
         .to_string();
 
-    Ok(DetailView::<M, S, M::Model>::new(path, method, primary_key))
+    Ok(DetailView::<M, S, M::Model>::new(
+        db,
+        path,
+        method,
+        primary_key,
+    ))
 }
 
 /// DetailView is a view for displaying details of a single entity.
@@ -58,6 +67,7 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    db: DatabaseConnection,
     path: String,
     method: Method,
     ph: PhantomData<(M, S, O)>,
@@ -77,6 +87,7 @@ where
     /// clone_without_when creates a clone of the DetailView without the WhenViews.
     fn clone_without_when(&self) -> Self {
         Self {
+            db: self.db.clone(),
             when: self.when.clone(),
             path: self.path.clone(),
             method: self.method.clone(),
@@ -96,8 +107,14 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
-    pub fn new(path: impl AsRef<str>, method: Method, lookup: impl Lookup<M, S> + 'static) -> Self {
+    pub fn new(
+        db: DatabaseConnection,
+        path: impl AsRef<str>,
+        method: Method,
+        lookup: impl Lookup<M, S> + 'static,
+    ) -> Self {
         Self {
+            db,
             path: path.as_ref().to_string(),
             method,
             ph: PhantomData,
@@ -145,6 +162,7 @@ where
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
     {
         DetailView::<M, S, Ser> {
+            db: self.db.clone(),
             path: self.path.clone(),
             method: self.method.clone(),
             ph: PhantomData,

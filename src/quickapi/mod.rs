@@ -1,4 +1,4 @@
-mod view;
+pub mod view;
 
 /// Create a new instance of QuickApi with the provided database connection.
 pub fn new<S>(db: sea_orm::DatabaseConnection) -> QuickApi<S> {
