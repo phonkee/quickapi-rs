@@ -61,7 +61,7 @@ where
     ph: PhantomData<(M, S, O)>,
     when: WhenViews<S, Arc<dyn DetailViewTrait<M, S> + Send + Sync + 'static>>,
     lookup: Arc<dyn Lookup<M, S>>,
-    filters: crate::filter::ModelSelectFilters,
+    filters: crate::filter::model::SelectFilters,
     ser: ModelSerializerJson<O>,
 }
 
@@ -129,7 +129,10 @@ where
     }
 
     /// with_filter sets a filter for the DetailView.
-    pub fn with_filter<F, T>(mut self, filter: impl crate::filter::ModelSelectFilter<M, S, T>) -> Self {
+    pub fn with_filter<F, T>(
+        mut self,
+        filter: impl crate::filter::model::SelectFilter<M, S, T>,
+    ) -> Self {
         self.filters.push(Arc::new(filter));
         self
     }
