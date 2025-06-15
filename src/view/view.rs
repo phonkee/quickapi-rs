@@ -56,4 +56,15 @@ impl<S> View<S> {
             _marker: std::marker::PhantomData,
         }
     }
+
+    /// list creates a new ListView for the specified path using the GET method.
+    pub fn list(&self) -> crate::view::list::View<S>
+    where
+        S: Clone + Send + Sync + 'static,
+    {
+        crate::view::list::View {
+            db: self.db.clone(),
+            _marker: std::marker::PhantomData,
+        }
+    }
 }

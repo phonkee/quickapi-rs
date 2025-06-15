@@ -14,32 +14,11 @@ use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
-use sea_orm::EntityTrait;
-use serde::Serialize;
+use sea_orm::{DatabaseConnection, EntityTrait};
 use std::default::Default;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug;
-
-// new ListView function that creates a new ListView instance with default serializer
-pub fn new<M, S>(path: &str) -> ListView<M, S, M::Model>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    <M as EntityTrait>::Model: Serialize + Clone + Send + Sync + 'static,
-{
-    new_with_method(path, Method::GET)
-}
-
-/// new_with_method function that creates a new ListView instance with a specified HTTP method
-pub fn new_with_method<M, S>(path: &str, method: Method) -> ListView<M, S, M::Model>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    <M as EntityTrait>::Model: Serialize + Clone + Send + Sync + 'static,
-{
-    ListView::<M, S, M::Model>::new(path, method)
-}
 
 /// ListView is a view for displaying a list of entities.
 pub struct ListView<M, S, O>
@@ -48,6 +27,7 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    db: DatabaseConnection,
     filters: ModelFilters,
     // when condition to apply logic
     when: WhenViews<S>,
@@ -68,6 +48,7 @@ where
     /// Custom clone implementation for ListView
     fn clone(&self) -> Self {
         ListView {
+            db: self.db.clone(),
             path: self.path.clone(),
             filters: self.filters.clone(),
             when: WhenViews::new(),
@@ -89,6 +70,7 @@ where
     /// clone_without_when creates a clone of the DetailView without the WhenViews.
     fn clone_without_when(&self) -> Self {
         Self {
+            db: self.db.clone(),
             when: WhenViews::new(),
             path: self.path.clone(),
             method: self.method.clone(),
@@ -108,8 +90,9 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// new method to create a new ListView instance
-    pub fn new(path: &str, method: Method) -> ListView<M, S, O> {
+    pub(crate) fn new(db: DatabaseConnection, path: &str, method: Method) -> ListView<M, S, O> {
         ListView::<M, S, O> {
+            db,
             path: String::from(path),
             method,
             filters: Default::default(),
@@ -161,6 +144,7 @@ where
         <M as EntityTrait>::Model: Into<Ser>,
     {
         ListView::<M, S, Ser> {
+            db: self.db.clone(),
             path: self.path,
             method: self.method.clone(),
             filters: self.filters,

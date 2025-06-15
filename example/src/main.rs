@@ -53,18 +53,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router: axum::Router<()> = axum::Router::new();
 
     // try new api
-    let _hello = api.view().detail().new::<entity::User>("/hello");
-
-    // // add detail view for User entity
-    // let router = view::detail::new::<entity::User, ()>("/api/user/{id}")?
-    //     .with_lookup("id")
-    //     .when(when_condition, |mut v| {
-    //         Ok(v.with_serializer::<serializers::SimpleUser>())
-    //     })?
-    //     .register_router(router)?;
+    let router = api
+        .view()
+        .detail()
+        .new::<entity::User>("/hello")?
+        .with_lookup("id")
+        .when(when_condition, |mut v| {
+            Ok(v.with_serializer::<serializers::SimpleUser>())
+        })?
+        .register_router(router)?;
 
     // add list view for User entity
-    let router = view::list::new::<entity::User, ()>("/api/user")
+    let router = api
+        .view()
+        .list()
+        .new::<entity::User>("/api/user")?
         .when(when_condition, |v| {
             // filter by something
             Ok(
@@ -79,17 +82,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .add_view(view::delete::new::<entity::Order, ()>("/{pk}")?.with_lookup("pk"))
         .register_router(router)?;
 
-    // add views from tuple
-    let router = (
-        view::list::new::<entity::User, ()>("/api/internal/user"),
-        // view::detail::new::<entity::User, ()>("/api/internal/user/{id}")?,
-        view::delete::new::<entity::User, ()>("/api/internal/user/{id}")?,
-        (
-            view::list::new::<entity::User, ()>("/api/external/user"),
-            // view::detail::new::<entity::User, ()>("/api/external/user/{id}")?,
-        ),
-    )
-        .register_router(router)?;
+    // // add views from tuple
+    // let router = (
+    //     view::list::new::<entity::User, ()>("/api/internal/user"),
+    //     // view::detail::new::<entity::User, ()>("/api/internal/user/{id}")?,
+    //     view::delete::new::<entity::User, ()>("/api/internal/user/{id}")?,
+    //     (
+    //         view::list::new::<entity::User, ()>("/api/external/user"),
+    //         // view::detail::new::<entity::User, ()>("/api/external/user/{id}")?,
+    //     ),
+    // )
+    //     .register_router(router)?;
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;
