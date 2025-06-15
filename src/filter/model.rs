@@ -27,6 +27,17 @@ impl DerefMut for SelectFilters {
     }
 }
 
+impl SelectFilters {
+    /// push a new filter into the SelectFilters.
+    pub fn push<M, S, T>(&mut self, filter: impl SelectFilter<M, S, T>)
+    where
+        M: sea_orm::EntityTrait + Send + Sync + 'static,
+        S: Clone + Send + Sync + 'static,
+    {
+        self.0.push(Arc::new(filter));
+    }
+}
+
 #[async_trait::async_trait]
 pub trait SelectFilter<M, S, T>: Clone + Sync + Send + 'static
 where

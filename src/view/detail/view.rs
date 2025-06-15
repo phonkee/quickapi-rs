@@ -133,7 +133,7 @@ where
         mut self,
         filter: impl crate::filter::model::SelectFilter<M, S, T>,
     ) -> Self {
-        self.filters.push(Arc::new(filter));
+        self.filters.push(filter);
         self
     }
 
