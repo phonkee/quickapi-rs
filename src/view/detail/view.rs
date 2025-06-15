@@ -181,7 +181,7 @@ where
         })?;
 
         debug!(
-            "detail view: {}{}, method: {}",
+            "registering detail view: {}{}, method: {}",
             prefix, self.path, self.method
         );
 

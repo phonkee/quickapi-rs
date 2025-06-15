@@ -3,6 +3,7 @@ use crate::{Error, RouterExt};
 use axum::Router;
 use std::marker::PhantomData;
 use std::sync::Arc;
+use tracing::debug;
 
 /// new creates a new ViewSet with the given path.
 pub fn new<S>(path: impl Into<String>) -> ViewSet<S>
@@ -42,6 +43,8 @@ where
 {
     /// register_router registers the views in the ViewSet with the given axum router.
     fn register_router_with_prefix(&self, router: Router<S>, _: &str) -> Result<Router<S>, Error> {
+        debug!("registering ViewSet at: {}", self.path);
+
         // prepare new router
         let mut inner = Router::new();
 
@@ -50,6 +53,9 @@ where
             // no prefix for viewset, so we register with empty prefix
             inner = view.register_router_with_prefix(inner, &self.path.clone())?;
         }
+
+
+        debug!("done registering ViewSet at: {}", self.path);
 
         // return nested router
         // Ok(router.clone().nest(&self.path.clone(), inner))

@@ -192,7 +192,7 @@ where
         })?;
 
         debug!(
-            "list view: {}{}, method: {}",
+            "registering list view: {}{}, method: {}",
             prefix, self.path, self.method
         );
 
