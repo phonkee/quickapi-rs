@@ -62,7 +62,7 @@ where
     ph: PhantomData<(M, S, O)>,
     when: WhenViews<S>,
     lookup: Arc<dyn Lookup<M, S>>,
-    filters: crate::filter::select::Filters,
+    filters: crate::filter::select::ModelFilters,
     ser: ModelSerializerJson<O>,
 }
 
@@ -132,7 +132,7 @@ where
     /// with_filter sets a filter for the DetailView.
     pub fn with_filter<F, T>(
         mut self,
-        filter: impl crate::filter::select::Filter<M, S, T>,
+        filter: impl crate::filter::select::ModelFilter<M, S, T>,
     ) -> Self {
         self.filters.push(filter);
         self

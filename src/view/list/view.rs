@@ -1,5 +1,5 @@
 #![allow(unused_mut)]
-use crate::filter::select::Filters;
+use crate::filter::select::ModelFilters;
 use crate::router::RouterExt;
 use crate::serializer::ModelSerializerJson;
 use crate::view::ViewTrait;
@@ -48,7 +48,7 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    filters: Filters,
+    filters: ModelFilters,
     // when condition to apply logic
     when: WhenViews<S>,
     path: String,
@@ -130,7 +130,7 @@ where
     }
 
     /// filter method to apply a filter condition
-    pub fn filter<X>(mut self, filter: impl crate::filter::select::Filter<M, S, X>) -> Self {
+    pub fn filter<X>(mut self, filter: impl crate::filter::select::ModelFilter<M, S, X>) -> Self {
         self.filters.push(filter);
         self
     }
