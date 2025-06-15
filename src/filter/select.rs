@@ -5,6 +5,7 @@ use axum::http::request::Parts;
 use sea_orm::Select;
 use std::any::Any;
 use std::ops::{Deref, DerefMut};
+use std::pin::Pin;
 use std::sync::Arc;
 
 #[async_trait::async_trait]
@@ -19,6 +20,32 @@ where
         state: S,
         query: Select<M>,
     ) -> Result<Select<M>, Error>;
+}
+
+#[async_trait::async_trait]
+#[allow(missing_docs, non_snake_case)]
+impl<F, M, S> ModelFilter<M, S, ()> for F
+where
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    S: Sync + Send + Clone + 'static,
+    F: Fn(
+            &mut Parts,
+            S,
+            Select<M>,
+        ) -> Pin<Box<dyn Future<Output = Result<Select<M>, Error>> + Send>>
+        + Clone
+        + Send
+        + Sync
+        + 'static,
+{
+    async fn filter_select(
+        &self,
+        parts: &mut Parts,
+        state: S,
+        query: Select<M>,
+    ) -> Result<Select<M>, Error> {
+        (self)(parts, state, query).await
+    }
 }
 
 /// SelectFilters holds a vector of filters that can be applied to a Select query.

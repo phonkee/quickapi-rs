@@ -2,7 +2,7 @@
 
 mod serializers;
 
-use axum::extract::Request;
+use axum::extract::{Path, Request};
 use axum::http::Method;
 use axum::http::request::Parts;
 use quickapi::router::RouterExt;
@@ -19,7 +19,12 @@ pub async fn filter_user(_s: Select<entity::User>, _: Parts) -> Result<Select<en
 }
 
 /// when_condition is a condition that will be checked before applying the view
-pub async fn when_condition(_parts: Parts, _state: ()) -> Result<(), quickapi::Error> {
+#[allow(unused_variables)]
+pub async fn when_condition(
+    _parts: Parts,
+    _state: (),
+    Path((user_id, team_id)): Path<(String, String)>,
+) -> Result<(), quickapi::Error> {
     Ok(())
 }
 
@@ -49,7 +54,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router = view::list::new::<entity::User, ()>("/api/user")
         .when(when_condition, |v| {
             // filter by something
-            Ok(v.with_serializer::<serializers::SimpleUser>())
+            Ok(v.with_serializer::<serializers::SimpleUser>()
+                .with_filter(|_parts, _state, query| async move { Ok(query) }))
         })?
         .register_router(router)?;
 

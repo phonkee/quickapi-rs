@@ -129,8 +129,11 @@ where
         self
     }
 
-    /// filter method to apply a filter condition
-    pub fn filter<X>(mut self, filter: impl crate::filter::select::ModelFilter<M, S, X>) -> Self {
+    /// with_filter method to apply a filter condition
+    pub fn with_filter<X>(
+        mut self,
+        filter: impl crate::filter::select::ModelFilter<M, S, X>,
+    ) -> Self {
         self.filters.push(filter);
         self
     }

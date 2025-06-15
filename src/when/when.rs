@@ -9,7 +9,7 @@ impl<S> When<S, ()> for bool
 where
     S: Clone + Send + Sync + 'static,
 {
-    async fn when(self, _parts: Parts, _state: S) -> Result<(), crate::Error> {
+    async fn case_when(self, _parts: Parts, _state: S) -> Result<(), crate::Error> {
         if self {
             Ok(())
         } else {
@@ -26,7 +26,7 @@ where
     F: Fn(Parts, S) -> Fut + Send + Sync + 'static,
     Fut: Future<Output = Result<(), crate::Error>> + Send + 'static,
 {
-    async fn when(self, parts: Parts, state: S) -> Result<(), crate::Error> {
+    async fn case_when(self, parts: Parts, state: S) -> Result<(), crate::Error> {
         let state = state.clone();
         let mut _parts = parts.clone();
 
@@ -49,7 +49,7 @@ macro_rules! impl_when_func {
             F: Fn(Parts, S, $($ty,)* $last) -> Fut + Send + Sync + 'static,
             Fut: Future<Output = Result<(), crate::Error>> + Send + 'static,
         {
-            async fn when(self, parts: Parts, state: S) -> Result<(), crate::Error> {
+            async fn case_when(self, parts: Parts, state: S) -> Result<(), crate::Error> {
                 let state = state.clone();
 
                 let mut _parts = parts.clone();
