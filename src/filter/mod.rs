@@ -1,3 +1,3 @@
-pub mod queryset;
+pub mod model;
 
-pub use queryset::{SelectFilter, SelectFilters};
+pub use model::{ModelSelectFilter, ModelSelectFilters};

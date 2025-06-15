@@ -9,10 +9,10 @@ use std::sync::Arc;
 
 /// SelectFilters holds a vector of filters that can be applied to a Select query.
 #[derive(Clone, Debug, Default)]
-pub struct SelectFilters(pub Vec<Arc<dyn Any + Send + Sync>>);
+pub struct ModelSelectFilters(pub Vec<Arc<dyn Any + Send + Sync>>);
 
 /// Allows immutable access to the inner vector of filters.
-impl Deref for SelectFilters {
+impl Deref for ModelSelectFilters {
     type Target = Vec<Arc<dyn Any + Send + Sync>>;
 
     fn deref(&self) -> &Self::Target {
@@ -21,14 +21,14 @@ impl Deref for SelectFilters {
 }
 
 /// Allows mutable access to the inner vector of filters.
-impl DerefMut for SelectFilters {
+impl DerefMut for ModelSelectFilters {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
 #[async_trait::async_trait]
-pub trait SelectFilter<M, S, T>: Clone + Sync + Send + 'static
+pub trait ModelSelectFilter<M, S, T>: Clone + Sync + Send + 'static
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
@@ -42,7 +42,7 @@ where
 }
 
 #[async_trait::async_trait]
-impl<M, S, H> SelectFilter<M, S, H> for H
+impl<M, S, H> ModelSelectFilter<M, S, H> for H
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     H: axum::handler::Handler<(), S>,
@@ -62,7 +62,7 @@ macro_rules! impl_filter_tuple {
     ([$($ty:ident),*], $last:ident) => {
         #[async_trait::async_trait]
         #[allow(missing_docs, non_snake_case)]
-        impl<F, M, S, $($ty,)* $last> SelectFilter<M, S, ($($ty,)* $last,)> for F
+        impl<F, M, S, $($ty,)* $last> ModelSelectFilter<M, S, ($($ty,)* $last,)> for F
         where
             M: sea_orm::EntityTrait + Send + Sync + 'static,
             S: Sync + Send + Clone + 'static,
