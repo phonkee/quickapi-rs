@@ -1,23 +1,20 @@
 #![allow(dead_code)]
+use crate::serializer::ModelSerializerJson;
+use crate::view::detail::lookup::Lookup;
 use crate::view::handler::Handler;
 use crate::view::{ModelViewTrait, ViewTrait};
+use crate::when::WhenViews;
 use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;
+use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::{MethodFilter, on};
 use sea_orm::Iden;
+use sea_orm::Iterable;
 use std::marker::PhantomData;
+use std::sync::Arc;
 use tracing::debug;
-
-/// default creates a new DeleteView instance with the default DELETE method.
-pub fn default<M, S>(path: impl Into<String>) -> Result<DeleteView<M, S>, Error>
-where
-    M: sea_orm::EntityTrait,
-    S: Clone + Send + Sync + 'static,
-{
-    new(path)
-}
 
 /// new creates a new DeleteView instance.
 pub fn new<M, S>(path: impl Into<String>) -> Result<DeleteView<M, S>, Error>
@@ -25,24 +22,29 @@ where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
-    new_with_method(path, axum::http::Method::DELETE)
+    new_with_method(path, Method::DELETE)
 }
 
 /// new_with_method creates a new DeleteView instance with a specified method.
 pub fn new_with_method<M, S>(
     path: impl Into<String>,
-    method: axum::http::Method,
+    method: Method,
 ) -> Result<DeleteView<M, S>, Error>
 where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
-    Ok(DeleteView {
-        path: path.into(),
-        method,
-        _phantom_data: PhantomData,
-    })
+    // Get the first primary key column name as a string
+    let primary_key = M::PrimaryKey::iter()
+        .next()
+        .ok_or(Error::ImproperlyConfigured(
+            "No primary key found for entity".to_string(),
+        ))?
+        .to_string();
+
+    Ok(DeleteView::new(&path.into(), method, primary_key))
 }
+
 /// DeleteView is a view for handling DELETE requests for a specific entity.
 #[derive(Clone)]
 pub struct DeleteView<M, S>
@@ -51,8 +53,25 @@ where
     S: Clone + Send + Sync + 'static,
 {
     path: String,
-    method: axum::http::Method,
+    method: Method,
+    lookup: Arc<dyn Lookup<M, S>>,
     _phantom_data: PhantomData<(M, S)>,
+}
+
+impl<M, S> DeleteView<M, S>
+where
+    M: sea_orm::EntityTrait,
+    S: Clone + Send + Sync + 'static,
+{
+    /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
+    pub fn new(path: &str, method: Method, lookup: impl Lookup<M, S> + 'static) -> Self {
+        Self {
+            path: path.to_owned(),
+            method,
+            lookup: Arc::new(lookup),
+            _phantom_data: Default::default(),
+        }
+    }
 }
 
 /// Implement the ViewTrait for DeleteView
