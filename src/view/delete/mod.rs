@@ -20,7 +20,7 @@ impl<S> View<S> {
         M: EntityTrait,
         S: Clone + Send + Sync + 'static,
     {
-        self.new_with_method(path.as_ref(), Method::GET)
+        self.new_with_method(path.as_ref(), Method::DELETE)
     }
 
     /// new_with_method function that creates a new DetailView instance with a specified HTTP method
