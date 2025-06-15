@@ -39,6 +39,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
+    // connect sea-orm to the database
+    let api = quickapi::new::<()>(
+        sea_orm::Database::connect(
+            "postgres://quickapi-example:quickapi-example@localhost:5432/quickapi-example",
+        )
+        .await?,
+    );
+
+    println!("DB: {:?}", api);
+
     // router instance
     let router: axum::Router<()> = axum::Router::new();
 
@@ -55,8 +65,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .when(when_condition, |v| {
             // filter by something
             Ok(
-                v.with_serializer::<serializers::SimpleUser>()
-                    .with_filter(|_parts, _state, query| Box::pin(async move { Ok(query) }))
+                v.with_serializer::<serializers::SimpleUser>(), // .with_filter(|_parts, _state, query| Box::pin(async move { Ok(query) }))
             )
         })?
         .register_router(router)?;

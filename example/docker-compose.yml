@@ -1,0 +1,11 @@
+version: "3.5"
+services:
+  postgres:
+    container_name: quickapi-example
+    image: postgres:12.2-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: quickapi-example
+      POSTGRES_PASSWORD: quickapi-example
+      POSTGRES_DB: quickapi-example
