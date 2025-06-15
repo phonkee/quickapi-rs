@@ -1,5 +1,5 @@
 #![allow(unused_mut)]
-use crate::filter::model::SelectFilters;
+use crate::filter::select::model::SelectFilters;
 use crate::router::RouterExt;
 use crate::serializer::ModelSerializerJson;
 use crate::view::ViewTrait;
@@ -129,7 +129,7 @@ where
     }
 
     /// filter method to apply a filter condition
-    pub fn filter<X>(mut self, filter: impl crate::filter::model::SelectFilter<M, S, X>) -> Self {
+    pub fn filter<X>(mut self, filter: impl crate::filter::select::model::SelectFilter<M, S, X>) -> Self {
         self.filters.push(filter);
         self
     }
