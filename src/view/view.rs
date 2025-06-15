@@ -1,5 +1,5 @@
 use crate::RouterExt;
-use crate::view::detail;
+use crate::view::{delete, detail};
 use axum::body::Body;
 use axum::http::request::Parts;
 
@@ -36,10 +36,13 @@ pub struct View<S> {
 
 /// View implements methods
 impl<S> View<S> {
-    /// Create a new View instance with the provided database connection.
-    pub fn new(db: sea_orm::DatabaseConnection) -> Self {
-        Self {
-            db,
+    /// delete creates a new DeleteView for the specified path using the DELETE method.
+    pub fn delete(&self) -> delete::View<S>
+    where
+        S: Clone + Send + Sync + 'static,
+    {
+        delete::View::<S> {
+            db: self.db.clone(),
             _marker: std::marker::PhantomData,
         }
     }

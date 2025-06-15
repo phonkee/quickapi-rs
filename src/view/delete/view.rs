@@ -9,41 +9,11 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use axum::response::{IntoResponse, Response};
 use axum::routing::on;
-use sea_orm::Iden;
-use sea_orm::Iterable;
+use sea_orm::DatabaseConnection;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::sync::Arc;
 use tracing::debug;
-
-/// new creates a new DeleteView instance.
-pub fn new<M, S>(path: impl Into<String>) -> Result<DeleteView<M, S>, Error>
-where
-    M: sea_orm::EntityTrait,
-    S: Clone + Send + Sync + 'static,
-{
-    new_with_method(path, Method::DELETE)
-}
-
-/// new_with_method creates a new DeleteView instance with a specified method.
-pub fn new_with_method<M, S>(
-    path: impl Into<String>,
-    method: Method,
-) -> Result<DeleteView<M, S>, Error>
-where
-    M: sea_orm::EntityTrait,
-    S: Clone + Send + Sync + 'static,
-{
-    // Get the first primary key column name as a string
-    let primary_key = M::PrimaryKey::iter()
-        .next()
-        .ok_or(Error::ImproperlyConfigured(
-            "No primary key found for entity".to_string(),
-        ))?
-        .to_string();
-
-    Ok(DeleteView::new(&path.into(), method, primary_key))
-}
 
 /// DeleteView is a view for handling DELETE requests for a specific entity.
 #[derive(Clone)]
@@ -52,6 +22,8 @@ where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
+    #[allow(dead_code)]
+    db: DatabaseConnection,
     path: String,
     method: Method,
     #[allow(dead_code)]
@@ -65,8 +37,14 @@ where
     S: Clone + Send + Sync + 'static,
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
-    pub fn new(path: &str, method: Method, lookup: impl Lookup<M, S> + 'static) -> Self {
+    pub fn new(
+        db: DatabaseConnection,
+        path: &str,
+        method: Method,
+        lookup: impl Lookup<M, S> + 'static,
+    ) -> Self {
         Self {
+            db,
             path: path.to_owned(),
             method,
             lookup: Arc::new(lookup),
