@@ -10,7 +10,7 @@ use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
-use axum::routing::{MethodFilter, on};
+use axum::routing::on;
 use sea_orm::Iterable;
 use sea_orm::{EntityTrait, Iden};
 use std::marker::PhantomData;
