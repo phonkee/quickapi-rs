@@ -1,9 +1,6 @@
-#![allow(dead_code)]
-use crate::serializer::ModelSerializerJson;
-use crate::view::lookup::Lookup;
 use crate::view::handler::Handler;
+use crate::view::lookup::Lookup;
 use crate::view::{ModelViewTrait, ViewTrait};
-use crate::when::WhenViews;
 use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;
@@ -54,6 +51,7 @@ where
 {
     path: String,
     method: Method,
+    #[allow(dead_code)]
     lookup: Arc<dyn Lookup<M, S>>,
     _phantom_data: PhantomData<(M, S)>,
 }

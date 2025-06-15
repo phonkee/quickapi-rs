@@ -1,4 +1,3 @@
-pub mod error;
 mod views;
 pub mod when;
 
@@ -12,7 +11,7 @@ where
 {
     /// when is executed against the request and state
     /// when it succeeds, the view is executed
-    async fn when(self, _parts: axum::http::request::Parts, _state: S) -> Result<(), error::Error>;
+    async fn when(self, _parts: axum::http::request::Parts, _state: S) -> Result<(), crate::Error>;
 }
 
 /// CloneNoWhen trait for cloning objects without the Whens

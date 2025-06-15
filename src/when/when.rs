@@ -9,11 +9,11 @@ impl<S> When<S, ()> for bool
 where
     S: Clone + Send + Sync + 'static,
 {
-    async fn when(self, _parts: Parts, _state: S) -> Result<(), super::error::Error> {
+    async fn when(self, _parts: Parts, _state: S) -> Result<(), crate::Error> {
         if self {
             Ok(())
         } else {
-            Err(super::error::Error::NoMatch)
+            Err(crate::Error::NoMatchWhen)
         }
     }
 }
@@ -24,9 +24,9 @@ impl<S, F, Fut> When<S, ()> for F
 where
     S: Clone + Send + Sync + 'static,
     F: Fn(Parts, S) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<(), super::error::Error>> + Send + 'static,
+    Fut: Future<Output = Result<(), crate::Error>> + Send + 'static,
 {
-    async fn when(self, parts: Parts, state: S) -> Result<(), super::error::Error> {
+    async fn when(self, parts: Parts, state: S) -> Result<(), crate::Error> {
         let state = state.clone();
         let mut _parts = parts.clone();
 
@@ -47,9 +47,9 @@ macro_rules! impl_when_func {
             )*
             $last: FromRequestParts<S> + Send + Sync + 'static,
             F: Fn(Parts, S, $($ty,)* $last) -> Fut + Send + Sync + 'static,
-            Fut: Future<Output = Result<(), super::error::Error>> + Send + 'static,
+            Fut: Future<Output = Result<(), crate::Error>> + Send + 'static,
         {
-            async fn when(self, parts: Parts, state: S) -> Result<(), super::error::Error> {
+            async fn when(self, parts: Parts, state: S) -> Result<(), crate::Error> {
                 let state = state.clone();
 
                 let mut _parts = parts.clone();
@@ -57,11 +57,11 @@ macro_rules! impl_when_func {
                     // create T1 from request parts
                     let $ty = $ty::from_request_parts(&mut _parts, &state)
                         .await
-                        .map_err(|_| super::error::Error::NoMatch)?;
+                        .map_err(|_| crate::Error::NoMatch)?;
                 )*
                 let $last = $last::from_request_parts(&mut _parts, &state)
                     .await
-                    .map_err(|_| super::error::Error::NoMatch)?;
+                    .map_err(|_| crate::Error::NoMatch)?;
 
                 self(parts, state.clone(), $($ty,)* $last).await
             }
