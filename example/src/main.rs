@@ -47,8 +47,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await?,
     );
 
-    println!("DB: {:?}", api);
-
     // router instance
     let router: axum::Router<()> = axum::Router::new();
 
@@ -97,11 +95,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .detail()
             .new::<entity::Order>("/secret/{pk}")?
             .with_lookup("pk"),
-        (
-            api.view()
-                .list()
-                .new::<entity::Order>("/secret/")?,
-        ),
+        (api.view().list().new::<entity::Order>("/secret/")?,),
     )
         .register_router(router)?;
 
