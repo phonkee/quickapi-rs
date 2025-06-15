@@ -19,7 +19,7 @@ pub async fn filter_user(_s: Select<entity::User>, _: Parts) -> Result<Select<en
 }
 
 /// when_condition is a condition that will be checked before applying the view
-pub async fn when_condition(_parts: Parts, _state: ()) -> Result<(), quickapi::when::error::Error> {
+pub async fn when_condition(_parts: Parts, _state: ()) -> Result<(), quickapi::Error> {
     Ok(())
 }
 
