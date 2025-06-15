@@ -54,8 +54,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router = view::list::new::<entity::User, ()>("/api/user")
         .when(when_condition, |v| {
             // filter by something
-            Ok(v.with_serializer::<serializers::SimpleUser>()
-                .with_filter(|_parts, _state, query| async move { Ok(query) }))
+            Ok(
+                v.with_serializer::<serializers::SimpleUser>()
+                    .with_filter(|_parts, _state, query| Box::pin(async move { Ok(query) }))
+            )
         })?
         .register_router(router)?;
 
