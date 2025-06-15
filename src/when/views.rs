@@ -11,7 +11,6 @@ where
 {
     pub when: Arc<dyn When<S, ()> + Send + Sync>,
     pub view: Arc<dyn ViewTrait<S> + Send + Sync + 'static>,
-    pub phantom_data: PhantomData<(S,)>,
 }
 
 impl<S> WhenView<S>
@@ -25,7 +24,6 @@ where
         Self {
             when,
             view: view.into(),
-            phantom_data: PhantomData,
         }
     }
 }
