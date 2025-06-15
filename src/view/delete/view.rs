@@ -10,6 +10,15 @@ use sea_orm::Iden;
 use std::marker::PhantomData;
 use tracing::debug;
 
+/// default creates a new DeleteView instance with the default DELETE method.
+pub fn default<M, S>(path: impl Into<String>) -> Result<DeleteView<M, S>, Error>
+where
+    M: sea_orm::EntityTrait,
+    S: Clone + Send + Sync + 'static,
+{
+    new(path)
+}
+
 /// new creates a new DeleteView instance.
 pub fn new<M, S>(path: impl Into<String>) -> Result<DeleteView<M, S>, Error>
 where
