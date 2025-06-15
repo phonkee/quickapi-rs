@@ -26,4 +26,9 @@ impl<S> QuickApi<S> {
             _marker: std::marker::PhantomData,
         }
     }
+
+    /// viewset returns object to create viewsets in the application.
+    pub fn viewset(&self, path: impl AsRef<str>) -> crate::viewset::ViewSet<S> {
+        crate::viewset::new(path.as_ref())
+    }
 }

@@ -77,7 +77,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .register_router(router)?;
 
     // add viewset for Order entity
-    let router = quickapi::viewset::new("/api/order")
+    let router = api.viewset("/api/order")
         // .add_view(view::detail::new::<entity::Order, ()>("/{pk}")?.with_lookup("pk"))
         .add_view(view::delete::new::<entity::Order, ()>("/{pk}")?.with_lookup("pk"))
         .register_router(router)?;

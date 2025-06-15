@@ -2,7 +2,6 @@ pub mod view;
 
 use crate::Error;
 use axum::http::Method;
-use sea_orm::{DatabaseConnection, EntityTrait};
 use std::marker::PhantomData;
 pub use view::ListView;
 
@@ -16,7 +15,7 @@ where
 
 /// View to create detail views in the application.
 pub struct View<S> {
-    pub(crate) db: DatabaseConnection,
+    pub(crate) db: sea_orm::DatabaseConnection,
     pub(crate) _marker: PhantomData<S>,
 }
 
@@ -24,9 +23,9 @@ pub struct View<S> {
 impl<S> View<S> {
     pub fn new<M>(&self, path: impl AsRef<str>) -> Result<ListView<M, S, M::Model>, Error>
     where
-        M: EntityTrait,
+        M: sea_orm::EntityTrait,
         S: Clone + Send + Sync + 'static,
-        <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
+        <M as sea_orm::EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
     {
         self.new_with_method(path, Method::GET)
     }
@@ -38,9 +37,9 @@ impl<S> View<S> {
         method: Method,
     ) -> Result<ListView<M, S, M::Model>, Error>
     where
-        M: EntityTrait,
+        M: sea_orm::EntityTrait,
         S: Clone + Send + Sync + 'static,
-        <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
+        <M as sea_orm::EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
     {
         Ok(ListView::<M, S, M::Model>::new(
             self.db.clone(),

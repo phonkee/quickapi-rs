@@ -1,3 +1,5 @@
+mod viewset;
+
 use crate::view::ViewTrait;
 use crate::{Error, RouterExt};
 use axum::Router;
@@ -6,10 +8,7 @@ use std::sync::Arc;
 use tracing::debug_span;
 
 /// new creates a new ViewSet with the given path.
-pub fn new<S>(path: impl Into<String>) -> ViewSet<S>
-where
-    S: Clone + Send + Sync + 'static,
-{
+pub(crate) fn new<S>(path: impl Into<String>) -> ViewSet<S> {
     ViewSet {
         path: path.into(),
         views: vec![],
