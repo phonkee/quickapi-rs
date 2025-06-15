@@ -130,7 +130,7 @@ where
     }
 
     /// filter method to apply a filter condition
-    pub fn filter<X>(mut self, filter: impl crate::filter::select::model::Filter<M, S, X>) -> Self {
+    pub fn filter<X>(mut self, filter: impl crate::filter::select::Filter<M, S, X>) -> Self {
         self.filters.push(filter);
         self
     }

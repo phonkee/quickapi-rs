@@ -132,7 +132,7 @@ where
     /// with_filter sets a filter for the DetailView.
     pub fn with_filter<F, T>(
         mut self,
-        filter: impl crate::filter::select::model::Filter<M, S, T>,
+        filter: impl crate::filter::select::Filter<M, S, T>,
     ) -> Self {
         self.filters.push(filter);
         self
