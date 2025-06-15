@@ -52,13 +52,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // router instance
     let router: axum::Router<()> = axum::Router::new();
 
-    // add detail view for User entity
-    let router = view::detail::new::<entity::User, ()>("/api/user/{id}")?
-        .with_lookup("id")
-        .when(when_condition, |mut v| {
-            Ok(v.with_serializer::<serializers::SimpleUser>())
-        })?
-        .register_router(router)?;
+    // api.detail()
+
+    // // add detail view for User entity
+    // let router = view::detail::new::<entity::User, ()>("/api/user/{id}")?
+    //     .with_lookup("id")
+    //     .when(when_condition, |mut v| {
+    //         Ok(v.with_serializer::<serializers::SimpleUser>())
+    //     })?
+    //     .register_router(router)?;
 
     // add list view for User entity
     let router = view::list::new::<entity::User, ()>("/api/user")
@@ -72,18 +74,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // add viewset for Order entity
     let router = quickapi::viewset::new("/api/order")
-        .add_view(view::detail::new::<entity::Order, ()>("/{pk}")?.with_lookup("pk"))
+        // .add_view(view::detail::new::<entity::Order, ()>("/{pk}")?.with_lookup("pk"))
         .add_view(view::delete::new::<entity::Order, ()>("/{pk}")?.with_lookup("pk"))
         .register_router(router)?;
 
     // add views from tuple
     let router = (
         view::list::new::<entity::User, ()>("/api/internal/user"),
-        view::detail::new::<entity::User, ()>("/api/internal/user/{id}")?,
+        // view::detail::new::<entity::User, ()>("/api/internal/user/{id}")?,
         view::delete::new::<entity::User, ()>("/api/internal/user/{id}")?,
         (
             view::list::new::<entity::User, ()>("/api/external/user"),
-            view::detail::new::<entity::User, ()>("/api/external/user/{id}")?,
+            // view::detail::new::<entity::User, ()>("/api/external/user/{id}")?,
         ),
     )
         .register_router(router)?;

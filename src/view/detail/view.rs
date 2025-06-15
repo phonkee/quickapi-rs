@@ -18,7 +18,8 @@ use std::sync::Arc;
 use tracing::debug;
 
 // new DetailView function that creates a new DetailView instance with default serializer
-pub fn new<M, S>(path: &str) -> Result<DetailView<M, S, M::Model>, Error>
+#[allow(dead_code)]
+pub(crate) fn new<M, S>(path: &str) -> Result<DetailView<M, S, M::Model>, Error>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
@@ -28,8 +29,8 @@ where
 }
 
 /// new_with_method function that creates a new DetailView instance with a specified HTTP method
-pub fn new_with_method<M, S>(
-    path: &str,
+pub(crate) fn new_with_method<M, S>(
+    path: impl AsRef<str>,
     method: Method,
 ) -> Result<DetailView<M, S, M::Model>, Error>
 where
@@ -95,9 +96,9 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
-    pub fn new(path: &str, method: Method, lookup: impl Lookup<M, S> + 'static) -> Self {
+    pub fn new(path: impl AsRef<str>, method: Method, lookup: impl Lookup<M, S> + 'static) -> Self {
         Self {
-            path: path.to_owned(),
+            path: path.as_ref().to_string(),
             method,
             ph: PhantomData,
             when: WhenViews::new(),
