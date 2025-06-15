@@ -17,16 +17,15 @@ use tracing::debug;
 
 /// DeleteView is a view for handling DELETE requests for a specific entity.
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct DeleteView<M, S>
 where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
-    #[allow(dead_code)]
     db: DatabaseConnection,
     path: String,
     method: Method,
-    #[allow(dead_code)]
     lookup: Arc<dyn Lookup<M, S>>,
     _phantom_data: PhantomData<(M, S)>,
 }

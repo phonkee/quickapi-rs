@@ -79,20 +79,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // add viewset for Order entity
     let router = api
         .viewset("/api/order")
-        .add_view(api.view().delete().new::<entity::Order>("/{pk}")?.with_lookup("pk"))
+        .add_view(
+            api.view()
+                .delete()
+                .new::<entity::Order>("/{pk}")?
+                .with_lookup("pk"),
+        )
         .register_router(router)?;
 
-    // // add views from tuple
-    // let router = (
-    //     view::list::new::<entity::User, ()>("/api/internal/user"),
-    //     // view::detail::new::<entity::User, ()>("/api/internal/user/{id}")?,
-    //     view::delete::new::<entity::User, ()>("/api/internal/user/{id}")?,
-    //     (
-    //         view::list::new::<entity::User, ()>("/api/external/user"),
-    //         // view::detail::new::<entity::User, ()>("/api/external/user/{id}")?,
-    //     ),
-    // )
-    //     .register_router(router)?;
+    // add views from tuple
+    let router = (
+        api.view()
+            .delete()
+            .new::<entity::Order>("/secret/{pk}")?
+            .with_lookup("pk"),
+        api.view()
+            .detail()
+            .new::<entity::Order>("/secret/{pk}")?
+            .with_lookup("pk"),
+        (
+            api.view()
+                .list()
+                .new::<entity::Order>("/secret/")?,
+        ),
+    )
+        .register_router(router)?;
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;
