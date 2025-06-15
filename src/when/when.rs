@@ -57,11 +57,11 @@ macro_rules! impl_when_func {
                     // create T1 from request parts
                     let $ty = $ty::from_request_parts(&mut _parts, &state)
                         .await
-                        .map_err(|_| crate::Error::NoMatch)?;
+                        .map_err(|_| crate::Error::NoMatchWhen)?;
                 )*
                 let $last = $last::from_request_parts(&mut _parts, &state)
                     .await
-                    .map_err(|_| crate::Error::NoMatch)?;
+                    .map_err(|_| crate::Error::NoMatchWhen)?;
 
                 self(parts, state.clone(), $($ty,)* $last).await
             }
