@@ -44,7 +44,7 @@ where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    async fn filter_queryset(
+    async fn filter_select(
         &self,
         parts: &mut Parts,
         state: S,
@@ -59,7 +59,7 @@ where
     H: axum::handler::Handler<(), S>,
     S: Sync + Send + Clone + 'static,
 {
-    async fn filter_queryset(
+    async fn filter_select(
         &self,
         _parts: &mut Parts,
         _state: S,
@@ -83,7 +83,7 @@ macro_rules! impl_filter_tuple {
             $last: FromRequestParts<S> + Send + Sync + 'static,
             F: Fn(&mut Parts, S, Select<M>, $($ty,)* $last) -> Result<Select<M>, Error> + Clone + Send + Sync + 'static,
         {
-            async fn filter_queryset(
+            async fn filter_select(
                 &self,
                 parts: &mut Parts,
                 state: S,
