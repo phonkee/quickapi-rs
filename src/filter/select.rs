@@ -7,6 +7,20 @@ use std::any::Any;
 use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
+#[async_trait::async_trait]
+pub trait Filter<M, S, T>: Clone + Sync + Send + 'static
+where
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static,
+{
+    async fn filter_select(
+        &self,
+        parts: &mut Parts,
+        state: S,
+        query: Select<M>,
+    ) -> Result<Select<M>, Error>;
+}
+
 /// SelectFilters holds a vector of filters that can be applied to a Select query.
 #[derive(Clone, Debug, Default)]
 pub struct Filters(pub Vec<Arc<dyn Any + Send + Sync>>);
@@ -29,7 +43,7 @@ impl DerefMut for Filters {
 
 impl Filters {
     /// push a new filter into the SelectFilters.
-    pub fn push<M, S, T>(&mut self, filter: impl super::Filter<M, S, T>)
+    pub fn push<M, S, T>(&mut self, filter: impl Filter<M, S, T>)
     where
         M: sea_orm::EntityTrait + Send + Sync + 'static,
         S: Clone + Send + Sync + 'static,
@@ -39,7 +53,7 @@ impl Filters {
 }
 
 #[async_trait::async_trait]
-impl<M, S, H> super::Filter<M, S, H> for H
+impl<M, S, H> Filter<M, S, H> for H
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     H: axum::handler::Handler<(), S>,
@@ -59,7 +73,7 @@ macro_rules! impl_filter_tuple {
     ([$($ty:ident),*], $last:ident) => {
         #[async_trait::async_trait]
         #[allow(missing_docs, non_snake_case)]
-        impl<F, M, S, $($ty,)* $last> super::Filter<M, S, ($($ty,)* $last,)> for F
+        impl<F, M, S, $($ty,)* $last> Filter<M, S, ($($ty,)* $last,)> for F
         where
             M: sea_orm::EntityTrait + Send + Sync + 'static,
             S: Sync + Send + Clone + 'static,

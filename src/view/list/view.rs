@@ -1,5 +1,5 @@
 #![allow(unused_mut)]
-use crate::filter::select::model::Filters;
+use crate::filter::select::Filters;
 use crate::router::RouterExt;
 use crate::serializer::ModelSerializerJson;
 use crate::view::ViewTrait;

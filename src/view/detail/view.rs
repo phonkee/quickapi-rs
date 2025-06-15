@@ -62,7 +62,7 @@ where
     ph: PhantomData<(M, S, O)>,
     when: WhenViews<S>,
     lookup: Arc<dyn Lookup<M, S>>,
-    filters: crate::filter::select::model::Filters,
+    filters: crate::filter::select::Filters,
     ser: ModelSerializerJson<O>,
 }
 
