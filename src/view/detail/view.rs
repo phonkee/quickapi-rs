@@ -3,7 +3,7 @@ use crate::serializer::ModelSerializerJson;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use crate::view::view::ModelViewTrait;
-use crate::view::when::{CloneWithoutWhen, WhenViews};
+use crate::when::{CloneWithoutWhen, WhenViews};
 use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;
@@ -110,7 +110,7 @@ where
     #[allow(unused_mut)]
     pub fn when<F, T, Ser>(
         mut self,
-        _when: impl crate::view::when::When<S, T> + Send + Sync + 'static,
+        _when: impl crate::when::When<S, T> + Send + Sync + 'static,
         _f: F,
     ) -> Result<Self, Error>
     where

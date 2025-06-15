@@ -28,7 +28,7 @@ impl DerefMut for SelectFilters {
 }
 
 #[async_trait::async_trait]
-pub trait SelectFilter<M, S, T>: Sync + Send + 'static
+pub trait SelectFilter<M, S, T>: Clone + Sync + Send + 'static
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
@@ -70,7 +70,7 @@ macro_rules! impl_filter_tuple {
                 $ty: FromRequestParts<S> + Send + Sync + 'static,
             )*
             $last: FromRequestParts<S> + Send + Sync + 'static,
-            F: Fn(&mut Parts, S, Select<M>, $($ty,)* $last) -> Result<Select<M>, Error> + Send + Sync + 'static,
+            F: Fn(&mut Parts, S, Select<M>, $($ty,)* $last) -> Result<Select<M>, Error> + Clone + Send + Sync + 'static,
         {
             async fn filter_queryset(
                 &self,

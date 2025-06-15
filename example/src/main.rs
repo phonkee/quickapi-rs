@@ -7,7 +7,7 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use quickapi::router::RouterExt;
 use quickapi::view;
-use quickapi::view::when::when::*;
+use quickapi::when::when::*;
 use sea_orm::{EntityTrait, Iden, Select};
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -19,7 +19,7 @@ pub async fn filter_user(_s: Select<entity::User>, _: Parts) -> Result<Select<en
 }
 
 /// when_condition is a condition that will be checked before applying the view
-pub async fn when_condition(_parts: Parts, _state: ()) -> Result<(), view::when::error::Error> {
+pub async fn when_condition(_parts: Parts, _state: ()) -> Result<(), quickapi::when::error::Error> {
     Ok(())
 }
 
@@ -62,6 +62,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router = (
         view::list::new::<entity::User, ()>("/api/internal/user"),
         view::detail::new::<entity::User, ()>("/api/internal/user/{id}")?,
+        view::delete::new::<entity::User, ()>("/api/internal/user/{id}")?,
         (
             view::list::new::<entity::User, ()>("/api/external/user"),
             view::detail::new::<entity::User, ()>("/api/external/user/{id}")?,

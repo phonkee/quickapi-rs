@@ -6,7 +6,7 @@ use crate::view::ViewTrait;
 use crate::view::handler::Handler;
 use crate::view::list::ListViewTrait;
 use crate::view::view::ModelViewTrait;
-use crate::view::when::{CloneWithoutWhen, When, WhenViews};
+use crate::when::{CloneWithoutWhen, When, WhenViews};
 use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;

@@ -1,13 +1,13 @@
+pub mod delete;
 pub mod detail;
 pub mod error;
 pub mod handler;
 pub mod list;
-mod view;
-pub mod when;
 pub mod program;
+mod view;
 
 pub use error::Error;
-pub use view::ViewTrait;
+pub use view::{ModelViewTrait, ViewTrait};
 
 pub use detail::DetailView;
 pub use list::ListView;

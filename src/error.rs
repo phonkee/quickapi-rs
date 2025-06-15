@@ -5,6 +5,9 @@ pub enum Error {
     #[error("Improperly configured: {0}")]
     ImproperlyConfigured(String),
 
+    #[error("Not implemented: {0}")]
+    NotImplemented(String),
+
     #[error("Invalid method: {0}")]
     InvalidMethod(String),
 
