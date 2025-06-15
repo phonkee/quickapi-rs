@@ -3,10 +3,7 @@ use crate::view::detail;
 use axum::body::Body;
 use axum::http::request::Parts;
 
-/// View trait for defining a view (List, Get, Delete, Update, Create)
-/// S is axum state type, which can be any type that implements Send + Sync.
-/// TODO: use async_trait for the future type to allow for async operations.
-
+/// ViewTrait defines the behavior of a view in the application.
 #[async_trait::async_trait]
 pub trait ViewTrait<S>: RouterExt<S> + Sync
 where
@@ -21,6 +18,7 @@ where
     ) -> Result<crate::response::JsonResponse, crate::error::Error>;
 }
 
+/// ModelViewTrait defines the behavior of a model view in the application.
 #[async_trait::async_trait]
 #[allow(dead_code)]
 pub trait ModelViewTrait<M, S>: ViewTrait<S>
