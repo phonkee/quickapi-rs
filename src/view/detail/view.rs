@@ -181,8 +181,9 @@ where
         })?;
 
         debug!(
-            "registering detail view: {}{}, method: {}",
-            prefix, self.path, self.method
+            path = format!("{}{}", prefix, self.path),
+            method = self.method.to_string(),
+            "detail view",
         );
 
         // Register the ListView with the axum router

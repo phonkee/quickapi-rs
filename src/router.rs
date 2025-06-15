@@ -8,6 +8,7 @@ pub trait RouterExt<S> {
         self.register_router_with_prefix(router, "")
     }
 
+    /// register_router_with_prefix registers the views in the ViewSet with the given axum router
     fn register_router_with_prefix(
         &self,
         router: axum::Router<S>,

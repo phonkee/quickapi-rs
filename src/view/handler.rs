@@ -4,7 +4,7 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 
 #[derive(Clone)]
-pub struct Handler<S, V>(V, PhantomData<S>)
+pub(crate) struct Handler<S, V>(V, PhantomData<S>)
 where
     V: ViewTrait<S> + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static;
