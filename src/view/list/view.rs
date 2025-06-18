@@ -54,7 +54,7 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     db: DatabaseConnection,
-    filters: ModelFilters,
+    filters: ModelFilters<M, S>,
     // when condition to apply logic
     when: WhenViews<S>,
     path: String,
@@ -124,7 +124,7 @@ where
             db,
             path: String::from(path),
             method,
-            filters: Default::default(),
+            filters: ModelFilters(vec![]),
             when: WhenViews::new(),
             _phantom_data: PhantomData,
             fallback: false,
@@ -159,8 +159,8 @@ where
     }
 
     /// with_filter method to apply a filter condition
-    pub fn with_filter(mut self, filter: impl crate::filter::SelectModelFilter<M, S, ()>) -> Self {
-        self.filters.push(filter);
+    pub fn with_filter(mut self, _filter: impl crate::filter::SelectModelFilter<M, S, ()>) -> Self {
+        // self.filters.0.push(filter);
         self
     }
 

@@ -23,6 +23,7 @@
  */
 
 use crate::Error;
+use crate::filter::select::ModelFilters;
 use crate::serializer::ModelSerializerJson;
 use crate::view::Lookup;
 use crate::view::detail::DetailViewTrait;
@@ -103,7 +104,7 @@ where
     ph: PhantomData<(M, S, O)>,
     when: WhenViews<S>,
     lookup: Arc<dyn Lookup<M, S>>,
-    filters: crate::filter::select::ModelFilters,
+    filters: crate::filter::select::ModelFilters<M, S>,
     ser: ModelSerializerJson<O>,
     json_key: crate::response::json::key::Key,
 }
@@ -152,7 +153,7 @@ where
             ph: PhantomData,
             when: WhenViews::new(),
             lookup: Arc::new(lookup),
-            filters: Default::default(),
+            filters: ModelFilters(vec![]),
             ser: ModelSerializerJson::<O>::new(),
             json_key: DEFAULT_JSON_KEY.into(),
         }
@@ -187,11 +188,12 @@ where
     }
 
     /// with_filter sets a filter for the DetailView.
+    #[allow(unused_mut)]
     pub fn with_filter<F, T>(
         mut self,
-        filter: impl crate::filter::SelectModelFilter<M, S, T>,
+        _filter: impl crate::filter::SelectModelFilter<M, S, T>,
     ) -> Self {
-        self.filters.push(filter);
+        // self.filters.0.push(filter);
         self
     }
 

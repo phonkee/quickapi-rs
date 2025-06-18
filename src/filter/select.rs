@@ -24,11 +24,10 @@
 
 use crate::Error;
 use crate::all_the_tuples;
+use crate::filter::SelectModelFilterErased;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use sea_orm::Select;
-use std::any::Any;
-use std::ops::{Deref, DerefMut};
 use std::pin::Pin;
 use std::sync::Arc;
 
@@ -59,35 +58,38 @@ where
 }
 
 /// SelectFilters holds a vector of filters that can be applied to a Select query.
-#[derive(Clone, Debug, Default)]
-pub struct ModelFilters(pub Vec<Arc<dyn Any + Send + Sync>>);
+#[derive(Clone, Default)]
+pub struct ModelFilters<M, S>(pub Vec<Arc<dyn SelectModelFilterErased<M, S> + Send + Sync>>)
+where
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static;
 
-/// Allows immutable access to the inner vector of filters.
-impl Deref for ModelFilters {
-    type Target = Vec<Arc<dyn Any + Send + Sync>>;
+// /// Allows immutable access to the inner vector of filters.
+// impl Deref for ModelFilters {
+//     type Target = Vec<Arc<dyn Any + Send + Sync>>;
+//
+//     fn deref(&self) -> &Self::Target {
+//         &self.0
+//     }
+// }
+//
+// /// Allows mutable access to the inner vector of filters.
+// impl DerefMut for ModelFilters {
+//     fn deref_mut(&mut self) -> &mut Self::Target {
+//         &mut self.0
+//     }
+// }
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-/// Allows mutable access to the inner vector of filters.
-impl DerefMut for ModelFilters {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl ModelFilters {
-    /// push a new filter into the SelectFilters.
-    pub fn push<M, S, T>(&mut self, filter: impl super::SelectModelFilter<M, S, T>)
-    where
-        M: sea_orm::EntityTrait + Send + Sync + 'static,
-        S: Clone + Send + Sync + 'static,
-    {
-        self.0.push(Arc::new(filter));
-    }
-}
+// impl ModelFilters {
+//     /// push a new filter into the SelectFilters.
+//     pub fn push<M, S, T>(&mut self, filter: impl super::SelectModelFilter<M, S, T>)
+//     where
+//         M: sea_orm::EntityTrait + Send + Sync + 'static,
+//         S: Clone + Send + Sync + 'static,
+//     {
+//         self.0.push(Arc::new(filter));
+//     }
+// }
 
 macro_rules! impl_filter_tuple {
     ([$($ty:ident),*], $last:ident) => {
@@ -109,7 +111,6 @@ macro_rules! impl_filter_tuple {
                 state: S,
                 query: Select<M>,
             ) -> Result<Select<M>, Error> {
-
                 $(
                 let $ty = $ty::from_request_parts(parts, &state)
                     .await
