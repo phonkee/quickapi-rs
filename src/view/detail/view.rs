@@ -263,10 +263,19 @@ where
 }
 
 /// Implementing ModelViewTrait for DetailView to define the model view behavior.
+#[async_trait::async_trait]
 impl<M, S, O> ModelViewTrait<M, S> for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    async fn handle_view(
+        &self,
+        parts: &mut Parts,
+        state: S,
+        body: Body,
+    ) -> Result<crate::response::json::Response, Error> {
+        crate::view::ViewTrait::<S>::handle_view(self, parts, state, body).await
+    }
 }

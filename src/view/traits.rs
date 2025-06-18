@@ -50,6 +50,13 @@ where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
+    /// handle_view runs the view logic.
+    async fn handle_view(
+        &self,
+        parts: &mut Parts,
+        state: S,
+        body: Body,
+    ) -> Result<crate::response::json::Response, crate::error::Error>;
 }
 
 /// View provides methods to create and manage views in the application.

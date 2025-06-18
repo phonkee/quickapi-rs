@@ -246,6 +246,15 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    /// handle_view method to process the model view request
+    async fn handle_view(
+        &self,
+        _parts: &mut Parts,
+        _state: S,
+        _body: Body,
+    ) -> Result<crate::response::json::Response, Error> {
+        ViewTrait::<S>::handle_view(self, _parts, _state, _body).await
+    }
 }
 
 #[async_trait::async_trait]
