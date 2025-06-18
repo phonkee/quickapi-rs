@@ -34,6 +34,7 @@ use quickapi::when::when::*;
 use sea_orm::{EntityTrait, Iden, Select};
 use std::marker::PhantomData;
 use std::pin::Pin;
+use std::time::Duration;
 use tracing::info;
 
 /// Filter user
@@ -62,16 +63,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
-    // connect sea-orm to the database
-    let api = quickapi::new::<()>(
-        sea_orm::Database::connect(
-            "postgres://quickapi-example:quickapi-example@localhost:5432/quickapi-example",
-        )
-        .await?,
+    // prepare database connection options
+    let mut db_opts = sea_orm::ConnectOptions::new(
+        "postgres://quickapi-example:quickapi-example@localhost:5432/quickapi-example",
     );
+    let db_opts = db_opts.connect_timeout(Duration::from_secs(5));
+
+    // instantiate quickapi with database connection
+    let api = quickapi::new::<()>(sea_orm::Database::connect(db_opts.clone()).await?);
 
     // router instance
-    let router: axum::Router<()> = axum::Router::new();
+    let router = axum::Router::new();
 
     // try new api
     let router = api

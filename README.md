@@ -12,14 +12,18 @@ QuickAPI is generic over axum State, so we can use any state we want. In this ex
 ```rust
 #[tokio::main]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // connect sea-orm to the database
-    let api = quickapi::new::<()>(
-        sea_orm::Database::connect("postgres://user:password@localhost:5432/database").await?
+    // prepare database connection options
+    let mut db_opts = sea_orm::ConnectOptions::new(
+        "postgres://quickapi-example:quickapi-example@localhost:5432/quickapi-example",
     );
+    let db_opts = db_opts.connect_timeout(Duration::from_secs(5));
 
-    // create an axum router
-    let router: axum::Router<()> = axum::Router::new();
-    
+    // instantiate quickapi with database connection
+    let api = quickapi::new::<()>(sea_orm::Database::connect(db_opts.clone()).await?);
+
+    // router instance
+    let router = axum::Router::new();
+
     // add user list endpoint and register it to the router
     let router = api
         .view()
