@@ -72,9 +72,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let db_opts = db_opts.connect_timeout(Duration::from_secs(MAX_DB_CONNECTION_TIMEOUT_SECONDS));
 
-    debug!("Connecting to database");
-
     // instantiate quickapi with database connection
+    debug!("Connecting to database");
     let api = quickapi::new::<()>(sea_orm::Database::connect(db_opts.clone()).await.map_err(
         |e| {
             error!("Failed to connect to database: {}", e.to_string());
@@ -82,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         },
     )?);
 
-    // router instance
+    // prepare axum router instance so we can register views(viewsets) to it
     let router = axum::Router::new();
 
     // try new api
