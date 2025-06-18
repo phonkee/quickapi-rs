@@ -16,8 +16,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let api = quickapi::new::<()>(
         sea_orm::Database::connect(
             "postgres://user:password@localhost:5432/database",
-        )
-            .await?,
+        ).await?,
     );
 
     // create an axum router
