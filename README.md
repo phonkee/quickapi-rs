@@ -13,9 +13,7 @@ QuickAPI is generic over axum State, so we can use any state we want. In this ex
 #[tokio::main]
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // prepare database connection options
-    let mut db_opts = sea_orm::ConnectOptions::new(
-        "postgres://quickapi-example:quickapi-example@localhost:5432/quickapi-example",
-    );
+    let mut db_opts = sea_orm::ConnectOptions::new("postgres://quickapi-example:quickapi-example@localhost:5432/quickapi-example");
     let db_opts = db_opts.connect_timeout(Duration::from_secs(5));
 
     // instantiate quickapi with database connection

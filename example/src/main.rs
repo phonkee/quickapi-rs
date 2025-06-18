@@ -35,12 +35,15 @@ use sea_orm::{EntityTrait, Iden, Select};
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::time::Duration;
-use tracing::info;
+use tracing::{debug, error, info};
 
 /// Filter user
 pub async fn filter_user(_s: Select<entity::User>, _: Parts) -> Result<Select<entity::User>, ()> {
     Ok(_s)
 }
+
+// MAX_DB_CONNECTION_TIMEOUT_SECONDS is the maximum time in seconds to wait for a database connection
+const MAX_DB_CONNECTION_TIMEOUT_SECONDS: u64 = 5;
 
 /// when_condition is a condition that will be checked before applying the view
 #[allow(unused_variables)]
@@ -67,10 +70,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut db_opts = sea_orm::ConnectOptions::new(
         "postgres://quickapi-example:quickapi-example@localhost:5432/quickapi-example",
     );
-    let db_opts = db_opts.connect_timeout(Duration::from_secs(5));
+    let db_opts = db_opts.connect_timeout(Duration::from_secs(MAX_DB_CONNECTION_TIMEOUT_SECONDS));
+
+    debug!("Connecting to database");
 
     // instantiate quickapi with database connection
-    let api = quickapi::new::<()>(sea_orm::Database::connect(db_opts.clone()).await?);
+    let api = quickapi::new::<()>(sea_orm::Database::connect(db_opts.clone()).await.map_err(
+        |e| {
+            error!("Failed to connect to database: {}", e.to_string());
+            e
+        },
+    )?);
 
     // router instance
     let router = axum::Router::new();
