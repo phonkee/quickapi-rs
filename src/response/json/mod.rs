@@ -21,68 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-use crate::response::json::partials::Partials;
 
 pub mod key;
-pub mod partials;
+pub(crate) mod partials;
+pub mod response;
 
-#[derive(Clone, Debug)]
-pub struct Response {
-    pub data: serde_json::Value,
-    pub status: axum::http::StatusCode,
-    pub headers: axum::http::HeaderMap,
-}
-
-/// Default implementation for JsonResponse
-impl Default for Response {
-    fn default() -> Self {
-        Response {
-            data: serde_json::Value::Null,
-            status: axum::http::StatusCode::OK,
-            headers: axum::http::HeaderMap::new(),
-        }
-    }
-}
-
-impl Response {
-    /// Creates a new JsonResponse with the given data
-    pub fn new(data: serde_json::Value) -> Self {
-        let mut result = Self::default();
-        result.data = data;
-        result
-    }
-
-    /// with_status sets the HTTP status code for the response
-    pub fn with_status(mut self, status: axum::http::StatusCode) -> Self {
-        self.status = status;
-        self
-    }
-
-    /// with_partials adds additional partials to the response data, if not object, it will be created with given key
-    pub fn with_partials<S>(mut self, key: &str, partials: &Partials<S>) -> Self {
-        let mut data_map = match &self.data {
-            serde_json::Value::Object(obj) => obj.clone(),
-            _ => {
-                let mut m = serde_json::Map::new();
-                m.insert(key.into(), self.data.clone());
-                m
-            }
-        };
-
-        partials.update_map(&mut data_map);
-
-        self.data = serde_json::Value::Object(data_map);
-
-        self
-    }
-}
-
-/// Implementing IntoResponse for JsonResponse to convert it into an axum response
-impl axum::response::IntoResponse for Response {
-    fn into_response(self) -> axum::response::Response {
-        let mut response = axum::response::Response::new(self.data.to_string().into());
-        *response.status_mut() = self.status;
-        *response.headers_mut() = self.headers;
-        response
-    }
-}
+/// Does this need to be public?
+pub use response::Response;
