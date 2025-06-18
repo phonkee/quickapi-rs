@@ -60,6 +60,7 @@ where
     fallback: bool,
     _phantom_data: PhantomData<M>,
     ser: ModelSerializerJson<O>,
+    key: crate::response::json::key::Key,
 }
 
 /// Implementing Clone for ListView to allow cloning of the view.
@@ -80,6 +81,7 @@ where
             method: self.method.clone(),
             fallback: false,
             ser: self.ser.clone(),
+            key: self.key.clone(),
         }
     }
 }
@@ -102,6 +104,7 @@ where
             _phantom_data: PhantomData,
             fallback: self.fallback,
             ser: self.ser.clone(),
+            key: self.key.clone(),
         }
     }
 }
@@ -124,6 +127,7 @@ where
             _phantom_data: PhantomData,
             fallback: false,
             ser: ModelSerializerJson::<O>::new(),
+            key: "objects".into(),
         }
     }
 
@@ -176,6 +180,7 @@ where
             _phantom_data: PhantomData,
             fallback: self.fallback,
             ser: ModelSerializerJson::<Ser>::new(),
+            key: self.key.clone(),
         }
     }
 }
@@ -242,6 +247,9 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     // Additional methods specific to ModelViewTrait can be implemented here
+    fn key(&self) -> crate::response::json::key::Key {
+        "objects".into()
+    }
 }
 
 #[async_trait::async_trait]

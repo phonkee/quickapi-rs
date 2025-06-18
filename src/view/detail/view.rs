@@ -269,4 +269,7 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    fn key(&self) -> crate::response::json::key::Key {
+        "object".into()
+    }
 }

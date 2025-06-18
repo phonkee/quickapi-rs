@@ -23,6 +23,7 @@
  */
 use crate::response::json::partials::Partials;
 
+pub mod key;
 pub mod partials;
 
 #[derive(Clone, Debug)]

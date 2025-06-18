@@ -23,6 +23,7 @@
  */
 
 use crate::RouterExt;
+use crate::response::json::key::Key;
 use crate::view::{delete, detail};
 use axum::body::Body;
 use axum::http::request::Parts;
@@ -50,6 +51,7 @@ where
     M: sea_orm::entity::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
+    fn key(&self) -> Key;
 }
 
 /// View provides methods to create and manage views in the application.
