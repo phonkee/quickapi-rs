@@ -23,7 +23,6 @@
  */
 
 use crate::Error;
-use crate::response::json::key::Key;
 use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
 use crate::view::lookup::Lookup;
@@ -106,9 +105,6 @@ where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
-    fn key(&self) -> Key {
-        "object".to_owned().into()
-    }
 }
 
 /// Implement the RouterExt trait for DeleteView

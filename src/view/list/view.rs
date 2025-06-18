@@ -31,7 +31,7 @@ use crate::view::ViewTrait;
 use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
 use crate::view::list::ListViewTrait;
-use crate::view::view::ModelViewTrait;
+use crate::view::traits::ModelViewTrait;
 use crate::when::{CloneNoWhen, When, WhenViews};
 use axum::Router;
 use axum::body::Body;
@@ -246,10 +246,6 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    // Additional methods specific to ModelViewTrait can be implemented here
-    fn key(&self) -> crate::response::json::key::Key {
-        "objects".into()
-    }
 }
 
 #[async_trait::async_trait]

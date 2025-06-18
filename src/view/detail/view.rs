@@ -28,7 +28,7 @@ use crate::view::Lookup;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
-use crate::view::view::ModelViewTrait;
+use crate::view::traits::ModelViewTrait;
 use crate::when::{CloneNoWhen, WhenViews};
 use axum::Router;
 use axum::body::Body;
@@ -269,7 +269,4 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    fn key(&self) -> crate::response::json::key::Key {
-        "object".into()
-    }
 }
