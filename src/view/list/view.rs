@@ -23,6 +23,7 @@
  */
 
 #![allow(unused_mut)]
+use crate::Error;
 use crate::filter::select::ModelFilters;
 use crate::router::RouterExt;
 use crate::serializer::ModelSerializerJson;
@@ -32,7 +33,6 @@ use crate::view::http::as_method_filter;
 use crate::view::list::ListViewTrait;
 use crate::view::view::ModelViewTrait;
 use crate::when::{CloneNoWhen, When, WhenViews};
-use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
@@ -224,8 +224,10 @@ where
         _parts: &mut Parts,
         _state: S,
         _body: Body,
-    ) -> Result<JsonResponse, Error> {
-        Ok(JsonResponse {
+    ) -> Result<crate::response::json::Response, Error> {
+        debug!("hello from ListView handle_view");
+
+        Ok(crate::response::json::Response {
             data: serde_json::Value::Null,
             ..Default::default()
         })

@@ -22,6 +22,7 @@
  * THE SOFTWARE.
  */
 
+use crate::Error;
 use crate::serializer::ModelSerializerJson;
 use crate::view::Lookup;
 use crate::view::detail::DetailViewTrait;
@@ -29,7 +30,6 @@ use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
 use crate::view::view::ModelViewTrait;
 use crate::when::{CloneNoWhen, WhenViews};
-use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
@@ -253,12 +253,12 @@ where
         mut _parts: &mut Parts,
         _state: S,
         _body: Body,
-    ) -> Result<JsonResponse, Error> {
+    ) -> Result<crate::response::json::Response, Error> {
         let lookup = self.lookup.clone();
         let _select = M::find();
         let _select = lookup.lookup(&mut _parts, _state.clone(), _select).await?;
         debug!("DetailView: lookup completed");
-        Ok(JsonResponse::default())
+        Ok(crate::response::json::Response::default())
     }
 }
 

@@ -39,7 +39,7 @@ where
         parts: &mut Parts,
         state: S,
         body: Body,
-    ) -> Result<crate::response::JsonResponse, crate::error::Error>;
+    ) -> Result<crate::response::json::Response, crate::error::Error>;
 }
 
 /// ModelViewTrait defines the behavior of a model view in the application.

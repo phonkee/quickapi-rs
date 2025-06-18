@@ -72,7 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     let db_opts = db_opts.connect_timeout(Duration::from_secs(MAX_DB_CONNECTION_TIMEOUT_SECONDS));
 
-    // instantiate quickapi with database connection
+    // instantiate quickapi with database connection instance
     debug!("Connecting to database");
     let api = quickapi::new::<()>(sea_orm::Database::connect(db_opts.clone()).await.map_err(
         |e| {

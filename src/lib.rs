@@ -40,4 +40,3 @@ pub use error::Error;
 pub use router::RouterExt;
 
 pub use quickapi::new;
-pub use response::JsonResponse;

@@ -22,11 +22,11 @@
  * THE SOFTWARE.
  */
 
+use crate::Error;
 use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
 use crate::view::lookup::Lookup;
 use crate::view::{ModelViewTrait, ViewTrait};
-use crate::{Error, JsonResponse};
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
@@ -94,7 +94,7 @@ where
         _parts: &mut Parts,
         _state: S,
         _body: Body,
-    ) -> Result<JsonResponse, Error> {
+    ) -> Result<crate::response::json::Response, Error> {
         Err(Error::NotImplemented("nope".to_string()))
     }
 }

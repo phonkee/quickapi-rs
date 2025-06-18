@@ -21,6 +21,36 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+use std::marker::PhantomData;
 
-pub mod select;
-mod common;
+/// Parts struct that holds a collection of parts for a response.
+#[derive(Clone, Debug)]
+pub struct Parts<S> {
+    parts: serde_json::Map<String, serde_json::Value>,
+    phantom_data: PhantomData<S>,
+}
+
+/// Implementing Default for Parts<S>
+impl<S> Default for Parts<S> {
+    fn default() -> Self {
+        Parts {
+            parts: serde_json::Map::new(),
+            phantom_data: PhantomData,
+        }
+    }
+}
+
+/// Implementing Parts methods
+impl<S> Parts<S> {
+    /// Inserts a part into the collection.
+    pub fn insert(&mut self, key: String, value: serde_json::Value) {
+        self.parts.insert(key, value);
+    }
+}
+
+/// Convert Parts<S> to serde_json::Value
+impl<S> From<Parts<S>> for serde_json::Value {
+    fn from(s: Parts<S>) -> Self {
+        serde_json::Value::Object(s.parts.clone())
+    }
+}

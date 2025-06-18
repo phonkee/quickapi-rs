@@ -58,6 +58,11 @@ where
         let state = _state.clone();
 
         Box::pin(async move {
+            // prepare json response parts
+            parts
+                .extensions
+                .insert(crate::response::parts::Parts::<S>::default());
+
             self.0
                 .handle_view(&mut parts, state, body)
                 .await
