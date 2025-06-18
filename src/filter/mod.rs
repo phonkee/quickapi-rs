@@ -65,10 +65,4 @@ where
         state: S,
         query: Select<M>,
     ) -> Result<Select<M>, Error>;
-
-    /// Returns true if this is the last filter in the chain.
-    /// This is used e.g. to do count queries for pagination.
-    fn is_last(&self) -> bool {
-        false
-    }
 }
