@@ -14,9 +14,7 @@ QuickAPI is generic over axum State, so we can use any state we want. In this ex
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // connect sea-orm to the database
     let api = quickapi::new::<()>(
-        sea_orm::Database::connect(
-            "postgres://user:password@localhost:5432/database",
-        ).await?,
+        sea_orm::Database::connect("postgres://user:password@localhost:5432/database").await?
     );
 
     // create an axum router
