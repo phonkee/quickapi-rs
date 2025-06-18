@@ -58,13 +58,13 @@ impl Response {
     }
 
     /// with_partials adds additional partials to the response data, if not object, it will be created with given key
-    pub fn with_partials<S>(mut self, key: &str, partials: Partials<S>) -> Self {
+    pub fn with_partials<S>(mut self, key: &str, partials: &Partials<S>) -> Self {
         let mut data_map = match &self.data {
             serde_json::Value::Object(obj) => obj.clone(),
             _ => {
-                let mut new_obj = serde_json::Map::new();
-                new_obj.insert(key.to_string(), partials.into());
-                new_obj
+                let mut m = serde_json::Map::new();
+                m.insert(key.into(), self.data.clone());
+                m
             }
         };
 
