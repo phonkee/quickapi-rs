@@ -22,7 +22,6 @@
  * THE SOFTWARE.
  */
 
-use crate::Error;
 use crate::filter::SelectModelFilter;
 use axum::http::request::Parts;
 use sea_orm::Select;
@@ -99,7 +98,7 @@ where
         _parts: &mut Parts,
         _state: S,
         query: Select<M>,
-    ) -> Result<Select<M>, Error> {
+    ) -> Result<Select<M>, crate::filter::Error> {
         Ok(query)
     }
 }

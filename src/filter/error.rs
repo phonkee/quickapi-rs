@@ -21,26 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-use axum::http::request::Parts;
-use sea_orm::Select;
 
-pub mod common;
-pub mod error;
-mod model;
-pub mod select;
-
-pub use crate::Error;
-
-#[async_trait::async_trait]
-pub trait SelectModelFilter<M, S, T>: Clone + Sync + Send + 'static
-where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
-    S: Clone + Send + Sync + 'static,
-{
-    async fn filter_select(
-        &self,
-        parts: &mut Parts,
-        state: S,
-        query: Select<M>,
-    ) -> Result<Select<M>, Error>;
-}
+// #[derive(Debug)]
+// pub struct Error {
+//     pub message: String,
+//     pub status_code: axum::http::StatusCode,
+// }
+// 
+// impl Error {
+//     pub fn new(message: String) -> Self {
+//         Self {
+//             message,
+//             status_code: axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+//         }
+//     }
+// }
