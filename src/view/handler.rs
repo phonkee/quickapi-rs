@@ -61,7 +61,7 @@ where
             // prepare json response parts
             parts
                 .extensions
-                .insert(crate::response::parts::Parts::<S>::default());
+                .insert(crate::response::json::partials::Partials::<S>::default());
 
             self.0
                 .handle_view(&mut parts, state, body)

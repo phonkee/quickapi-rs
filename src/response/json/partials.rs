@@ -21,46 +21,43 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+use std::marker::PhantomData;
 
+/// Parts struct that holds a collection of parts for a response.
 #[derive(Clone, Debug)]
-pub struct Response {
-    pub data: serde_json::Value,
-    pub status: axum::http::StatusCode,
-    pub headers: axum::http::HeaderMap,
+pub struct Partials<S> {
+    parts: serde_json::Map<String, serde_json::Value>,
+    phantom_data: PhantomData<S>,
 }
 
-/// Default implementation for JsonResponse
-impl Default for Response {
+/// Implementing Default for Parts<S>
+impl<S> Default for Partials<S> {
     fn default() -> Self {
-        Response {
-            data: serde_json::Value::Null,
-            status: axum::http::StatusCode::OK,
-            headers: axum::http::HeaderMap::new(),
+        Partials {
+            parts: serde_json::Map::new(),
+            phantom_data: PhantomData,
         }
     }
 }
 
-impl Response {
-    /// Creates a new JsonResponse with the given data
-    pub fn new(data: serde_json::Value) -> Self {
-        let mut result = Self::default();
-        result.data = data;
-        result
+/// Implementing Parts methods
+impl<S> Partials<S> {
+    /// Inserts a part into the collection.
+    pub fn insert(&mut self, key: String, value: serde_json::Value) {
+        self.parts.insert(key, value);
     }
 
-    /// with_status sets the HTTP status code for the response
-    pub fn with_status(mut self, status: axum::http::StatusCode) -> Self {
-        self.status = status;
-        self
+    /// update_map
+    pub fn update_map(&self, other_map: &mut serde_json::Map<String, serde_json::Value>) {
+        for (key, value) in &self.parts {
+            other_map.insert(key.clone(), value.clone());
+        }
     }
 }
 
-/// Implementing IntoResponse for JsonResponse to convert it into an axum response
-impl axum::response::IntoResponse for Response {
-    fn into_response(self) -> axum::response::Response {
-        let mut response = axum::response::Response::new(self.data.to_string().into());
-        *response.status_mut() = self.status;
-        *response.headers_mut() = self.headers;
-        response
+/// Convert Parts<S> to serde_json::Value
+impl<S> From<Partials<S>> for serde_json::Value {
+    fn from(s: Partials<S>) -> Self {
+        serde_json::Value::Object(s.parts.clone())
     }
 }

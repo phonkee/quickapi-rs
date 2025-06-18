@@ -22,4 +22,3 @@
  * THE SOFTWARE.
  */
 pub mod json;
-pub mod parts;
