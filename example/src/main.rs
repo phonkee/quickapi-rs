@@ -28,6 +28,7 @@ mod serializers;
 use axum::extract::{Path, Request};
 use axum::http::Method;
 use axum::http::request::Parts;
+use quickapi::filter::common::Paginator;
 use quickapi::router::RouterExt;
 use quickapi::view;
 use quickapi::when::when::*;
@@ -100,6 +101,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .view()
         .list()
         .new::<entity::User>("/api/user")?
+        .with_filter(Paginator::new())
         .when(when_condition, |v| {
             // filter by something
             Ok(

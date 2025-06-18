@@ -58,7 +58,7 @@ where
         let state = _state.clone();
 
         Box::pin(async move {
-            // prepare json response parts
+            // prepare json response partials (keys)
             parts
                 .extensions
                 .insert(crate::response::json::partials::Partials::<S>::default());

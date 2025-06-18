@@ -23,10 +23,10 @@
  */
 
 use crate::Error;
+use crate::view::ViewTrait;
 use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
 use crate::view::lookup::Lookup;
-use crate::view::{ModelViewTrait, ViewTrait};
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
@@ -94,23 +94,6 @@ where
         _body: Body,
     ) -> Result<crate::response::json::Response, Error> {
         Err(Error::NotImplemented("nope".to_string()))
-    }
-}
-
-/// Implement the ModelViewTrait for DeleteView
-#[async_trait::async_trait]
-impl<M, S> ModelViewTrait<M, S> for DeleteView<M, S>
-where
-    M: sea_orm::EntityTrait,
-    S: Clone + Send + Sync + 'static,
-{
-    async fn handle_view(
-        &self,
-        _parts: &mut Parts,
-        _state: S,
-        _body: Body,
-    ) -> Result<crate::response::json::Response, Error> {
-        ViewTrait::<S>::handle_view(self, _parts, _state, _body).await
     }
 }
 

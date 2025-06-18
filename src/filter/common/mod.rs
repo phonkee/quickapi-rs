@@ -22,6 +22,6 @@
  * THE SOFTWARE.
  */
 
-#![allow(dead_code)]
+pub mod paginator;
 
-pub struct Paginator {}
+pub use paginator::Paginator;

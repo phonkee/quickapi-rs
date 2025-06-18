@@ -33,22 +33,8 @@ use std::pin::Pin;
 use std::sync::Arc;
 
 #[async_trait::async_trait]
-pub trait ModelFilter<M, S, T>: Clone + Sync + Send + 'static
-where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
-    S: Clone + Send + Sync + 'static,
-{
-    async fn filter_select(
-        &self,
-        parts: &mut Parts,
-        state: S,
-        query: Select<M>,
-    ) -> Result<Select<M>, Error>;
-}
-
-#[async_trait::async_trait]
 #[allow(missing_docs, non_snake_case)]
-impl<F, M, S> ModelFilter<M, S, ()> for F
+impl<F, M, S> super::SelectModelFilter<M, S, ()> for F
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Sync + Send + Clone + 'static,
@@ -94,7 +80,7 @@ impl DerefMut for ModelFilters {
 
 impl ModelFilters {
     /// push a new filter into the SelectFilters.
-    pub fn push<M, S, T>(&mut self, filter: impl ModelFilter<M, S, T>)
+    pub fn push<M, S, T>(&mut self, filter: impl super::SelectModelFilter<M, S, T>)
     where
         M: sea_orm::EntityTrait + Send + Sync + 'static,
         S: Clone + Send + Sync + 'static,
@@ -103,28 +89,11 @@ impl ModelFilters {
     }
 }
 
-#[async_trait::async_trait]
-impl<M, S, H> ModelFilter<M, S, H> for H
-where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
-    H: axum::handler::Handler<(), S>,
-    S: Sync + Send + Clone + 'static,
-{
-    async fn filter_select(
-        &self,
-        _parts: &mut Parts,
-        _state: S,
-        query: Select<M>,
-    ) -> Result<Select<M>, Error> {
-        Ok(query)
-    }
-}
-
 macro_rules! impl_filter_tuple {
     ([$($ty:ident),*], $last:ident) => {
         #[async_trait::async_trait]
         #[allow(missing_docs, non_snake_case)]
-        impl<F, M, S, $($ty,)* $last> ModelFilter<M, S, ($($ty,)* $last,)> for F
+        impl<F, M, S, $($ty,)* $last> super::SelectModelFilter<M, S, ($($ty,)* $last,)> for F
         where
             M: sea_orm::EntityTrait + Send + Sync + 'static,
             S: Sync + Send + Clone + 'static,

@@ -86,6 +86,8 @@ impl<S> View<S> {
     }
 }
 
+const DEFAULT_JSON_KEY: &str = "object";
+
 /// DetailView is a view for displaying details of a single entity.
 #[derive(Clone)]
 #[allow(dead_code)]
@@ -103,6 +105,7 @@ where
     lookup: Arc<dyn Lookup<M, S>>,
     filters: crate::filter::select::ModelFilters,
     ser: ModelSerializerJson<O>,
+    json_key: crate::response::json::key::Key,
 }
 
 /// Implementing CloneWithoutWhen for DetailView to clone without WhenViews.
@@ -123,6 +126,7 @@ where
             lookup: self.lookup.clone(),
             filters: self.filters.clone(),
             ser: self.ser.clone(),
+            json_key: self.json_key.clone(),
         }
     }
 }
@@ -150,6 +154,7 @@ where
             lookup: Arc::new(lookup),
             filters: Default::default(),
             ser: ModelSerializerJson::<O>::new(),
+            json_key: DEFAULT_JSON_KEY.into(),
         }
     }
 
@@ -169,6 +174,12 @@ where
         Ok(self)
     }
 
+    /// with_json_key sets the object json key in response.
+    pub fn with_json_key(mut self, key: impl Into<crate::response::json::key::Key>) -> Self {
+        self.json_key = key.into();
+        self
+    }
+
     /// with_lookup sets the lookup for the DetailView.
     pub fn with_lookup(mut self, lookup: impl Lookup<M, S> + 'static) -> Self {
         self.lookup = Arc::new(lookup);
@@ -178,7 +189,7 @@ where
     /// with_filter sets a filter for the DetailView.
     pub fn with_filter<F, T>(
         mut self,
-        filter: impl crate::filter::select::ModelFilter<M, S, T>,
+        filter: impl crate::filter::SelectModelFilter<M, S, T>,
     ) -> Self {
         self.filters.push(filter);
         self
@@ -198,6 +209,7 @@ where
             lookup: self.lookup.clone(),
             filters: self.filters.clone(),
             ser: ModelSerializerJson::<Ser>::new(),
+            json_key: self.json_key.clone(),
         }
     }
 }

@@ -24,7 +24,7 @@
 
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
-pub(crate) struct Key(String);
+pub struct Key(String);
 
 /// Implement conversion from String
 impl From<String> for Key {

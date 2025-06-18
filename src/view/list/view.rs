@@ -44,6 +44,8 @@ use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug;
 
+const DEFAULT_JSON_KEY: &str = "objects";
+
 /// ListView is a view for displaying a list of entities.
 pub struct ListView<M, S, O>
 where
@@ -60,7 +62,7 @@ where
     fallback: bool,
     _phantom_data: PhantomData<M>,
     ser: ModelSerializerJson<O>,
-    key: crate::response::json::key::Key,
+    json_key: crate::response::json::key::Key,
 }
 
 /// Implementing Clone for ListView to allow cloning of the view.
@@ -81,7 +83,7 @@ where
             method: self.method.clone(),
             fallback: false,
             ser: self.ser.clone(),
-            key: self.key.clone(),
+            json_key: self.json_key.clone(),
         }
     }
 }
@@ -104,7 +106,7 @@ where
             _phantom_data: PhantomData,
             fallback: self.fallback,
             ser: self.ser.clone(),
-            key: self.key.clone(),
+            json_key: self.json_key.clone(),
         }
     }
 }
@@ -127,7 +129,7 @@ where
             _phantom_data: PhantomData,
             fallback: false,
             ser: ModelSerializerJson::<O>::new(),
-            key: "objects".into(),
+            json_key: DEFAULT_JSON_KEY.into(),
         }
     }
 
@@ -137,15 +139,6 @@ where
         F: FnOnce(Self) -> Result<Self, crate::error::Error>,
     {
         self.fallback = true;
-        self
-    }
-
-    /// with_filter method to apply a filter condition
-    pub fn with_filter<X>(
-        mut self,
-        filter: impl crate::filter::select::ModelFilter<M, S, X>,
-    ) -> Self {
-        self.filters.push(filter);
         self
     }
 
@@ -165,6 +158,18 @@ where
         Ok(self)
     }
 
+    /// with_filter method to apply a filter condition
+    pub fn with_filter(mut self, filter: impl crate::filter::SelectModelFilter<M, S, ()>) -> Self {
+        self.filters.push(filter);
+        self
+    }
+
+    /// with_json_key sets the object json key in response.
+    pub fn with_json_key(mut self, key: impl Into<crate::response::json::key::Key>) -> Self {
+        self.json_key = key.into();
+        self
+    }
+
     /// with_serializer method to set a custom serializer
     pub fn with_serializer<Ser>(mut self) -> ListView<M, S, Ser>
     where
@@ -175,12 +180,12 @@ where
             db: self.db.clone(),
             path: self.path,
             method: self.method.clone(),
-            filters: self.filters,
+            filters: self.filters.clone(),
             when: self.when.clone(),
             _phantom_data: PhantomData,
             fallback: self.fallback,
             ser: ModelSerializerJson::<Ser>::new(),
-            key: self.key.clone(),
+            json_key: self.json_key.clone(),
         }
     }
 }
