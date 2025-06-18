@@ -21,24 +21,3 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-use crate::Error;
-use axum::http::request::Parts;
-use sea_orm::Select;
-
-pub mod common;
-pub mod select;
-mod model;
-
-#[async_trait::async_trait]
-pub trait SelectModelFilter<M, S, T>: Clone + Sync + Send + 'static
-where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
-    S: Clone + Send + Sync + 'static,
-{
-    async fn filter_select(
-        &self,
-        parts: &mut Parts,
-        state: S,
-        query: Select<M>,
-    ) -> Result<Select<M>, Error>;
-}
