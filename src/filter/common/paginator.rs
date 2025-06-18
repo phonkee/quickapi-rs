@@ -26,6 +26,8 @@ use crate::filter::SelectModelFilter;
 use axum::http::request::Parts;
 use sea_orm::Select;
 
+const DEFAULT_PER_PAGE: usize = 10;
+
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
 pub struct Paginator<M, S>
@@ -36,7 +38,7 @@ where
     prefix: Option<String>,
     page: usize,
     per_page: usize,
-    per_page_selected: Option<Vec<usize>>,
+    per_page_accept: Option<Vec<usize>>,
     _phantom: std::marker::PhantomData<(M, S)>,
 }
 
@@ -48,9 +50,9 @@ where
     fn default() -> Self {
         Self {
             prefix: None,
-            per_page_selected: None,
+            per_page_accept: None,
             page: 1,
-            per_page: 10,
+            per_page: DEFAULT_PER_PAGE,
             _phantom: std::marker::PhantomData,
         }
     }
@@ -79,9 +81,9 @@ where
         self
     }
 
-    /// with_per_page_selected sets the selected items per page.
-    pub fn with_per_page_selected(mut self, selected: Vec<usize>) -> Self {
-        self.per_page_selected = Some(selected);
+    /// with_per_page_accept sets the selected items per page.
+    pub fn with_per_page_accept(mut self, selected: Vec<usize>) -> Self {
+        self.per_page_accept = Some(selected);
         self
     }
 }
@@ -100,5 +102,10 @@ where
         query: Select<M>,
     ) -> Result<Select<M>, crate::filter::Error> {
         Ok(query)
+    }
+
+    /// is_last indicates that this filter is last in the chain of filters.
+    fn is_last(&self) -> bool {
+        true
     }
 }

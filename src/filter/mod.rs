@@ -37,10 +37,17 @@ where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
+    /// filter_select is called to filter the select query.
     async fn filter_select(
         &self,
         parts: &mut Parts,
         state: S,
         query: Select<M>,
     ) -> Result<Select<M>, Error>;
+
+    /// Returns true if this is the last filter in the chain.
+    /// This is used e.g. to do count queries for pagination.
+    fn is_last(&self) -> bool {
+        false
+    }
 }

@@ -101,7 +101,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .view()
         .list()
         .new::<entity::User>("/api/user")?
-        .with_filter(Paginator::new())
+        .with_filter(Paginator::new().with_per_page(10))
         .when(when_condition, |v| {
             // filter by something
             Ok(
