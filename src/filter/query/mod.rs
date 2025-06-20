@@ -22,11 +22,14 @@
  * THE SOFTWARE.
  */
 #![allow(unused_imports)]
+
 use crate::all_the_tuples;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use axum::routing::on;
 use sea_orm::Select;
+use std::marker::PhantomData;
+use std::pin::Pin;
 
 #[async_trait::async_trait]
 #[allow(dead_code)]
@@ -45,53 +48,53 @@ where
     ) -> Result<Select<M>, crate::filter::Error>;
 }
 
-#[async_trait::async_trait]
-#[allow(dead_code)]
-pub(crate) trait SelectModelBoxed<M, S>
+pub trait SelectModelBoxed<M, S>: Send + Sync
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    /// filter_select is called to filter the select query.
-    async fn filter_select(
-        &self,
-        parts: &mut Parts,
-        state: &S,
+    fn filter_select_boxed<'a>(
+        &'a self,
+        parts: &'a mut Parts,
+        state: &'a S,
         query: Select<M>,
-    ) -> Result<Select<M>, crate::filter::Error>;
+    ) -> Pin<Box<dyn Future<Output = Result<Select<M>, crate::filter::Error>> + Send + 'a>>;
 }
 
-pub struct SelectBoxedImpl<M, S>
+pub struct SelectModelBoxedImpl<F, M, S, T>
 where
+    F: SelectModel<M, S, T> + Send + Sync + 'static,
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
+    T: 'static,
 {
-    #[allow(dead_code)]
-    pub(crate) inner: Box<dyn SelectModelBoxed<M, S> + Send + Sync>,
+    inner: F,
+    _phantom: PhantomData<(M, S, T)>,
 }
 
-impl<M, S> SelectBoxedImpl<M, S>
+impl<F, M, S, T> SelectModelBoxed<M, S> for SelectModelBoxedImpl<F, M, S, T>
 where
+    F: SelectModel<M, S, T> + Send + Sync + 'static,
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
+    T: Sync + Send + 'static,
 {
-    #[allow(dead_code)]
-    pub fn from<F, T>(f: F) -> Self
-    where
-        F: SelectModel<M, S, T> + SelectModelBoxed<M, S> + Send + Sync + 'static,
-        T: 'static,
-    {
-        Self { inner: Box::new(f) }
+    fn filter_select_boxed<'a>(
+        &'a self,
+        parts: &'a mut Parts,
+        state: &'a S,
+        query: Select<M>,
+    ) -> Pin<Box<dyn Future<Output = Result<Select<M>, crate::filter::Error>> + Send + 'a>> {
+        Box::pin(self.inner.filter_select(parts, state, query))
     }
 }
 
-#[allow(dead_code)]
 pub struct SelectBoxedVecImpl<M, S>
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    pub(crate) inner: Vec<SelectBoxedImpl<M, S>>,
+    pub(crate) inner: Vec<Box<dyn SelectModelBoxed<M, S> + Send + Sync>>,
 }
 
 impl<M, S> SelectBoxedVecImpl<M, S>
@@ -103,12 +106,16 @@ where
         Self { inner: Vec::new() }
     }
 
-    pub fn push<F, T>(&mut self, _f: F)
+    pub fn push<F, T>(&mut self, f: F)
     where
         F: SelectModel<M, S, T> + Send + Sync + 'static,
-        T: 'static,
+        T: Sync + Send + 'static,
     {
-        // self.inner.push(SelectBoxedImpl::from(f));
+        let boxed = Box::new(SelectModelBoxedImpl {
+            inner: f,
+            _phantom: PhantomData,
+        });
+        self.inner.push(boxed);
     }
 }
 
@@ -153,6 +160,7 @@ all_the_tuples!(impl_select_tuples);
 mod tests {
     use super::*;
     use sea_orm::entity::prelude::*;
+    use sea_orm::{DatabaseConnection, DbBackend, QueryTrait};
     use serde::Serialize;
 
     #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize)]
@@ -174,12 +182,33 @@ mod tests {
     where
         M: sea_orm::EntityTrait + Send + Sync + 'static,
     {
-        Ok(_query)
+        Ok(_query.filter(Expr::col("id").eq(1)))
     }
 
     #[tokio::test]
     async fn test_select_model() {
         let mut _filters = SelectBoxedVecImpl::<Entity, ()>::new();
         _filters.push(some_filter);
+
+        // prepare a dummy request
+        let _request = axum::http::request::Request::builder()
+            .method(axum::http::Method::GET)
+            .uri("https://www.rust-lang.org/")
+            .body(())
+            .unwrap();
+
+        // create parts from request
+        let (mut parts, _body) = _request.into_parts();
+        let state = ();
+        let mut query = Entity::find();
+
+        for filter in _filters.inner {
+            query = filter
+                .filter_select_boxed(&mut parts, &state, query.clone())
+                .await
+                .unwrap();
+        }
+
+        println!("query: {:#?}", query.build(DbBackend::Postgres).to_string());
     }
 }
