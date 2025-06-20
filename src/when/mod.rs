@@ -42,6 +42,20 @@ where
     ) -> Result<(), crate::Error>;
 }
 
+#[async_trait::async_trait]
+pub trait WhenBoxed<S>: Send
+where
+    S: Clone + Send,
+{
+    /// when is executed against the request and state
+    /// when it succeeds, the view is executed
+    async fn case_when(
+        self,
+        _parts: &mut axum::http::request::Parts,
+        _state: &S,
+    ) -> Result<(), crate::Error>;
+}
+
 /// CloneNoWhen trait for cloning objects without the Whens
 pub trait CloneNoWhen {
     /// Clone the object without the When trait

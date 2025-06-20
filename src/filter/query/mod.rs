@@ -48,6 +48,7 @@ where
     ) -> Result<Select<M>, crate::filter::Error>;
 }
 
+#[allow(dead_code)]
 pub trait SelectModelBoxed<M, S>: Send + Sync
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
@@ -97,6 +98,7 @@ where
     pub(crate) inner: Vec<Box<dyn SelectModelBoxed<M, S> + Send + Sync>>,
 }
 
+#[allow(dead_code)]
 impl<M, S> SelectBoxedVecImpl<M, S>
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
