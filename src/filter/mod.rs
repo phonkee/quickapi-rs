@@ -29,7 +29,7 @@ pub mod error;
 mod model;
 pub mod select;
 
-pub use crate::Error;
+pub use error::Error;
 
 #[async_trait::async_trait]
 pub trait SelectModelFilter<M, S, T>: Clone + Sync + Send + 'static
@@ -43,7 +43,7 @@ where
         parts: &mut Parts,
         state: S,
         query: Select<M>,
-    ) -> Result<Select<M>, Error>;
+    ) -> Result<Select<M>, crate::Error>;
 
     /// Returns true if this is the last filter in the chain.
     /// This is used e.g. to do count queries for pagination.
@@ -64,5 +64,5 @@ where
         parts: &mut Parts,
         state: S,
         query: Select<M>,
-    ) -> Result<Select<M>, Error>;
+    ) -> Result<Select<M>, crate::Error>;
 }

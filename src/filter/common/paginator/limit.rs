@@ -21,8 +21,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+use std::str::FromStr;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[allow(dead_code)]
 pub struct Limit(usize);
 
@@ -35,5 +36,21 @@ impl Default for Limit {
 impl From<usize> for Limit {
     fn from(value: usize) -> Self {
         Limit(value)
+    }
+}
+
+impl FromStr for Limit {
+    type Err = crate::filter::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let value = s.parse::<usize>().map_err(|_| {
+            crate::filter::Error::InvalidQueryParameter(format!("Invalid limit value: {s}"))
+        })?;
+        if value == 0 {
+            return Err(crate::filter::Error::InvalidQueryParameter(
+                "Limit must be greater than 0".to_string(),
+            ));
+        }
+        Ok(Self(value))
     }
 }

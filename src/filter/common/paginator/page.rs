@@ -21,14 +21,42 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+use std::str::FromStr;
 
 // Page type
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[allow(dead_code)]
 pub struct Page(usize);
 
 impl Default for Page {
     fn default() -> Self {
         Self(1)
+    }
+}
+
+impl From<usize> for Page {
+    fn from(value: usize) -> Self {
+        if value == 0 {
+            Self(1)
+        } else {
+            Self(value)
+        }
+    }
+}
+
+// implement parse from string
+impl FromStr for Page {
+    type Err = crate::filter::error::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let value = s.parse::<usize>().map_err(|_| {
+            crate::filter::Error::InvalidQueryParameter(format!("Invalid page number: {s}"))
+        })?;
+        if value == 0 {
+            return Err(crate::filter::Error::InvalidQueryParameter(
+                "Page number must be greater than 0".to_string(),
+            ));
+        }
+        Ok(Self(value))
     }
 }

@@ -22,17 +22,8 @@
  * THE SOFTWARE.
  */
 
-// #[derive(Debug)]
-// pub struct Error {
-//     pub message: String,
-//     pub status_code: axum::http::StatusCode,
-// }
-// 
-// impl Error {
-//     pub fn new(message: String) -> Self {
-//         Self {
-//             message,
-//             status_code: axum::http::StatusCode::INTERNAL_SERVER_ERROR,
-//         }
-//     }
-// }
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Invalid query parameter: {0}")]
+    InvalidQueryParameter(String),
+}
