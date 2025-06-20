@@ -44,8 +44,11 @@ impl Default for Params {
 impl Params {
     /// new_prefixed creates a new instance of Names with the given prefix.
     pub fn new_prefixed(prefix: impl AsRef<str>) -> Self {
-        let prefix = prefix.as_ref().trim_end_matches('_');
         let mut result = Self::default();
+        let prefix = prefix.as_ref().trim_end_matches('_');
+        if prefix.is_empty() || prefix == "" {
+            return result; // Return default if prefix is empty
+        }
         result.page = format!("{prefix}_{}", result.page);
         result.limit = format!("{prefix}_{}", result.limit);
         result
@@ -54,14 +57,10 @@ impl Params {
     /// parse_query extracts the page and limit parameters from a query string.
     pub fn parse_query(
         &self,
-        uri: &axum::http::Uri,
+        query: impl AsRef<str>,
     ) -> Result<(Option<Page>, Option<Limit>), crate::filter::Error> {
-        let Some(path_query) = uri.path_and_query() else {
-            return Ok((None, None));
-        };
-
         // now get query parameters
-        let query = path_query.query().unwrap_or_default();
+        let query = query.as_ref();
 
         // prepare variables for page and limit
         let mut page = None;
@@ -118,21 +117,18 @@ mod tests {
     #[test]
     fn test_parse_query() {
         let params = Params::default();
-        let uri = axum::http::Uri::from_static("/items?page=2&limit=10");
-        let (page, limit) = params.parse_query(&uri).unwrap();
+        let (page, limit) = params.parse_query("page=2&limit=10").unwrap();
         assert_eq!(page, Some(2.into()));
         assert_eq!(limit, Some(10.into()));
 
-        let uri = axum::http::Uri::from_static("/items?page=asdf&limit=10");
-        let result = params.parse_query(&uri);
+        let result = params.parse_query("page=asdf&limit=10");
         assert!(result.is_err());
         assert_eq!(
             result.err().unwrap().to_string(),
             "Invalid query parameter: page"
         );
 
-        let uri = axum::http::Uri::from_static("/items?page=1&limit=fff");
-        let result = params.parse_query(&uri);
+        let result = params.parse_query("page=1&limit=fff");
         assert!(result.is_err());
         assert_eq!(
             result.err().unwrap().to_string(),
@@ -143,8 +139,7 @@ mod tests {
     #[test]
     fn test_parse_query_zero_page() {
         let params = Params::new_prefixed("custom");
-        let uri = axum::http::Uri::from_static("/items?custom_page=0&custom_limit=10");
-        let result = params.parse_query(&uri);
+        let result = params.parse_query("custom_page=0&custom_limit=10");
         assert_eq!(
             result.err().unwrap().to_string(),
             "Invalid query parameter: custom_page"
@@ -154,8 +149,7 @@ mod tests {
     #[test]
     fn test_empty_values() {
         let params = Params::default();
-        let uri = axum::http::Uri::from_static("/items");
-        let (page, limit) = params.parse_query(&uri).unwrap();
+        let (page, limit) = params.parse_query("").unwrap();
         assert_eq!(page, None);
         assert_eq!(limit, None);
     }

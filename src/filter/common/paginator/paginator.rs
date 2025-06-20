@@ -24,6 +24,7 @@
 
 use super::{Limit, Page};
 use crate::filter::SelectModelFilter;
+use crate::filter::common::paginator::limit::{LimitChoices, LimitConstraint, LimitConstraintBox};
 use crate::filter::common::paginator::params;
 use axum::http::request::Parts;
 use sea_orm::Select;
@@ -35,10 +36,10 @@ where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
-    page: Page,
-    limit: Limit,
-    limit_choices: Option<Vec<Limit>>,
-    params: params::Params,
+    pub(crate) page: Page,
+    pub(crate) limit: Limit,
+    pub(crate) limit_constraint: LimitConstraintBox,
+    pub(crate) params: params::Params,
     _phantom: std::marker::PhantomData<(M, S)>,
 }
 
@@ -48,6 +49,11 @@ where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
+    /// parse_query extracts the page and limit parameters from a query string.
+    pub fn parse_query(&self, _uri: impl AsRef<str>) -> Result<(), crate::filter::Error> {
+        Ok(())
+    }
+
     /// with_per_page sets the number of items per page.
     pub fn with_limit(mut self, limit: impl Into<Limit>) -> Self {
         self.limit = limit.into();
@@ -66,16 +72,16 @@ where
     }
 
     /// with_per_page_accept sets the selected items per page.
-    pub fn with_limit_choices<L>(mut self, choices: Option<Vec<L>>) -> Self
+    pub fn with_limit_choices<T, L>(self, choices: Vec<L>) -> Self
     where
         L: Into<Limit>,
     {
-        self.limit_choices = match choices {
-            Some(choices) if !choices.is_empty() => {
-                Some(choices.into_iter().map(Into::into).collect())
-            }
-            _ => None,
-        };
+        self.with_limit_constraint(LimitChoices::from(choices))
+    }
+
+    /// with_limit_constraint sets the limit constraint for the paginator.
+    pub fn with_limit_constraint<T: LimitConstraint>(mut self, constraint: T) -> Self {
+        self.limit_constraint = Box::new(constraint);
         self
     }
 }
@@ -120,9 +126,28 @@ mod tests {
 
     impl ActiveModelBehavior for ActiveModel {}
 
-    #[tokio::test]
-    async fn test_paginator() {
+    #[test]
+    fn test_paginator() {
         let _paginator = Paginator::<Entity, ()>::default().with_limit(20);
         // assert_eq!(paginator.per_page, 20);
+    }
+
+    #[test]
+    fn test_paginator_limit() {
+        let paginator = Paginator::<Entity, ()>::default()
+            .with_limit(20)
+            .with_param_names_prefix("custom");
+
+        assert_eq!(paginator.limit, 20.into());
+    }
+
+    #[test]
+    fn test_paginator_limit_constraint() {
+        let paginator = Paginator::<Entity, ()>::default()
+            .with_limit(20)
+            .with_param_names_prefix("custom")
+            .with_limit_constraint(LimitChoices::from(vec![10, 20, 50]));
+
+        assert_eq!(paginator.limit, 20.into());
     }
 }
