@@ -41,7 +41,7 @@ where
 {
     page: Page,
     limit: Limit,
-    limit_choices: Option<Vec<usize>>,
+    limit_choices: Option<Vec<Limit>>,
     param_names: params::Names,
     _phantom: std::marker::PhantomData<(M, S)>,
 }
@@ -70,8 +70,12 @@ where
     }
 
     /// with_per_page_accept sets the selected items per page.
-    pub fn with_per_page_accept(mut self, selected: Vec<usize>) -> Self {
-        self.limit_choices = Some(selected);
+    pub fn with_limit_choices<T, L>(mut self, choices: T) -> Self
+    where
+        T: IntoIterator<Item = L>,
+        L: Into<Limit>,
+    {
+        self.limit_choices = Some(choices.into_iter().map(Into::into).collect());
         self
     }
 }
