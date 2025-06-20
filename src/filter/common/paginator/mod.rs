@@ -21,42 +21,29 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+mod limit;
+mod page;
 pub mod params;
 
 use crate::filter::SelectModelFilter;
 use axum::http::request::Parts;
 use sea_orm::Select;
 
-const DEFAULT_PER_PAGE: usize = 10;
+pub use limit::Limit;
+pub use page::Page;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 #[allow(dead_code)]
 pub struct Paginator<M, S>
 where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
-    page: usize,
-    per_page: usize,
-    per_page_accept: Option<Vec<usize>>,
+    page: Page,
+    limit: Limit,
+    limit_choices: Option<Vec<usize>>,
     param_names: params::Names,
     _phantom: std::marker::PhantomData<(M, S)>,
-}
-
-impl<M, S> Default for Paginator<M, S>
-where
-    M: sea_orm::EntityTrait,
-    S: Clone + Send + Sync + 'static,
-{
-    fn default() -> Self {
-        Self {
-            per_page_accept: None,
-            page: 1,
-            per_page: DEFAULT_PER_PAGE,
-            param_names: params::Names::default(),
-            _phantom: std::marker::PhantomData,
-        }
-    }
 }
 
 /// Paginator is a filter that reads pagination from query, and applies to query and also to response.
@@ -65,14 +52,9 @@ where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
-    /// Creates a new Paginator with the given prefix.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
     /// with_per_page sets the number of items per page.
-    pub fn with_per_page(mut self, per_page: usize) -> Self {
-        self.per_page = per_page;
+    pub fn with_limit(mut self, limit: impl Into<Limit>) -> Self {
+        self.limit = limit.into();
         self
     }
 
@@ -89,7 +71,7 @@ where
 
     /// with_per_page_accept sets the selected items per page.
     pub fn with_per_page_accept(mut self, selected: Vec<usize>) -> Self {
-        self.per_page_accept = Some(selected);
+        self.limit_choices = Some(selected);
         self
     }
 }
@@ -137,7 +119,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_paginator() {
-        let _paginator = Paginator::<Entity, ()>::new().with_per_page(20);
+        let _paginator = Paginator::<Entity, ()>::default().with_limit(20);
         // assert_eq!(paginator.per_page, 20);
     }
 }
