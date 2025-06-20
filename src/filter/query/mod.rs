@@ -21,48 +21,4 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-use axum::http::request::Parts;
-use sea_orm::Select;
 
-pub mod common;
-pub mod error;
-pub mod select;
-mod query;
-
-pub use error::Error;
-
-#[async_trait::async_trait]
-pub trait SelectModelFilter<M, S, T>: Clone + Sync + Send + 'static
-where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
-    S: Clone + Send + Sync + 'static,
-{
-    /// filter_select is called to filter the select query.
-    async fn filter_select(
-        &self,
-        parts: &mut Parts,
-        state: S,
-        query: Select<M>,
-    ) -> Result<Select<M>, crate::Error>;
-
-    /// Returns true if this is the last filter in the chain.
-    /// This is used e.g. to do count queries for pagination.
-    fn is_last(&self) -> bool {
-        false
-    }
-}
-
-#[async_trait::async_trait]
-pub trait SelectModelFilterErased<M, S>: Sync + Send + 'static
-where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
-    S: Clone + Send + Sync + 'static,
-{
-    /// filter_select is called to filter the select query.
-    async fn filter_select(
-        &self,
-        parts: &mut Parts,
-        state: S,
-        query: Select<M>,
-    ) -> Result<Select<M>, crate::Error>;
-}
