@@ -189,6 +189,7 @@ mod tests {
     async fn test_select_model() {
         let mut _filters = SelectBoxedVecImpl::<Entity, ()>::new();
         _filters.push(some_filter);
+        _filters.push(some_filter);
 
         // prepare a dummy request
         let _request = axum::http::request::Request::builder()
