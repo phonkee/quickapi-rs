@@ -64,6 +64,7 @@ where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
+    #[allow(dead_code)]
     pub(crate) inner: Box<dyn SelectModelBoxed<M, S> + Send + Sync>,
 }
 
@@ -72,6 +73,7 @@ where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
+    #[allow(dead_code)]
     pub fn from<F, T>(f: F) -> Self
     where
         F: SelectModel<M, S, T> + SelectModelBoxed<M, S> + Send + Sync + 'static,
@@ -81,6 +83,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 pub struct SelectBoxedVecImpl<M, S>
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
@@ -98,12 +101,12 @@ where
         Self { inner: Vec::new() }
     }
 
-    pub fn push<F, T>(&mut self, f: F)
+    pub fn push<F, T>(&mut self, _f: F)
     where
-        F: SelectModel<M, S, T> + SelectModelBoxed<M, S> + Send + Sync + 'static,
+        F: SelectModel<M, S, T>  + Send + Sync + 'static,
         T: 'static,
     {
-        self.inner.push(SelectBoxedImpl::from(f));
+        // self.inner.push(SelectBoxedImpl::from(f));
     }
 }
 
@@ -162,7 +165,13 @@ mod tests {
 
     impl ActiveModelBehavior for ActiveModel {}
 
-    pub fn some_filter(_query: Select<Entity>) -> Result<Select<Entity>, crate::filter::Error> {
+    pub fn some_filter<M>(
+        _query: Select<M>,
+        _x: axum::extract::RawQuery,
+    ) -> Result<Select<M>, crate::filter::Error>
+    where
+        M: sea_orm::EntityTrait + Send + Sync + 'static,
+    {
         Ok(_query)
     }
 
