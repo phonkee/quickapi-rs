@@ -43,6 +43,70 @@ where
     ) -> Result<Select<M>, crate::filter::Error>;
 }
 
+#[async_trait::async_trait]
+#[allow(dead_code)]
+pub(crate) trait SelectModelBoxed<M, S>
+where
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static,
+{
+    /// filter_select is called to filter the select query.
+    async fn filter_select(
+        &self,
+        parts: &mut Parts,
+        state: &S,
+        query: Select<M>,
+    ) -> Result<Select<M>, crate::filter::Error>;
+}
+
+pub struct SelectBoxedImpl<M, S>
+where
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static,
+{
+    pub(crate) inner: Box<dyn SelectModelBoxed<M, S> + Send + Sync>,
+}
+
+impl<M, S> SelectBoxedImpl<M, S>
+where
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static,
+{
+    pub fn from<F, T>(f: F) -> Self
+    where
+        F: SelectModel<M, S, T> + SelectModelBoxed<M, S> + Send + Sync + 'static,
+        T: 'static,
+    {
+        Self { inner: Box::new(f) }
+    }
+}
+
+pub struct SelectBoxedVecImpl<M, S>
+where
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static,
+{
+    pub(crate) inner: Vec<SelectBoxedImpl<M, S>>,
+}
+
+impl<M, S> SelectBoxedVecImpl<M, S>
+where
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static,
+{
+    pub fn new() -> Self {
+        Self { inner: Vec::new() }
+    }
+
+    pub fn push<F, T>(&mut self, f: F)
+    where
+        F: SelectModel<M, S, T> + SelectModelBoxed<M, S> + Send + Sync + 'static,
+        T: 'static,
+    {
+        self.inner.push(SelectBoxedImpl::from(f));
+    }
+}
+
 macro_rules! impl_select_tuples {
     ([$($ty:ident),*], $last:ident) => {
         #[async_trait::async_trait]
@@ -79,3 +143,32 @@ macro_rules! impl_select_tuples {
 }
 
 all_the_tuples!(impl_select_tuples);
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sea_orm::entity::prelude::*;
+    use serde::Serialize;
+
+    #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize)]
+    #[sea_orm(table_name = "user")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: i32,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+
+    pub fn some_filter(_query: Select<Entity>) -> Result<Select<Entity>, crate::filter::Error> {
+        Ok(_query)
+    }
+
+    #[tokio::test]
+    async fn test_select_model() {
+        let mut _filters = SelectBoxedVecImpl::<Entity, ()>::new();
+        _filters.push(some_filter);
+    }
+}
