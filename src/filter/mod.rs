@@ -26,7 +26,6 @@ use sea_orm::Select;
 
 pub mod common;
 pub mod error;
-mod model;
 pub mod select;
 
 pub use error::Error;
