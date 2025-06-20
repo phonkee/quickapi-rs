@@ -128,6 +128,7 @@ mod tests {
     use crate::filter::common::paginator::Params;
     use sea_orm::entity::prelude::*;
     use serde::Serialize;
+    use crate::filter::common::paginator::limit::LimitDefault;
 
     #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize)]
     #[sea_orm(table_name = "user")]
@@ -157,7 +158,7 @@ mod tests {
     }
 
     #[test]
-    fn test_paginator_limit_constraint() {
+    fn test_paginator_limit_constraint_choices() {
         let mut paginator = Paginator::<Entity, ()>::default()
             .with_params(Params::new("p", "l"))
             .with_default_limit(20)
@@ -168,4 +169,18 @@ mod tests {
         assert_eq!(paginator.limit, 20.into());
         assert_eq!(paginator.page, 1.into());
     }
+
+    #[test]
+    fn test_paginator_limit_constraint_default() {
+        let mut paginator = Paginator::<Entity, ()>::default()
+            .with_params(Params::new("p", "l"))
+            .with_default_limit(20)
+            .with_limit_constraint(LimitDefault);
+
+        paginator.parse_query("p=1&l=30").unwrap();
+
+        assert_eq!(paginator.limit, 20.into());
+        assert_eq!(paginator.page, 1.into());
+    }
+
 }

@@ -133,7 +133,7 @@ impl LimitConstraint for LimitStatic {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct LimitDefault();
+pub struct LimitDefault;
 
 impl LimitConstraint for LimitDefault {
     fn clone_box(&self) -> Box<dyn LimitConstraint + Send + Sync> {
