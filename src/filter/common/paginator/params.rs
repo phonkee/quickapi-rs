@@ -46,10 +46,8 @@ impl Params {
     pub fn new_prefixed(prefix: impl AsRef<str>) -> Self {
         let prefix = prefix.as_ref().trim_end_matches('_');
         let mut result = Self::default();
-        if !prefix.is_empty() {
-            result.page = format!("{prefix}_{}", result.page);
-            result.limit = format!("{prefix}_{}", result.limit);
-        }
+        result.page = format!("{prefix}_{}", result.page);
+        result.limit = format!("{prefix}_{}", result.limit);
         result
     }
 
@@ -63,19 +61,26 @@ impl Params {
         };
 
         // now get query parameters
-        let query = path_query.query().unwrap_or("");
+        let query = path_query.query().unwrap_or_default();
 
-        let mut page: Option<Page> = None;
-        let mut limit: Option<Limit> = None;
+        // prepare variables for page and limit
+        let mut page = None;
+        let mut limit = None;
 
         // now parse query parameters
         for (key, value) in url::form_urlencoded::parse(query.as_bytes()) {
             match key.as_ref() {
                 _ if key == self.page => {
-                    page = Some(value.parse::<Page>()?);
+                    // TODO: match error
+                    page = Some(value.parse::<Page>().map_err(|_| {
+                        crate::filter::Error::InvalidQueryParameter(self.page.clone())
+                    })?);
                 }
                 _ if key == self.limit => {
-                    limit = Some(value.parse::<Limit>()?);
+                    // TODO: match error
+                    limit = Some(value.parse::<Limit>().map_err(|_| {
+                        crate::filter::Error::InvalidQueryParameter(self.limit.clone())
+                    })?);
                 }
                 _ => continue,
             };
@@ -117,5 +122,41 @@ mod tests {
         let (page, limit) = params.parse_query(&uri).unwrap();
         assert_eq!(page, Some(2.into()));
         assert_eq!(limit, Some(10.into()));
+
+        let uri = axum::http::Uri::from_static("/items?page=asdf&limit=10");
+        let result = params.parse_query(&uri);
+        assert!(result.is_err());
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "Invalid query parameter: page"
+        );
+
+        let uri = axum::http::Uri::from_static("/items?page=1&limit=fff");
+        let result = params.parse_query(&uri);
+        assert!(result.is_err());
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "Invalid query parameter: limit"
+        );
+    }
+
+    #[test]
+    fn test_parse_query_zero_page() {
+        let params = Params::new_prefixed("custom");
+        let uri = axum::http::Uri::from_static("/items?custom_page=0&custom_limit=10");
+        let result = params.parse_query(&uri);
+        assert_eq!(
+            result.err().unwrap().to_string(),
+            "Invalid query parameter: custom_page"
+        );
+    }
+
+    #[test]
+    fn test_empty_values() {
+        let params = Params::default();
+        let uri = axum::http::Uri::from_static("/items");
+        let (page, limit) = params.parse_query(&uri).unwrap();
+        assert_eq!(page, None);
+        assert_eq!(limit, None);
     }
 }

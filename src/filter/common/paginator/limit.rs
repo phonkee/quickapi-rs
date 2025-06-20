@@ -44,11 +44,11 @@ impl FromStr for Limit {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let value = s.parse::<usize>().map_err(|_| {
-            crate::filter::Error::InvalidQueryParameter(format!("Invalid limit value: {s}"))
+            crate::filter::Error::InvalidQueryParameter(format!("limit: {s}"))
         })?;
         if value == 0 {
             return Err(crate::filter::Error::InvalidQueryParameter(
-                "Limit must be greater than 0".to_string(),
+                "limit: 0".to_string(),
             ));
         }
         Ok(Self(value))
