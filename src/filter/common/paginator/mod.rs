@@ -70,12 +70,16 @@ where
     }
 
     /// with_per_page_accept sets the selected items per page.
-    pub fn with_limit_choices<T, L>(mut self, choices: T) -> Self
+    pub fn with_limit_choices<L>(mut self, choices: Option<Vec<L>>) -> Self
     where
-        T: IntoIterator<Item = L>,
         L: Into<Limit>,
     {
-        self.limit_choices = Some(choices.into_iter().map(Into::into).collect());
+        self.limit_choices = match choices {
+            Some(choices) if !choices.is_empty() => {
+                Some(choices.into_iter().map(Into::into).collect())
+            }
+            _ => None,
+        };
         self
     }
 }
@@ -113,7 +117,6 @@ mod tests {
     pub struct Model {
         #[sea_orm(primary_key)]
         pub id: i32,
-        pub username: String,
     }
 
     #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -28,10 +28,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .list()
         .new::<entity::User>("/api/user/")?
         .register_router(router)?;
-    
+
     Ok(())
 }
 ```
+
+# TODO:
+
+- [ ] Add transaction to request Parts
 
 # Author
 
