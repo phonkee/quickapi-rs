@@ -21,9 +21,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#![allow(unused_imports)]
 use crate::all_the_tuples;
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
+use axum::routing::on;
 use sea_orm::Select;
 
 #[async_trait::async_trait]
@@ -103,7 +105,7 @@ where
 
     pub fn push<F, T>(&mut self, _f: F)
     where
-        F: SelectModel<M, S, T>  + Send + Sync + 'static,
+        F: SelectModel<M, S, T> + Send + Sync + 'static,
         T: 'static,
     {
         // self.inner.push(SelectBoxedImpl::from(f));
