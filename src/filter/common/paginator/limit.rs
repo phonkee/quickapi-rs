@@ -24,13 +24,15 @@
 use std::fmt::Debug;
 use std::str::FromStr;
 
+const DEFAULT_LIMIT: usize = 10;
+
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[allow(dead_code)]
 pub struct Limit(usize);
 
 impl Default for Limit {
     fn default() -> Self {
-        Limit(10)
+        Limit(DEFAULT_LIMIT)
     }
 }
 

@@ -42,6 +42,14 @@ impl Default for Params {
 }
 
 impl Params {
+    /// new creates a new instance of Names with the given page and limit.
+    pub fn new(page: impl Into<String>, limit: impl Into<String>) -> Self {
+        Self {
+            page: page.into(),
+            limit: limit.into(),
+        }
+    }
+
     /// new_prefixed creates a new instance of Names with the given prefix.
     pub fn new_prefixed(prefix: impl AsRef<str>) -> Self {
         let mut result = Self::default();

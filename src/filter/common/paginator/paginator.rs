@@ -37,7 +37,9 @@ where
     S: Clone + Send + Sync + 'static,
 {
     pub(crate) page: Page,
+    pub(crate) default_page: Page,
     pub(crate) limit: Limit,
+    pub(crate) default_limit: Limit,
     pub(crate) limit_constraint: LimitConstraintBox,
     pub(crate) params: params::Params,
     _phantom: std::marker::PhantomData<(M, S)>,
@@ -50,23 +52,35 @@ where
     S: Clone + Send + Sync + 'static,
 {
     /// parse_query extracts the page and limit parameters from a query string.
-    pub fn parse_query(&self, _uri: impl AsRef<str>) -> Result<(), crate::filter::Error> {
+    pub fn parse_query(&mut self, query: impl AsRef<str>) -> Result<(), crate::filter::Error> {
+        let (page, limit) = self.params.parse_query(query)?;
+
+        self.limit = match limit {
+            Some(l) => self.limit_constraint.limit(l, self.default_limit.clone())?,
+            None => self.default_limit.clone(),
+        };
+
+        self.page = match page {
+            Some(p) => p,
+            None => self.default_page.clone(),
+        };
+
         Ok(())
     }
 
-    /// with_per_page sets the number of items per page.
-    pub fn with_limit(mut self, limit: impl Into<Limit>) -> Self {
-        self.limit = limit.into();
+    /// with_default_limit sets the default limit for the paginator.
+    pub fn with_default_limit(mut self, limit: impl Into<Limit>) -> Self {
+        self.default_limit = limit.into();
         self
     }
 
-    /// with_param_names_prefix sets the parameter names for the paginator with a prefix.
-    pub fn with_param_names_prefix(self, prefix: impl Into<String>) -> Self {
-        self.with_param_names(params::Params::new_prefixed(prefix.into()))
+    /// with_params_prefixed sets the parameter names for the paginator with a prefix.
+    pub fn with_params_prefixed(self, prefix: impl Into<String>) -> Self {
+        self.with_params(params::Params::new_prefixed(prefix.into()))
     }
 
-    /// with_param_names sets the parameter names for the paginator.
-    pub fn with_param_names(mut self, names: params::Params) -> Self {
+    /// with_params sets the parameter names for the paginator.
+    pub fn with_params(mut self, names: params::Params) -> Self {
         self.params = names;
         self
     }
@@ -111,6 +125,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::filter::common::paginator::Params;
     use sea_orm::entity::prelude::*;
     use serde::Serialize;
 
@@ -128,26 +143,29 @@ mod tests {
 
     #[test]
     fn test_paginator() {
-        let _paginator = Paginator::<Entity, ()>::default().with_limit(20);
+        let _paginator = Paginator::<Entity, ()>::default();
         // assert_eq!(paginator.per_page, 20);
     }
 
     #[test]
     fn test_paginator_limit() {
         let paginator = Paginator::<Entity, ()>::default()
-            .with_limit(20)
-            .with_param_names_prefix("custom");
+            .with_default_limit(20)
+            .with_params_prefixed("custom");
 
         assert_eq!(paginator.limit, 20.into());
     }
 
     #[test]
     fn test_paginator_limit_constraint() {
-        let paginator = Paginator::<Entity, ()>::default()
-            .with_limit(20)
-            .with_param_names_prefix("custom")
+        let mut paginator = Paginator::<Entity, ()>::default()
+            .with_params(Params::new("p", "l"))
+            .with_default_limit(20)
             .with_limit_constraint(LimitChoices::from(vec![10, 20, 50]));
 
+        paginator.parse_query("p=1&l=30").unwrap();
+
         assert_eq!(paginator.limit, 20.into());
+        assert_eq!(paginator.page, 1.into());
     }
 }

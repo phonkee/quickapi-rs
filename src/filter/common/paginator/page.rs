@@ -23,6 +23,8 @@
  */
 use std::str::FromStr;
 
+const DEFAULT_PAGE: usize = 1;
+
 // Page type
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
 #[allow(dead_code)]
@@ -30,7 +32,7 @@ pub struct Page(usize);
 
 impl Default for Page {
     fn default() -> Self {
-        Self(1)
+        Self(DEFAULT_PAGE)
     }
 }
 
