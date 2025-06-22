@@ -21,23 +21,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+#![allow(dead_code, unused_imports)]
+use axum::extract::FromRequestParts;
+use std::marker::PhantomData;
 
-pub mod delete;
-pub mod detail;
-pub mod error;
-pub mod handler;
-mod http;
-pub mod list;
-mod lookup;
-pub mod program;
-pub mod traits;
-mod when;
-mod extract;
+pub struct PartsExtractor<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    parts: axum::http::request::Parts,
+    _phantom: PhantomData<(S,)>,
+}
 
-pub use error::Error;
-pub use traits::{ModelViewTrait, View, ViewTrait};
+impl<S> FromRequestParts<S> for PartsExtractor<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    type Rejection = axum::extract::rejection::PathRejection;
 
-pub use detail::DetailView;
-pub use list::ListView;
-
-pub use lookup::Lookup;
+    async fn from_request_parts(
+        _parts: &mut axum::http::request::Parts,
+        _state: &S,
+    ) -> Result<Self, Self::Rejection> {
+        Ok(Self {
+            parts: _parts.clone(),
+            _phantom: PhantomData,
+        })
+    }
+}
