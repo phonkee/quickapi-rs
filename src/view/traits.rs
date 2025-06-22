@@ -21,8 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-use crate::RouterExt;
+use crate::response::json::Response;
 use crate::view::{delete, detail};
+use crate::{Error, RouterExt};
+use axum::Router;
 use axum::body::Body;
 use axum::http::request::Parts;
 
@@ -39,6 +41,34 @@ where
         state: S,
         body: Body,
     ) -> Result<crate::response::json::Response, crate::error::Error>;
+}
+
+#[async_trait::async_trait]
+impl<S> ViewTrait<S> for ()
+where
+    S: Clone + Send + Sync + 'static,
+{
+    async fn handle_view(
+        &self,
+        _parts: &mut Parts,
+        _state: S,
+        _body: Body,
+    ) -> Result<Response, Error> {
+        Ok(Response::default())
+    }
+}
+
+impl<S> RouterExt<S> for ()
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn register_router_with_prefix(
+        &self,
+        router: Router<S>,
+        _prefix: &str,
+    ) -> Result<Router<S>, Error> {
+        Ok(router)
+    }
 }
 
 /// ModelViewTrait defines the behavior of a model view in the application.

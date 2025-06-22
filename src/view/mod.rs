@@ -31,6 +31,7 @@ pub mod list;
 mod lookup;
 pub mod program;
 pub mod traits;
+mod when;
 
 pub use error::Error;
 pub use traits::{ModelViewTrait, View, ViewTrait};
