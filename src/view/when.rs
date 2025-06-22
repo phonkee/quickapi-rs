@@ -41,7 +41,7 @@ where
 }
 
 #[allow(dead_code)]
-pub(crate) trait WhenBoxed<S>: Send
+pub(crate) trait WhenErased<S>: Send
 where
     S: Clone + Send,
 {
@@ -55,7 +55,7 @@ where
 }
 
 #[allow(dead_code)]
-pub struct WhenBoxedImpl<F, S, T>
+pub struct WhenBoxed<F, S, T>
 where
     F: When<S, T> + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
@@ -65,7 +65,7 @@ where
     _phantom: PhantomData<(S, T)>,
 }
 
-impl<F, S, T> WhenBoxed<S> for WhenBoxedImpl<F, S, T>
+impl<F, S, T> WhenErased<S> for WhenBoxed<F, S, T>
 where
     F: When<S, T> + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
@@ -84,7 +84,7 @@ pub(crate) struct WhenView<S>
 where
     S: Clone + Send + Sync + 'static,
 {
-    pub(crate) when: Box<dyn WhenBoxed<S> + Send + Sync>,
+    pub(crate) when: Box<dyn WhenErased<S> + Send + Sync>,
     pub(crate) view: Box<dyn ViewTrait<S> + Send + Sync>,
 }
 
@@ -107,7 +107,7 @@ where
         W: When<S, T> + Sync + Send + 'static,
     {
         self.inner.push(WhenView {
-            when: Box::new(WhenBoxedImpl {
+            when: Box::new(WhenBoxed {
                 inner: when,
                 _phantom: PhantomData,
             }),
