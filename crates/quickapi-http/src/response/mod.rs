@@ -21,31 +21,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#![allow(dead_code, unused_imports)]
-use axum::extract::FromRequestParts;
-use std::marker::PhantomData;
 
-pub struct PartsExtractor<S>
-where
-    S: Clone + Send + Sync + 'static,
-{
-    parts: axum::http::request::Parts,
-    _phantom: PhantomData<(S,)>,
-}
+pub mod key;
+pub(crate) mod partials;
+pub mod response;
 
-impl<S> FromRequestParts<S> for PartsExtractor<S>
-where
-    S: Clone + Send + Sync + 'static,
-{
-    type Rejection = axum::extract::rejection::PathRejection;
-
-    async fn from_request_parts(
-        _parts: &mut axum::http::request::Parts,
-        _state: &S,
-    ) -> Result<Self, Self::Rejection> {
-        Ok(Self {
-            parts: _parts.clone(),
-            _phantom: PhantomData,
-        })
-    }
-}
+/// Does this need to be public?
+pub use response::Response;

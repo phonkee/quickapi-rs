@@ -28,11 +28,9 @@ pub mod error;
 pub mod handler;
 mod http;
 pub mod list;
-mod lookup;
 pub mod program;
 pub mod traits;
-mod when;
-mod extract;
+pub mod when;
 
 pub use error::Error;
 pub use traits::{ModelViewTrait, View, ViewTrait};
@@ -40,4 +38,4 @@ pub use traits::{ModelViewTrait, View, ViewTrait};
 pub use detail::DetailView;
 pub use list::ListView;
 
-pub use lookup::Lookup;
+pub use detail::lookup::Lookup;

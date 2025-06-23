@@ -23,6 +23,7 @@
  */
 
 pub mod view;
+pub mod lookup;
 
 pub use view::{DetailView, View};
 

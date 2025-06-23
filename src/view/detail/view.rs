@@ -30,7 +30,6 @@ use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
 use crate::view::traits::ModelViewTrait;
-use crate::when::{CloneNoWhen, WhenViews};
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
@@ -102,34 +101,11 @@ where
     path: String,
     method: Method,
     ph: PhantomData<(M, S, O)>,
-    when: WhenViews<S>,
+    // when: WhenViews<S>,
     lookup: Arc<dyn Lookup<M, S>>,
     filters: crate::filter::select::ModelFilters<M, S>,
     ser: ModelSerializerJson<O>,
     json_key: crate::response::json::key::Key,
-}
-
-/// Implementing CloneWithoutWhen for DetailView to clone without WhenViews.
-impl<M, S, O> CloneNoWhen for DetailView<M, S, O>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    /// clone_without_when creates a clone of the DetailView without the WhenViews.
-    fn clone_without_when(&self) -> Self {
-        Self {
-            db: self.db.clone(),
-            when: self.when.clone(),
-            path: self.path.clone(),
-            method: self.method.clone(),
-            ph: PhantomData,
-            lookup: self.lookup.clone(),
-            filters: self.filters.clone(),
-            ser: self.ser.clone(),
-            json_key: self.json_key.clone(),
-        }
-    }
 }
 
 /// Implementing DetailView for creating a new instance.
@@ -151,7 +127,7 @@ where
             path: path.as_ref().to_string(),
             method,
             ph: PhantomData,
-            when: WhenViews::new(),
+            // when: WhenViews::new(),
             lookup: Arc::new(lookup),
             filters: ModelFilters(vec![]),
             ser: ModelSerializerJson::<O>::new(),
@@ -163,15 +139,15 @@ where
     #[allow(unused_mut)]
     pub fn when<F, T, Ser>(
         mut self,
-        _when: impl crate::when::When<S, T> + Send + Sync + 'static,
+        _when: impl quickapi_when::When<S, T> + Send + Sync + 'static,
         _f: F,
     ) -> Result<Self, Error>
     where
         Ser: Clone + serde::Serialize + Send + Sync + 'static,
         F: Fn(DetailView<M, S, O>) -> Result<DetailView<M, S, Ser>, Error>,
     {
-        let mut _result = _f(self.clone_without_when())?;
-        self.when.add_view(_when, Arc::new(_result));
+        // let mut _result = _f(self.clone_without_when())?;
+        // self.when.add_view(_when, Arc::new(_result));
         Ok(self)
     }
 
@@ -207,7 +183,7 @@ where
             path: self.path.clone(),
             method: self.method.clone(),
             ph: PhantomData,
-            when: self.when.clone(),
+            // when: self.when.clone(),
             lookup: self.lookup.clone(),
             filters: self.filters.clone(),
             ser: ModelSerializerJson::<Ser>::new(),

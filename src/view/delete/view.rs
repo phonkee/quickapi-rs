@@ -26,7 +26,7 @@ use crate::Error;
 use crate::view::ViewTrait;
 use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
-use crate::view::lookup::Lookup;
+use crate::view::detail::lookup::Lookup;
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;

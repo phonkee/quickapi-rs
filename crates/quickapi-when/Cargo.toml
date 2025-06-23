@@ -1,0 +1,11 @@
+[package]
+name = "quickapi-when"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+quickapi-macro = { path = "../quickapi-macro" }
+quickapi-view = { path = "../quickapi-view" }
+axum = "0.8.4"
+async-trait = "0.1.88"
+tokio = "1.45.1"

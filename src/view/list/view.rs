@@ -32,7 +32,6 @@ use crate::view::handler::Handler;
 use crate::view::http::as_method_filter;
 use crate::view::list::ListViewTrait;
 use crate::view::traits::ModelViewTrait;
-use crate::when::{CloneNoWhen, When, WhenViews};
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
@@ -41,7 +40,6 @@ use axum::routing::on;
 use sea_orm::{DatabaseConnection, EntityTrait};
 use std::default::Default;
 use std::marker::PhantomData;
-use std::sync::Arc;
 use tracing::debug;
 
 const DEFAULT_JSON_KEY: &str = "objects";
@@ -56,7 +54,7 @@ where
     db: DatabaseConnection,
     filters: ModelFilters<M, S>,
     // when condition to apply logic
-    when: WhenViews<S>,
+    // when: WhenViews<S>,
     path: String,
     method: Method,
     fallback: bool,
@@ -78,33 +76,10 @@ where
             db: self.db.clone(),
             path: self.path.clone(),
             filters: self.filters.clone(),
-            when: WhenViews::new(),
+            // when: WhenViews::new(),
             _phantom_data: PhantomData,
             method: self.method.clone(),
             fallback: false,
-            ser: self.ser.clone(),
-            json_key: self.json_key.clone(),
-        }
-    }
-}
-
-/// Implementing CloneWithoutWhen for DetailView to clone without WhenViews.
-impl<M, S, O> CloneNoWhen for ListView<M, S, O>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    /// clone_without_when creates a clone of the DetailView without the WhenViews.
-    fn clone_without_when(&self) -> Self {
-        Self {
-            db: self.db.clone(),
-            when: WhenViews::new(),
-            path: self.path.clone(),
-            method: self.method.clone(),
-            filters: self.filters.clone(),
-            _phantom_data: PhantomData,
-            fallback: self.fallback,
             ser: self.ser.clone(),
             json_key: self.json_key.clone(),
         }
@@ -125,7 +100,7 @@ where
             path: String::from(path),
             method,
             filters: ModelFilters(vec![]),
-            when: WhenViews::new(),
+            // when: WhenViews::new(),
             _phantom_data: PhantomData,
             fallback: false,
             ser: ModelSerializerJson::<O>::new(),
@@ -146,15 +121,15 @@ where
     #[allow(unused_mut)]
     pub fn when<F, T, Ser>(
         mut self,
-        _when: impl When<S, T> + Send + Sync + 'static,
+        _when: impl quickapi_when::When<S, T> + Send + Sync + 'static,
         _f: F,
     ) -> Result<Self, Error>
     where
         Ser: Clone + serde::Serialize + Send + Sync + 'static,
         F: Fn(ListView<M, S, O>) -> Result<ListView<M, S, Ser>, Error>,
     {
-        let mut _result = _f(self.clone_without_when())?;
-        self.when.add_view(_when, Arc::new(_result));
+        // let mut _result = _f(self.clone_without_when())?;
+        // self.when.add_view(_when, Arc::new(_result));
         Ok(self)
     }
 
@@ -181,7 +156,7 @@ where
             path: self.path,
             method: self.method.clone(),
             filters: self.filters.clone(),
-            when: self.when.clone(),
+            // when: self.when.clone(),
             _phantom_data: PhantomData,
             fallback: self.fallback,
             ser: ModelSerializerJson::<Ser>::new(),

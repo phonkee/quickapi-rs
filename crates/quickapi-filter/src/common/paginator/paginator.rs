@@ -21,13 +21,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-
-use super::{Limit, Page};
-use crate::filter::SelectModelFilter;
-use crate::filter::common::paginator::limit::{LimitChoices, LimitConstraint, LimitConstraintBox};
-use crate::filter::common::paginator::params;
+use super::{DEFAULT_LIMIT, Limit, Page};
+use crate::common::paginator::limit::LimitConstraint;
+use crate::common::paginator::params;
+use crate::select::SelectFilter;
+use async_trait::async_trait;
 use axum::http::request::Parts;
-use sea_orm::Select;
 
 #[derive(Clone, Debug, Default)]
 #[allow(dead_code)]
@@ -40,7 +39,7 @@ where
     pub(crate) default_page: Page,
     pub(crate) limit: Limit,
     pub(crate) default_limit: Limit,
-    pub(crate) limit_constraint: LimitConstraintBox,
+    pub(crate) limit_constraint: LimitConstraint,
     pub(crate) params: params::Params,
     _phantom: std::marker::PhantomData<(M, S)>,
 }
@@ -52,20 +51,20 @@ where
     S: Clone + Send + Sync + 'static,
 {
     /// parse_query extracts the page and limit parameters from a query string.
-    pub fn parse_query(&mut self, query: impl AsRef<str>) -> Result<(), crate::filter::Error> {
+    pub fn parse_query(&self, query: impl AsRef<str>) -> Result<(Page, Limit), crate::Error> {
         let (page, limit) = self.params.parse_query(query)?;
 
-        self.limit = match limit {
+        let limit = match limit {
             Some(l) => self.limit_constraint.limit(l, self.default_limit.clone())?,
             None => self.default_limit.clone(),
         };
 
-        self.page = match page {
+        let page = match page {
             Some(p) => p,
             None => self.default_page.clone(),
         };
 
-        Ok(())
+        Ok((page, limit))
     }
 
     /// with_default_limit sets the default limit for the paginator.
@@ -85,50 +84,43 @@ where
         self
     }
 
-    /// with_per_page_accept sets the selected items per page.
-    pub fn with_limit_choices<T, L>(self, choices: Vec<L>) -> Self
-    where
-        L: Into<Limit>,
-    {
-        self.with_limit_constraint(LimitChoices::from(choices))
-    }
-
     /// with_limit_constraint sets the limit constraint for the paginator.
-    pub fn with_limit_constraint<T: LimitConstraint>(mut self, constraint: T) -> Self {
-        self.limit_constraint = Box::new(constraint);
+    pub fn with_limit_constraint(mut self, constraint: impl Into<LimitConstraint>) -> Self {
+        self.limit_constraint = constraint.into();
         self
     }
 }
 
 #[async_trait::async_trait]
-impl<M, S, X> SelectModelFilter<M, S, X> for Paginator<M, S>
+impl<M, S, T> SelectFilter<M, S, T> for Paginator<M, S>
 where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
-    X: serde::Serialize + Clone + Send + Sync + 'static,
+    T: 'static,
 {
     async fn filter_select(
         &self,
         _parts: &mut Parts,
-        _state: S,
-        query: Select<M>,
-    ) -> Result<Select<M>, crate::Error> {
-        Ok(query)
-    }
+        _state: &S,
+        query: sea_orm::Select<M>,
+    ) -> Result<sea_orm::Select<M>, crate::Error> {
+        let query_str = _parts.uri.query().unwrap_or_default();
 
-    /// is_last indicates that this filter is last in the chain of filters.
-    fn is_last(&self) -> bool {
-        true
+        let (_page, _limit) = self.parse_query(query_str)?;
+        // let offset = (page.0 - 1) * limit.0;
+        // TODO: add to parts information for response pagination
+        // Ok(query.limit(limit.0).offset(offset).into())
+
+        Ok(query)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::filter::common::paginator::Params;
+    use crate::common::paginator::Params;
     use sea_orm::entity::prelude::*;
     use serde::Serialize;
-    use crate::filter::common::paginator::limit::LimitDefault;
 
     #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize)]
     #[sea_orm(table_name = "user")]
@@ -149,12 +141,10 @@ mod tests {
     }
 
     #[test]
-    fn test_paginator_limit() {
-        let paginator = Paginator::<Entity, ()>::default()
-            .with_default_limit(20)
-            .with_params_prefixed("custom");
+    fn test_paginator_default_limit() {
+        let paginator = Paginator::<Entity, ()>::default().with_params_prefixed("custom");
 
-        assert_eq!(paginator.limit, 20.into());
+        assert_eq!(paginator.default_limit, DEFAULT_LIMIT.into());
     }
 
     #[test]
@@ -162,12 +152,12 @@ mod tests {
         let mut paginator = Paginator::<Entity, ()>::default()
             .with_params(Params::new("p", "l"))
             .with_default_limit(20)
-            .with_limit_constraint(LimitChoices::from(vec![10, 20, 50]));
+            .with_limit_constraint(vec![10, 20, 50]);
 
-        paginator.parse_query("p=1&l=30").unwrap();
+        let (page, limit) = paginator.parse_query("p=1&l=30").unwrap();
 
-        assert_eq!(paginator.limit, 20.into());
-        assert_eq!(paginator.page, 1.into());
+        assert_eq!(limit, 20.into());
+        assert_eq!(page, 1.into());
     }
 
     #[test]
@@ -175,12 +165,11 @@ mod tests {
         let mut paginator = Paginator::<Entity, ()>::default()
             .with_params(Params::new("p", "l"))
             .with_default_limit(20)
-            .with_limit_constraint(LimitDefault);
+            .with_limit_constraint(LimitConstraint::Default);
 
-        paginator.parse_query("p=1&l=30").unwrap();
+        let (page, limit) = paginator.parse_query("p=1&l=30").unwrap();
 
-        assert_eq!(paginator.limit, 20.into());
-        assert_eq!(paginator.page, 1.into());
+        assert_eq!(limit, 20.into());
+        assert_eq!(page, 1.into());
     }
-
 }

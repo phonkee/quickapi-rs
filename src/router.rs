@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-use crate::{Error, all_the_tuples};
+use crate::{Error};
 use axum::Router;
 
 /// RouterExt is a trait that allows for registering views with an axum router.
@@ -64,4 +64,4 @@ macro_rules! impl_tuple {
     };
 }
 
-all_the_tuples!(impl_tuple);
+quickapi_macro::all_the_tuples!(impl_tuple);

@@ -21,40 +21,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-use std::str::FromStr;
+#![allow(unused_imports, unused_mut, dead_code, unused_variables)]
+mod limit;
+mod page;
+mod paginator;
+mod params;
 
-const DEFAULT_PAGE: usize = 1;
-
-// Page type
-#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]
-#[allow(dead_code)]
-pub struct Page(usize);
-
-impl Default for Page {
-    fn default() -> Self {
-        Self(DEFAULT_PAGE)
-    }
-}
-
-impl From<usize> for Page {
-    fn from(value: usize) -> Self {
-        if value == 0 { Self(1) } else { Self(value) }
-    }
-}
-
-// implement parse from string
-impl FromStr for Page {
-    type Err = crate::filter::error::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let value = s
-            .parse::<usize>()
-            .map_err(|_| crate::filter::Error::InvalidQueryParameter("page".into()))?;
-        if value == 0 {
-            return Err(crate::filter::Error::InvalidQueryParameter(
-                "page".to_string(),
-            ));
-        }
-        Ok(Self(value))
-    }
-}
+pub use limit::{DEFAULT_LIMIT, Limit};
+pub use page::{DEFAULT_PAGE, Page};
+pub use paginator::Paginator;
+pub use params::Params;

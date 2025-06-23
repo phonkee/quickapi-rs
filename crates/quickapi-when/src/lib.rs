@@ -22,7 +22,6 @@
  * THE SOFTWARE.
  */
 #![allow(dead_code, unused_imports, unused_mut)]
-use crate::view::ViewTrait;
 use axum::http::request::Parts;
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -36,7 +35,7 @@ where
 {
     /// when is executed against the request and state
     /// when it succeeds, the view is executed
-    async fn when(&self, _parts: &mut Parts, _state: &S) -> Result<(), crate::view::error::Error>;
+    async fn when(&self, _parts: &mut Parts, _state: &S) -> Result<(), quickapi_view::Error>;
 }
 
 #[allow(dead_code)]
@@ -50,10 +49,9 @@ where
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-    ) -> Pin<Box<dyn Future<Output = Result<(), crate::view::Error>> + Send + 'a>>;
+    ) -> Pin<Box<dyn Future<Output = Result<(), quickapi_view::Error>> + Send + 'a>>;
 }
 
-#[allow(dead_code)]
 pub struct WhenBoxed<F, S, T>
 where
     F: When<S, T> + Send + Sync + 'static,
@@ -74,7 +72,7 @@ where
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-    ) -> Pin<Box<dyn Future<Output = Result<(), crate::view::Error>> + Send + 'a>> {
+    ) -> Pin<Box<dyn Future<Output = Result<(), quickapi_view::Error>> + Send + 'a>> {
         Box::pin(self.inner.when(parts, state))
     }
 }
@@ -84,7 +82,7 @@ where
     S: Clone + Send + Sync + 'static,
 {
     pub(crate) when: Box<dyn WhenErased<S> + Send + Sync>,
-    pub(crate) view: Box<dyn ViewTrait<S> + Send + Sync>,
+    pub(crate) view: Box<dyn quickapi_view::ViewTrait<S> + Send + Sync>,
 }
 
 #[derive(Default)]
@@ -104,7 +102,7 @@ where
     where
         T: Send + Sync + 'static,
         W: When<S, T> + Sync + Send + 'static,
-        V: ViewTrait<S> + Send + Sync + 'static,
+        V: quickapi_view::ViewTrait<S> + Send + Sync + 'static,
     {
         self.inner.push(WhenView {
             when: Box::new(WhenBoxed {
@@ -121,9 +119,9 @@ where
 impl<S, F> When<S, ()> for F
 where
     S: Clone + Send + Sync + 'static,
-    F: Fn(&mut Parts) -> Result<(), crate::view::error::Error> + Send + Sync + 'static,
+    F: Fn(&mut Parts) -> Result<(), quickapi_view::Error> + Send + Sync + 'static,
 {
-    async fn when(&self, _parts: &mut Parts, _state: &S) -> Result<(), crate::view::error::Error> {
+    async fn when(&self, _parts: &mut Parts, _state: &S) -> Result<(), quickapi_view::Error> {
         (self)(_parts)
     }
 }
@@ -137,16 +135,16 @@ macro_rules! impl_when_func {
             S: Clone + Send + Sync + 'static,
             $($ty: axum::extract::FromRequestParts<S> + Send + Sync + 'static, )*
             $last: axum::extract::FromRequestParts<S> + Send + Sync + 'static,
-            F: Fn(&mut Parts, $($ty,)* $last) -> Result<(), crate::view::error::Error> + Send + Sync + 'static,
+            F: Fn(&mut Parts, $($ty,)* $last) -> Result<(), quickapi_view::Error> + Send + Sync + 'static,
         {
-            async fn when(&self, _parts: &mut Parts, _state: &S) -> Result<(), crate::view::error::Error> {
+            async fn when(&self, _parts: &mut Parts, _state: &S) -> Result<(), quickapi_view::Error> {
                 $(
                     let $ty = $ty::from_request_parts(_parts, _state).await.map_err(|_| {
-                        crate::view::error::Error::NotApplied
+                        quickapi_view::Error::NoMatchWhen
                     })?;
                 )*
                 let $last = $last::from_request_parts(_parts, _state).await.map_err(|_| {
-                    crate::view::error::Error::NotApplied
+                    quickapi_view::Error::NoMatchWhen
                 })?;
 
                 (self)(_parts, $($ty,)* $last)
@@ -163,7 +161,7 @@ mod tests {
     use super::*;
     use std::sync::Arc;
 
-    fn hello(_parts: &mut Parts) -> Result<(), crate::view::error::Error> {
+    fn hello(_parts: &mut Parts) -> Result<(), quickapi_view::Error> {
         Ok(())
     }
 

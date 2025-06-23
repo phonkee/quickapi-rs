@@ -21,7 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-use crate::filter::common::paginator::{Limit, Page};
+use crate::common::paginator::{Limit, Page};
 
 const DEFAULT_PAGE: &str = "page";
 const DEFAULT_PER_PAGE: &str = "limit";
@@ -66,28 +66,28 @@ impl Params {
     pub fn parse_query(
         &self,
         query: impl AsRef<str>,
-    ) -> Result<(Option<Page>, Option<Limit>), crate::filter::Error> {
-        // now get query parameters
-        let query = query.as_ref();
-
+    ) -> Result<(Option<Page>, Option<Limit>), crate::Error> {
         // prepare variables for page and limit
         let mut page = None;
         let mut limit = None;
 
-        // now parse query parameters
-        for (key, value) in url::form_urlencoded::parse(query.as_bytes()) {
+        // // now parse query parameters
+        for (key, value) in url::form_urlencoded::parse(query.as_ref().as_bytes()) {
             match key.as_ref() {
                 _ if key == self.page => {
                     // TODO: match error
-                    page = Some(value.parse::<Page>().map_err(|_| {
-                        crate::filter::Error::InvalidQueryParameter(self.page.clone())
-                    })?);
+                    page = Some(
+                        value
+                            .parse::<Page>()
+                            .map_err(|_| crate::Error::InvalidQueryParameter(self.page.clone()))?,
+                    );
                 }
                 _ if key == self.limit => {
                     // TODO: match error
-                    limit = Some(value.parse::<Limit>().map_err(|_| {
-                        crate::filter::Error::InvalidQueryParameter(self.limit.clone())
-                    })?);
+                    limit =
+                        Some(value.parse::<Limit>().map_err(|_| {
+                            crate::Error::InvalidQueryParameter(self.limit.clone())
+                        })?);
                 }
                 _ => continue,
             };

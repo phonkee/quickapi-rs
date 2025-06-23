@@ -22,5 +22,20 @@
  * THE SOFTWARE.
  */
 
+#[derive(Clone, Debug)]
 #[allow(dead_code)]
-pub trait State {}
+pub struct Key(String);
+
+/// Implement conversion from String
+impl From<String> for Key {
+    fn from(value: String) -> Self {
+        Key(value)
+    }
+}
+
+/// Implement conversion from &str
+impl From<&str> for Key {
+    fn from(value: &str) -> Self {
+        Key(value.to_string())
+    }
+}
