@@ -211,7 +211,8 @@ mod tests {
 
     impl ActiveModelBehavior for ActiveModel {}
 
-    pub fn some_filter<M>(
+    // primary_key_filter filters by primary key
+    pub fn primary_key_filter<M>(
         _query: Select<M>,
         _x: axum::extract::OriginalUri,
     ) -> Result<Select<M>, crate::Error>
@@ -229,8 +230,7 @@ mod tests {
     #[tokio::test]
     async fn test_select_model() {
         let mut _filters = SelectFilters::<Entity, ()>::new();
-        _filters.push(some_filter);
-        _filters.push(some_filter);
+        _filters.push(primary_key_filter);
 
         // prepare a dummy request
         let _request = axum::http::request::Request::builder()
@@ -247,6 +247,6 @@ mod tests {
             .await
             .unwrap();
 
-        println!("query: {:#?}", query.build(DbBackend::Postgres).to_string());
+        println!("query: {:?}", query.build(DbBackend::Postgres).to_string());
     }
 }
