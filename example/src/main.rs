@@ -30,15 +30,31 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use quickapi::router::RouterExt;
 use quickapi::view;
+use sea_orm::prelude::Expr;
 use sea_orm::{EntityTrait, Iden, Select};
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::time::Duration;
 use tracing::{debug, error, info};
 
+use quickapi_filter::select::*;
+
 /// Filter user
-pub async fn filter_user(_s: Select<entity::User>, _: Parts) -> Result<Select<entity::User>, ()> {
+pub async fn filter_user(
+    _s: Select<entity::User>,
+    _x: axum::extract::RawQuery,
+) -> Result<Select<entity::User>, quickapi::FilterError> {
     Ok(_s)
+}
+
+// primary_key_filter filters by primary key
+pub fn primary_key_filter(
+    _query: Select<entity::User>,
+    _x: axum::extract::OriginalUri,
+    // _y: axum::extract::OriginalUri,
+) -> Result<Select<entity::User>, quickapi_filter::Error> {
+    // get id query parameter
+    Ok(_query)
 }
 
 // MAX_DB_CONNECTION_TIMEOUT_SECONDS is the maximum time in seconds to wait for a database connection
@@ -99,7 +115,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .view()
         .list()
         .new::<entity::User>("/api/user")?
-        .with_filter::<()>(quickapi::filter_common::paginator::Paginator::default())
+        // .with_filter(quickapi::filter_common::paginator::Paginator::default())
+        .with_filter(primary_key_filter)
         // .when(when_condition, |v| {
         //     // filter by something
         //     Ok(

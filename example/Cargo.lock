@@ -535,6 +535,7 @@ dependencies = [
  "axum",
  "entity",
  "quickapi",
+ "quickapi-filter",
  "sea-orm",
  "serde",
  "tokio",

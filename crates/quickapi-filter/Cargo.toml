@@ -5,7 +5,6 @@ edition = "2024"
 
 [dependencies]
 quickapi-macro = { path = "../quickapi-macro" }
-
 thiserror = "2.0.12"
 axum = "0.8.4"
 sea-orm = { version = "1.1.12", features = ["runtime-tokio-native-tls", "sqlx-postgres"] }

@@ -36,4 +36,6 @@ pub use router::RouterExt;
 
 pub use quickapi::new;
 
+pub use quickapi_filter::Error as FilterError;
 pub use quickapi_filter::common as filter_common;
+

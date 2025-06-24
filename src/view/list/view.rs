@@ -36,6 +36,7 @@ use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
+use quickapi_filter::SelectFilter;
 use sea_orm::{DatabaseConnection, EntityTrait};
 use std::default::Default;
 use std::marker::PhantomData;
@@ -51,7 +52,7 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     db: DatabaseConnection,
-    filters: quickapi_filter::SelectFilters<M, S>,
+    pub filters: quickapi_filter::SelectFilters<M, S>,
     // when condition to apply logic
     // when: WhenViews<S>,
     path: String,
@@ -134,14 +135,12 @@ where
 
     /// with_filter method to apply a filter condition
     /// TODO: how to automatically detect T?
-    pub fn with_filter<T>(
-        mut self,
-        _filter: impl quickapi_filter::SelectFilter<M, S, T> + Send + Sync + 'static,
-    ) -> Self
+    pub fn with_filter<F, T>(mut self, f: F) -> Self
     where
-        T: Send + Sync + 'static,
+        F: SelectFilter<M, S, T> + Send + Sync + 'static,
+        T: Sync + Send + 'static,
     {
-        self.filters.push(_filter);
+        self.filters.push(f);
         self
     }
 
