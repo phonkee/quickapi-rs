@@ -215,9 +215,10 @@ mod tests {
     pub fn primary_key_filter<M>(
         _query: Select<M>,
         _x: axum::extract::OriginalUri,
+        _y: axum::extract::OriginalUri,
     ) -> Result<Select<M>, crate::Error>
     where
-        M: sea_orm::EntityTrait + Send + Sync + 'static,
+        M: EntityTrait + Send + Sync + 'static,
     {
         // get id query parameter
         let id = url::form_urlencoded::parse(_x.query().unwrap_or("").as_bytes())

@@ -28,10 +28,8 @@ mod serializers;
 use axum::extract::{Path, Request};
 use axum::http::Method;
 use axum::http::request::Parts;
-use quickapi::filter::common::Paginator;
 use quickapi::router::RouterExt;
 use quickapi::view;
-use quickapi::when::when::*;
 use sea_orm::{EntityTrait, Iden, Select};
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -91,9 +89,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .detail()
         .new::<entity::User>("/hello")?
         .with_lookup("id")
-        .when(when_condition, |mut v| {
-            Ok(v.with_serializer::<serializers::SimpleUser>())
-        })?
+        // .when(when_condition, |mut v| {
+        //     Ok(v.with_serializer::<serializers::SimpleUser>())
+        // })?
         .register_router(router)?;
 
     // add list view for User entity
@@ -101,13 +99,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .view()
         .list()
         .new::<entity::User>("/api/user")?
-        .with_filter(Paginator::default())
-        .when(when_condition, |v| {
-            // filter by something
-            Ok(
-                v.with_serializer::<serializers::SimpleUser>(), // .with_filter(|_parts, _state, query| Box::pin(async move { Ok(query) }))
-            )
-        })?
+        // .with_filter(Paginator::default())
+        // .when(when_condition, |v| {
+        //     // filter by something
+        //     Ok(
+        //         v.with_serializer::<serializers::SimpleUser>(), // .with_filter(|_parts, _state, query| Box::pin(async move { Ok(query) }))
+        //     )
+        // })?
         .register_router(router)?;
 
     // add viewset for Order entity

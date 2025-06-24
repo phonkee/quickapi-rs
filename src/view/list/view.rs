@@ -24,7 +24,6 @@
 
 #![allow(unused_mut)]
 use crate::Error;
-use crate::filter::select::ModelFilters;
 use crate::router::RouterExt;
 use crate::serializer::ModelSerializerJson;
 use crate::view::ViewTrait;
@@ -52,7 +51,7 @@ where
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     db: DatabaseConnection,
-    filters: ModelFilters<M, S>,
+    filters: quickapi_filter::SelectFilters<M, S>,
     // when condition to apply logic
     // when: WhenViews<S>,
     path: String,
@@ -75,7 +74,7 @@ where
         ListView {
             db: self.db.clone(),
             path: self.path.clone(),
-            filters: self.filters.clone(),
+            filters: quickapi_filter::SelectFilters::new(),
             // when: WhenViews::new(),
             _phantom_data: PhantomData,
             method: self.method.clone(),
@@ -99,7 +98,7 @@ where
             db,
             path: String::from(path),
             method,
-            filters: ModelFilters(vec![]),
+            filters: quickapi_filter::SelectFilters::new(),
             // when: WhenViews::new(),
             _phantom_data: PhantomData,
             fallback: false,
@@ -134,8 +133,14 @@ where
     }
 
     /// with_filter method to apply a filter condition
-    pub fn with_filter(mut self, _filter: impl crate::filter::SelectModelFilter<M, S, ()>) -> Self {
-        // self.filters.0.push(filter);
+    pub fn with_filter<T>(
+        mut self,
+        _filter: impl quickapi_filter::SelectFilter<M, S, T> + Send + Sync + 'static,
+    ) -> Self
+    where
+        T: Send + Sync + 'static,
+    {
+        self.filters.push(_filter);
         self
     }
 
@@ -152,15 +157,15 @@ where
         <M as EntityTrait>::Model: Into<Ser>,
     {
         ListView::<M, S, Ser> {
-            db: self.db.clone(),
+            db: self.db,
             path: self.path,
-            method: self.method.clone(),
-            filters: self.filters.clone(),
+            method: self.method,
+            filters: self.filters,
             // when: self.when.clone(),
             _phantom_data: PhantomData,
             fallback: self.fallback,
             ser: ModelSerializerJson::<Ser>::new(),
-            json_key: self.json_key.clone(),
+            json_key: self.json_key,
         }
     }
 }

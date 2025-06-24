@@ -4,4 +4,4 @@ mod error;
 mod select;
 
 pub use error::Error;
-pub use select::SelectFilter;
+pub use select::{SelectFilter, SelectFilters};

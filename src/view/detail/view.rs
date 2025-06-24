@@ -23,7 +23,6 @@
  */
 
 use crate::Error;
-use crate::filter::select::ModelFilters;
 use crate::serializer::ModelSerializerJson;
 use crate::view::Lookup;
 use crate::view::detail::DetailViewTrait;
@@ -89,7 +88,6 @@ impl<S> View<S> {
 const DEFAULT_JSON_KEY: &str = "object";
 
 /// DetailView is a view for displaying details of a single entity.
-#[derive(Clone)]
 #[allow(dead_code)]
 pub struct DetailView<M, S, O>
 where
@@ -103,7 +101,7 @@ where
     ph: PhantomData<(M, S, O)>,
     // when: WhenViews<S>,
     lookup: Arc<dyn Lookup<M, S>>,
-    filters: crate::filter::select::ModelFilters<M, S>,
+    filters: quickapi_filter::SelectFilters<M, S>,
     ser: ModelSerializerJson<O>,
     json_key: crate::response::json::key::Key,
 }
@@ -129,7 +127,7 @@ where
             ph: PhantomData,
             // when: WhenViews::new(),
             lookup: Arc::new(lookup),
-            filters: ModelFilters(vec![]),
+            filters: quickapi_filter::SelectFilters::new(),
             ser: ModelSerializerJson::<O>::new(),
             json_key: DEFAULT_JSON_KEY.into(),
         }
@@ -165,16 +163,16 @@ where
 
     /// with_filter sets a filter for the DetailView.
     #[allow(unused_mut)]
-    pub fn with_filter<F, T>(
-        mut self,
-        _filter: impl crate::filter::SelectModelFilter<M, S, T>,
-    ) -> Self {
-        // self.filters.0.push(filter);
+    pub fn with_filter<F, T>(mut self, _filter: impl quickapi_filter::SelectFilter<M, S, T>) -> Self
+    where
+        T: 'static,
+    {
+        // self.filters.push(_filter);
         self
     }
 
     /// with_serializer creates a new DetailView with a specified serializer.
-    pub fn with_serializer<Ser>(&mut self) -> DetailView<M, S, Ser>
+    pub fn with_serializer<Ser>(self) -> DetailView<M, S, Ser>
     where
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
     {
@@ -185,7 +183,7 @@ where
             ph: PhantomData,
             // when: self.when.clone(),
             lookup: self.lookup.clone(),
-            filters: self.filters.clone(),
+            filters: self.filters,
             ser: ModelSerializerJson::<Ser>::new(),
             json_key: self.json_key.clone(),
         }
@@ -199,6 +197,27 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+}
+
+impl<M, S, O> Clone for DetailView<M, S, O>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + Clone + Send + Sync + 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            db: self.db.clone(),
+            path: self.path.clone(),
+            method: self.method.clone(),
+            ph: PhantomData,
+            // when: self.when.clone(),
+            lookup: self.lookup.clone(),
+            filters: quickapi_filter::SelectFilters::new(),
+            ser: self.ser.clone(),
+            json_key: self.json_key.clone(),
+        }
+    }
 }
 
 /// Implementing RouterExt for DetailView to register the router.
