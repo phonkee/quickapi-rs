@@ -163,11 +163,14 @@ where
 
     /// with_filter sets a filter for the DetailView.
     #[allow(unused_mut)]
-    pub fn with_filter<F, T>(mut self, _filter: impl quickapi_filter::SelectFilter<M, S, T>) -> Self
+    pub fn with_filter<F, T>(
+        mut self,
+        _filter: impl quickapi_filter::SelectFilter<M, S, T> + Send + Sync + 'static,
+    ) -> Self
     where
-        T: 'static,
+        T: Send + Sync + 'static,
     {
-        // self.filters.push(_filter);
+        self.filters.push(_filter);
         self
     }
 
