@@ -87,7 +87,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let router = api
         .view()
         .detail()
-        .new::<entity::User>("/hello")?
+        .new::<entity::User>("/hello/world/{id}")?
         .with_lookup("id")
         // .when(when_condition, |mut v| {
         //     Ok(v.with_serializer::<serializers::SimpleUser>())
@@ -99,7 +99,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .view()
         .list()
         .new::<entity::User>("/api/user")?
-        // .with_filter(Paginator::default())
+        .with_filter::<()>(quickapi::filter_common::paginator::Paginator::default())
         // .when(when_condition, |v| {
         //     // filter by something
         //     Ok(

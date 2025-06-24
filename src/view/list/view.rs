@@ -133,6 +133,7 @@ where
     }
 
     /// with_filter method to apply a filter condition
+    /// TODO: how to automatically detect T?
     pub fn with_filter<T>(
         mut self,
         _filter: impl quickapi_filter::SelectFilter<M, S, T> + Send + Sync + 'static,
