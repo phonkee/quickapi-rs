@@ -159,11 +159,12 @@ macro_rules! impl_select_tuples {
     ([$($ty:ident),*], $last:ident) => {
         #[async_trait::async_trait]
         #[allow(missing_docs, non_snake_case)]
-        impl<F, M, S, $($ty,)* $last> SelectFilter<M, S, ($($ty,)* $last,)> for F
+        impl<F, Fut, M, S, $($ty,)* $last> SelectFilter<M, S, ($($ty,)* $last,)> for F
         where
             M: sea_orm::EntityTrait + Send + Sync + 'static,
             S: Sync + Send + Clone + 'static,
-            F: Fn(sea_orm::Select<M>, $($ty,)* $last) -> Result<sea_orm::Select<M>, crate::Error> + Sync,
+            F: Fn(sea_orm::Select<M>, $($ty,)* $last) -> Fut + Send + Sync + 'static,
+            Fut: std::future::Future<Output = Result<sea_orm::Select<M>, crate::Error>> + Send + 'static,
             $(
                 $ty: axum::extract::FromRequestParts<S> + Send + 'static,
             )*
@@ -184,7 +185,7 @@ macro_rules! impl_select_tuples {
                     crate::Error::NoMatch
                 })?;
 
-                (self)(query, $($ty,)* $last)
+                (self)(query, $($ty,)* $last).await
             }
         }
     };
@@ -212,7 +213,7 @@ mod tests {
     impl ActiveModelBehavior for ActiveModel {}
 
     // primary_key_filter filters by primary key
-    pub fn primary_key_filter<M>(
+    pub async fn primary_key_filter<M>(
         _query: Select<M>,
         _x: axum::extract::OriginalUri,
         _y: axum::extract::OriginalUri,

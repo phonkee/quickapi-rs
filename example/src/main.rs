@@ -21,34 +21,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#![allow(unused_imports)]
-
 mod serializers;
 
-use axum::extract::{Path, Request};
-use axum::http::Method;
+use axum::extract::Path;
 use axum::http::request::Parts;
+use quickapi::filter_common::paginator::Paginator;
 use quickapi::router::RouterExt;
-use quickapi::view;
-use sea_orm::prelude::Expr;
-use sea_orm::{EntityTrait, Iden, Select};
-use std::marker::PhantomData;
-use std::pin::Pin;
+use sea_orm::Select;
 use std::time::Duration;
 use tracing::{debug, error, info};
 
-use quickapi_filter::select::*;
-
-/// Filter user
-pub async fn filter_user(
-    _s: Select<entity::User>,
-    _x: axum::extract::RawQuery,
-) -> Result<Select<entity::User>, quickapi::FilterError> {
-    Ok(_s)
-}
-
 // primary_key_filter filters by primary key
-pub fn primary_key_filter(
+pub async fn primary_key_filter(
     _query: Select<entity::User>,
     _x: axum::extract::OriginalUri,
     // _y: axum::extract::OriginalUri,
@@ -61,11 +45,10 @@ pub fn primary_key_filter(
 const MAX_DB_CONNECTION_TIMEOUT_SECONDS: u64 = 5;
 
 /// when_condition is a condition that will be checked before applying the view
-#[allow(unused_variables)]
 pub async fn when_condition(
     _parts: Parts,
     _state: (),
-    Path((user_id, team_id)): Path<(String, String)>,
+    Path(_id): Path<String>,
 ) -> Result<(), quickapi::Error> {
     Ok(())
 }
@@ -115,7 +98,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .view()
         .list()
         .new::<entity::User>("/api/user")?
-        // .with_filter(quickapi::filter_common::paginator::Paginator::default())
+        .with_filter(Paginator::default())
         .with_filter(primary_key_filter)
         // .when(when_condition, |v| {
         //     // filter by something
