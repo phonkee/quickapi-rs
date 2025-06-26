@@ -22,16 +22,15 @@
  * THE SOFTWARE.
  */
 
-use crate::Error;
-use crate::view::ViewTrait;
-use crate::view::handler::Handler;
-use crate::view::http::as_method_filter;
 use crate::view::detail::lookup::Lookup;
+use crate::view::handler::Handler;
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
+use quickapi_view::ViewTrait;
+use quickapi_view::as_method_filter;
 use sea_orm::DatabaseConnection;
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -92,13 +91,15 @@ where
         _parts: &mut Parts,
         _state: S,
         _body: Body,
-    ) -> Result<crate::response::json::Response, Error> {
-        Err(Error::NotImplemented("nope".to_string()))
+    ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
+        Err(quickapi_view::Error::ImproperlyConfigured(
+            "nope".to_owned(),
+        ))
     }
 }
 
 /// Implement the RouterExt trait for DeleteView
-impl<M, S> crate::RouterExt<S> for DeleteView<M, S>
+impl<M, S> quickapi_view::RouterExt<S> for DeleteView<M, S>
 where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
@@ -107,7 +108,7 @@ where
         &self,
         router: Router<S>,
         prefix: &str,
-    ) -> Result<Router<S>, Error> {
+    ) -> Result<Router<S>, quickapi_view::Error> {
         let mf = as_method_filter(&self.method)?;
 
         debug!(

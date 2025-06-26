@@ -7,6 +7,8 @@ edition = "2024"
 quickapi-filter = { path = "crates/quickapi-filter" }
 quickapi-macro = { path = "crates/quickapi-macro" }
 quickapi-when = { path = "crates/quickapi-when" }
+quickapi-http = { path = "crates/quickapi-http" }
+quickapi-view = { path = "crates/quickapi-view" }
 
 async-trait = "0.1.88"
 axum = { version = "0.8.4" }

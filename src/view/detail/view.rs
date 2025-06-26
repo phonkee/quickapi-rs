@@ -27,13 +27,13 @@ use crate::serializer::ModelSerializerJson;
 use crate::view::Lookup;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
-use crate::view::http::as_method_filter;
-use crate::view::traits::ModelViewTrait;
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
+use quickapi_view::ModelViewTrait;
+use quickapi_view::as_method_filter;
 use sea_orm::{DatabaseConnection, Iterable};
 use sea_orm::{EntityTrait, Iden};
 use std::marker::PhantomData;
@@ -103,7 +103,7 @@ where
     lookup: Arc<dyn Lookup<M, S>>,
     filters: quickapi_filter::SelectFilters<M, S>,
     ser: ModelSerializerJson<O>,
-    json_key: crate::response::json::key::Key,
+    json_key: quickapi_http::response::key::Key,
 }
 
 /// Implementing DetailView for creating a new instance.
@@ -150,7 +150,7 @@ where
     }
 
     /// with_json_key sets the object json key in response.
-    pub fn with_json_key(mut self, key: impl Into<crate::response::json::key::Key>) -> Self {
+    pub fn with_json_key(mut self, key: impl Into<quickapi_http::response::key::Key>) -> Self {
         self.json_key = key.into();
         self
     }
@@ -180,15 +180,15 @@ where
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
     {
         DetailView::<M, S, Ser> {
-            db: self.db.clone(),
-            path: self.path.clone(),
-            method: self.method.clone(),
+            db: self.db,
+            path: self.path,
+            method: self.method,
             ph: PhantomData,
-            // when: self.when.clone(),
-            lookup: self.lookup.clone(),
+            // when: self.when,
+            lookup: self.lookup,
             filters: self.filters,
             ser: ModelSerializerJson::<Ser>::new(),
-            json_key: self.json_key.clone(),
+            json_key: self.json_key,
         }
     }
 }
@@ -224,7 +224,7 @@ where
 }
 
 /// Implementing RouterExt for DetailView to register the router.
-impl<M, S, O> crate::RouterExt<S> for DetailView<M, S, O>
+impl<M, S, O> quickapi_view::RouterExt<S> for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
@@ -235,7 +235,7 @@ where
         &self,
         router: Router<S>,
         prefix: &str,
-    ) -> Result<Router<S>, Error> {
+    ) -> Result<Router<S>, quickapi_view::Error> {
         let mf = as_method_filter(&self.method)?;
 
         debug!(
@@ -254,7 +254,7 @@ where
 
 /// Implementing View for DetailView to render the detail view.
 #[async_trait::async_trait]
-impl<M, S, O> crate::view::ViewTrait<S> for DetailView<M, S, O>
+impl<M, S, O> quickapi_view::ViewTrait<S> for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
@@ -265,12 +265,12 @@ where
         mut _parts: &mut Parts,
         _state: S,
         _body: Body,
-    ) -> Result<crate::response::json::Response, Error> {
+    ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
         let lookup = self.lookup.clone();
         let _select = M::find();
         let _select = lookup.lookup(&mut _parts, _state.clone(), _select).await?;
         debug!("DetailView: lookup completed");
-        Ok(crate::response::json::Response::default())
+        Ok(quickapi_http::response::Response::default())
     }
 }
 
@@ -287,7 +287,7 @@ where
         parts: &mut Parts,
         state: S,
         body: Body,
-    ) -> Result<crate::response::json::Response, Error> {
-        crate::view::ViewTrait::<S>::handle_view(self, parts, state, body).await
+    ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
+        quickapi_view::ViewTrait::<S>::handle_view(self, parts, state, body).await
     }
 }

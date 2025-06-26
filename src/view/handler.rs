@@ -22,8 +22,8 @@
  * THE SOFTWARE.
  */
 
-use crate::view::ViewTrait;
 use axum::response::{IntoResponse, Response};
+use quickapi_view::ViewTrait;
 use std::marker::PhantomData;
 use std::pin::Pin;
 
@@ -61,7 +61,7 @@ where
             // prepare json response partials (keys)
             parts
                 .extensions
-                .insert(crate::response::json::partials::Partials::<S>::default());
+                .insert(quickapi_http::response::partials::Partials::<S>::default());
 
             self.0
                 .handle_view(&mut parts, state, body)

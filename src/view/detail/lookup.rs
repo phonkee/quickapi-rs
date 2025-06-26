@@ -22,7 +22,6 @@
  * THE SOFTWARE.
  */
 
-use crate::Error;
 use axum::extract::FromRequestParts;
 use axum::extract::Path;
 use axum::http::request::Parts;
@@ -43,7 +42,7 @@ where
         parts: &mut Parts,
         _s: S,
         q: Select<M>,
-    ) -> Result<Select<M>, crate::error::Error>;
+    ) -> Result<Select<M>, quickapi_view::Error>;
 }
 
 /// String implementation of Lookup trait. It does lookup by a primary key.
@@ -58,7 +57,7 @@ where
         _parts: &mut Parts,
         _s: S,
         q: Select<M>,
-    ) -> Result<Select<M>, crate::error::Error> {
+    ) -> Result<Select<M>, quickapi_view::Error> {
         let _id: Path<String> = Path::from_request_parts(_parts, &_s).await?;
         debug!("Lookup by field: {:?}", _id.0);
 
@@ -74,15 +73,21 @@ where
     S: Clone + Send + Sync + 'static,
 {
     // TODO: better errors handling
-    async fn lookup(&self, _parts: &mut Parts, _s: S, q: Select<M>) -> Result<Select<M>, Error> {
+    async fn lookup(
+        &self,
+        _parts: &mut Parts,
+        _s: S,
+        q: Select<M>,
+    ) -> Result<Select<M>, quickapi_view::Error> {
         let _id: Path<String> = Path::from_request_parts(_parts, &_s).await?;
 
         // Get the first primary key column name as a string
-        let primary_key = M::PrimaryKey::iter()
-            .next()
-            .ok_or(Error::ImproperlyConfigured(
-                "No primary key found for entity".to_string(),
-            ))?;
+        let primary_key =
+            M::PrimaryKey::iter()
+                .next()
+                .ok_or(quickapi_view::Error::ImproperlyConfigured(
+                    "No primary key found for entity".to_string(),
+                ))?;
 
         Ok(q.filter(primary_key.into_column().eq(_id.0)))
     }

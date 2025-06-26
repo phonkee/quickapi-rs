@@ -21,6 +21,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+use crate::view::{delete, detail};
 
 /// Create a new instance of QuickApi with the provided database connection.
 pub fn new<S>(db: sea_orm::DatabaseConnection) -> QuickApi<S> {
@@ -42,17 +43,41 @@ pub struct QuickApi<S> {
 
 /// QuickApi implements methods to create views in the application.
 impl<S> QuickApi<S> {
-    /// view returns object to create views in the application.
-    /// view is single endpoint in api.
-    pub fn view(&self) -> crate::view::View<S> {
-        crate::view::View {
+    /// viewset returns object to create viewsets in the application.
+    pub fn prefix(&self, path: impl AsRef<str>) -> crate::viewset::ViewSet<S> {
+        crate::viewset::new(path.as_ref())
+    }
+
+    /// delete creates a new DeleteView for the specified path using the DELETE method.
+    pub fn delete(&self) -> delete::View<S>
+    where
+        S: Clone + Send + Sync + 'static,
+    {
+        delete::View::<S> {
             db: self.db.clone(),
             _marker: std::marker::PhantomData,
         }
     }
 
-    /// viewset returns object to create viewsets in the application.
-    pub fn viewset(&self, path: impl AsRef<str>) -> crate::viewset::ViewSet<S> {
-        crate::viewset::new(path.as_ref())
+    /// detail creates a new DetailView for the specified path using the GET method.
+    pub fn detail(&self) -> detail::View<S>
+    where
+        S: Clone + Send + Sync + 'static,
+    {
+        detail::View {
+            db: self.db.clone(),
+            _marker: std::marker::PhantomData,
+        }
+    }
+
+    /// list creates a new ListView for the specified path using the GET method.
+    pub fn list(&self) -> crate::view::list::View<S>
+    where
+        S: Clone + Send + Sync + 'static,
+    {
+        crate::view::list::View {
+            db: self.db.clone(),
+            _marker: std::marker::PhantomData,
+        }
     }
 }

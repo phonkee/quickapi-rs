@@ -26,14 +26,10 @@ pub mod delete;
 pub mod detail;
 pub mod error;
 pub mod handler;
-mod http;
 pub mod list;
 pub mod program;
-pub mod traits;
-pub mod when;
 
 pub use error::Error;
-pub use traits::{ModelViewTrait, View, ViewTrait};
 
 pub use detail::DetailView;
 pub use list::ListView;

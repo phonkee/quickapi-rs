@@ -25,17 +25,17 @@ mod serializers;
 
 use axum::extract::Path;
 use axum::http::request::Parts;
+use quickapi::RouterExt;
 use quickapi::filter_common::paginator::Paginator;
-use quickapi::router::RouterExt;
 use sea_orm::Select;
 use std::time::Duration;
-use tracing::{debug, error, info};
+use tracing::{debug, info};
 
 // primary_key_filter filters by primary key
 pub async fn primary_key_filter(
     _query: Select<entity::User>,
     _x: axum::extract::OriginalUri,
-    // _y: axum::extract::OriginalUri,
+    _y: axum::extract::OriginalUri,
 ) -> Result<Select<entity::User>, quickapi_filter::Error> {
     // get id query parameter
     Ok(_query)
@@ -72,19 +72,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // instantiate quickapi with database connection instance
     debug!("Connecting to database");
-    let api = quickapi::new::<()>(sea_orm::Database::connect(db_opts.clone()).await.map_err(
-        |e| {
-            error!("Failed to connect to database: {}", e.to_string());
-            e
-        },
-    )?);
+    let api = quickapi::new::<()>(
+        sea_orm::Database::connect(db_opts.clone())
+            .await
+            .expect("cannot connect to database"),
+    );
 
     // prepare axum router instance so we can register views(viewsets) to it
     let router = axum::Router::new();
 
     // try new api
     let router = api
-        .view()
         .detail()
         .new::<entity::User>("/hello/world/{id}")?
         .with_lookup("id")
@@ -95,7 +93,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // add list view for User entity
     let router = api
-        .view()
         .list()
         .new::<entity::User>("/api/user")?
         .with_filter(Paginator::default())
@@ -110,10 +107,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // add viewset for Order entity
     let router = api
-        .viewset("/api/order")
+        .prefix("/api/order")
         .add_view(
-            api.view()
-                .delete()
+            api.delete()
                 .new::<entity::Order>("/{pk}")?
                 .with_lookup("pk"),
         )
@@ -121,15 +117,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // add views from tuple
     let router = (
-        api.view()
-            .delete()
+        api.delete()
             .new::<entity::Order>("/secret/{pk}")?
             .with_lookup("pk"),
-        api.view()
-            .detail()
+        api.detail()
             .new::<entity::Order>("/secret/{pk}")?
             .with_lookup("pk"),
-        (api.view().list().new::<entity::Order>("/secret/")?,),
+        (api.list().new::<entity::Order>("/secret/")?,),
     )
         .register_router(router)?;
 

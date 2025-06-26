@@ -23,7 +23,7 @@
  */
 
 pub mod key;
-pub(crate) mod partials;
+pub mod partials;
 pub mod response;
 
 /// Does this need to be public?

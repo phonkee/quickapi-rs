@@ -24,9 +24,8 @@
 
 mod viewset;
 
-use crate::view::ViewTrait;
-use crate::{Error, RouterExt};
 use axum::Router;
+use quickapi_view::ViewTrait;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug_span;
@@ -60,12 +59,16 @@ where
 }
 
 /// Implementing RouterExt for ViewSet to register the views with the axum router.
-impl<S> RouterExt<S> for ViewSet<S>
+impl<S> quickapi_view::RouterExt<S> for ViewSet<S>
 where
     S: Clone + Send + Sync + 'static,
 {
     /// register_router registers the views in the ViewSet with the given axum router.
-    fn register_router_with_prefix(&self, router: Router<S>, _: &str) -> Result<Router<S>, Error> {
+    fn register_router_with_prefix(
+        &self,
+        router: Router<S>,
+        _: &str,
+    ) -> Result<Router<S>, quickapi_view::Error> {
         let span = debug_span!("viewset", viewset_path = %self.path);
         let _enter = span.enter();
 

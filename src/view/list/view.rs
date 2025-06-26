@@ -24,19 +24,19 @@
 
 #![allow(unused_mut)]
 use crate::Error;
-use crate::router::RouterExt;
 use crate::serializer::ModelSerializerJson;
-use crate::view::ViewTrait;
 use crate::view::handler::Handler;
-use crate::view::http::as_method_filter;
 use crate::view::list::ListViewTrait;
-use crate::view::traits::ModelViewTrait;
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
 use quickapi_filter::SelectFilter;
+use quickapi_http::response::key::Key;
+use quickapi_view::ModelViewTrait;
+use quickapi_view::RouterExt;
+use quickapi_view::ViewTrait;
 use sea_orm::{DatabaseConnection, EntityTrait};
 use std::default::Default;
 use std::marker::PhantomData;
@@ -60,7 +60,7 @@ where
     fallback: bool,
     _phantom_data: PhantomData<M>,
     ser: ModelSerializerJson<O>,
-    json_key: crate::response::json::key::Key,
+    json_key: Option<Key>,
 }
 
 /// Implementing Clone for ListView to allow cloning of the view.
@@ -104,7 +104,7 @@ where
             _phantom_data: PhantomData,
             fallback: false,
             ser: ModelSerializerJson::<O>::new(),
-            json_key: DEFAULT_JSON_KEY.into(),
+            json_key: Some(DEFAULT_JSON_KEY.into()),
         }
     }
 
@@ -145,7 +145,7 @@ where
     }
 
     /// with_json_key sets the object json key in response.
-    pub fn with_json_key(mut self, key: impl Into<crate::response::json::key::Key>) -> Self {
+    pub fn with_json_key(mut self, key: impl Into<Option<Key>>) -> Self {
         self.json_key = key.into();
         self
     }
@@ -183,8 +183,8 @@ where
         &self,
         router: Router<S>,
         prefix: &str,
-    ) -> Result<Router<S>, Error> {
-        let mf = as_method_filter(&self.method)?;
+    ) -> Result<Router<S>, quickapi_view::Error> {
+        let mf = quickapi_view::as_method_filter(&self.method)?;
 
         debug!(
             path = format!("{}{}", prefix, self.path),
@@ -214,10 +214,10 @@ where
         _parts: &mut Parts,
         _state: S,
         _body: Body,
-    ) -> Result<crate::response::json::Response, Error> {
+    ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
         debug!("hello from ListView handle_view");
 
-        Ok(crate::response::json::Response {
+        Ok(quickapi_http::response::Response {
             data: serde_json::Value::Null,
             ..Default::default()
         })
@@ -237,7 +237,7 @@ where
         _parts: &mut Parts,
         _state: S,
         _body: Body,
-    ) -> Result<crate::response::json::Response, Error> {
+    ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
         ViewTrait::<S>::handle_view(self, _parts, _state, _body).await
     }
 }

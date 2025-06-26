@@ -23,8 +23,6 @@
  */
 
 mod error;
-pub mod response;
-pub mod router;
 pub mod view;
 pub mod viewset;
 
@@ -32,10 +30,10 @@ mod quickapi;
 mod serializer;
 
 pub use error::Error;
-pub use router::RouterExt;
 
 pub use quickapi::new;
 
 pub use quickapi_filter::Error as FilterError;
 pub use quickapi_filter::common as filter_common;
 
+pub use quickapi_view::{ModelViewTrait, RouterExt, ViewTrait};

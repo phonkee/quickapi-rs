@@ -26,4 +26,10 @@ pub enum Error {
     //
     #[error("No match when")]
     NoMatchWhen,
+
+    #[error("Invalid method: {0}")]
+    InvalidMethod(String),
+
+    #[error("Path rejection: {0}")]
+    PathRejection(#[from] axum::extract::rejection::PathRejection),
 }

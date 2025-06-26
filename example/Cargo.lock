@@ -1527,7 +1527,9 @@ dependencies = [
  "async-trait",
  "axum",
  "quickapi-filter",
+ "quickapi-http",
  "quickapi-macro",
+ "quickapi-view",
  "quickapi-when",
  "sea-orm",
  "serde",
@@ -1585,6 +1587,7 @@ dependencies = [
  "axum",
  "quickapi-macro",
  "quickapi-view",
+ "thiserror",
  "tokio",
 ]
 

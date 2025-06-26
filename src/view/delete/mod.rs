@@ -55,7 +55,7 @@ impl<S> View<S> {
         method: Method,
     ) -> Result<DeleteView<M, S>, Error>
     where
-        M: sea_orm::EntityTrait,
+        M: EntityTrait,
         S: Clone + Send + Sync + 'static,
     {
         // Get the first primary key column name as a string
