@@ -79,9 +79,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // try new api
     let router = api
         .detail::<entity::User>("/hello/world/{id}", "id")?
-        // .when(when_condition, |mut v| {
-        //     Ok(v.with_serializer::<serializers::SimpleUser>())
-        // })?
+        .when(when_condition, |v| {
+            Ok(v.with_serializer::<serializers::SimpleUser>())
+        })?
         .register_router(router)?;
 
     // add list view for User entity
