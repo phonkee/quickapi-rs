@@ -24,7 +24,6 @@
 
 mod error;
 pub mod view;
-pub mod viewset;
 
 mod quickapi;
 mod serializer;

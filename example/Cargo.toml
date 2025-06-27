@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 quickapi-filter = { path = "../crates/quickapi-filter" }
+quickapi-when = { path = "../crates/quickapi-when" }
 
 tokio = { version = "1.45", features = ["full"] }
 axum = { version = "0.8", features = ["macros"] }

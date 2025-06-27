@@ -23,12 +23,10 @@
  *
  */
 
-pub mod create;
-pub mod delete;
-pub mod detail;
-pub mod error;
-pub mod handler;
-pub mod list;
-pub mod prefix;
+mod callback;
+mod columns;
+mod error;
 
+pub use callback::{BeforeSave, BeforeSaveContainer};
+pub use columns::primary_key;
 pub use error::Error;

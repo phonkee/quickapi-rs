@@ -1,30 +1,29 @@
 /*
- * The MIT License (MIT)
+ *  The MIT License (MIT)
  *
- * Copyright (c) 2024-2025, Peter Vrba
+ *  Copyright (c) 2024-2025, Peter Vrba
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
  *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ *
  */
 mod serializers;
 
-use axum::extract::Path;
-use axum::http::request::Parts;
 use quickapi::RouterExt;
 use quickapi::filter_common::paginator::Paginator;
 use sea_orm::Select;
@@ -45,11 +44,7 @@ pub async fn primary_key_filter(
 const MAX_DB_CONNECTION_TIMEOUT_SECONDS: u64 = 5;
 
 /// when_condition is a condition that will be checked before applying the view
-pub async fn when_condition(
-    _parts: Parts,
-    _state: (),
-    Path(_id): Path<String>,
-) -> Result<(), quickapi::Error> {
+pub async fn when_condition(_x: axum::extract::OriginalUri) -> Result<(), quickapi_when::Error> {
     Ok(())
 }
 
@@ -83,9 +78,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // try new api
     let router = api
-        .detail()
-        .new::<entity::User>("/hello/world/{id}")?
-        .with_lookup("id")
+        .detail::<entity::User>("/hello/world/{id}", "id")?
         // .when(when_condition, |mut v| {
         //     Ok(v.with_serializer::<serializers::SimpleUser>())
         // })?
@@ -93,38 +86,47 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // add list view for User entity
     let router = api
-        .list()
-        .new::<entity::User>("/api/user")?
+        .list::<entity::User>("/api/user")?
         .with_filter(Paginator::default())
         .with_filter(primary_key_filter)
-        // .when(when_condition, |v| {
-        //     // filter by something
-        //     Ok(
-        //         v.with_serializer::<serializers::SimpleUser>(), // .with_filter(|_parts, _state, query| Box::pin(async move { Ok(query) }))
-        //     )
-        // })?
+        .when(when_condition, |v| {
+            // change serializer for this condition
+            Ok(v.with_serializer::<serializers::SimpleUser>())
+        })?
         .register_router(router)?;
 
     // add viewset for Order entity
     let router = api
         .prefix("/api/order")
-        .add_view(
-            api.delete()
-                .new::<entity::Order>("/{pk}")?
-                .with_lookup("pk"),
-        )
+        .with_filter(api.delete::<entity::Order>("/{pk}")?.with_lookup("pk"))
+        .with_filter(api.detail::<entity::Order>("some/order/{pk}", "pk")?)
         .register_router(router)?;
 
-    // add views from tuple
+    // add multiple prefixes and from tuple of views
     let router = (
-        api.delete()
-            .new::<entity::Order>("/secret/{pk}")?
+        api.prefix("/api/internal/order/").with_filter(
+            api.prefix("secret/")
+                .with_filter(api.detail::<entity::Order>("some/order/{pk}", "pk")?),
+        ),
+        api.delete::<entity::Order>("/secret/{pk}")?
             .with_lookup("pk"),
-        api.detail()
-            .new::<entity::Order>("/secret/{pk}")?
-            .with_lookup("pk"),
-        (api.list().new::<entity::Order>("/secret/")?,),
+        api.detail::<entity::Order>("/secret/{pk}", "pk")?,
+        (
+            // if you exceed the maximum number of views, you can use tuple to group them
+            api.list::<entity::Order>("/secret/")?,
+        ),
     )
+        .register_router(router)?;
+
+    // TODO: create view
+    let router = api
+        .create::<entity::User>("/api/user")?
+        .with_serializer::<serializers::SimpleUser>()
+        .with_before_save(async move |m: entity::UserModel| {
+            // do something with model before saving
+            debug!("Before save: {:?}", m);
+            Ok(m)
+        })
         .register_router(router)?;
 
     // prepare listener

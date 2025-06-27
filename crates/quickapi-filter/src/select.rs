@@ -26,6 +26,7 @@
 use axum::extract::FromRequestParts;
 use axum::http::request::Parts;
 use axum::routing::on;
+use dyn_clone::DynClone;
 use sea_orm::Select;
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -48,7 +49,7 @@ where
 }
 
 #[allow(dead_code)]
-pub trait SelectFilterErased<M, S>: Send + Sync
+pub trait SelectFilterErased<M, S>: Send + Sync + DynClone
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
@@ -61,6 +62,8 @@ where
     ) -> Pin<Box<dyn Future<Output = Result<Select<M>, crate::Error>> + Send + 'a>>;
 }
 
+dyn_clone::clone_trait_object!(<M, S> SelectFilterErased<M, S>);
+
 pub struct SelectModelBoxed<F, M, S, T>
 where
     F: SelectFilter<M, S, T> + Send + Sync + 'static,
@@ -72,9 +75,25 @@ where
     _phantom: PhantomData<(M, S, T)>,
 }
 
+// Implement Clone for SelectModelBoxed
+impl<F, M, S, T> Clone for SelectModelBoxed<F, M, S, T>
+where
+    F: SelectFilter<M, S, T> + Send + Sync + Clone + 'static,
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static,
+    T: 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            _phantom: PhantomData,
+        }
+    }
+}
+
 impl<F, M, S, T> SelectFilterErased<M, S> for SelectModelBoxed<F, M, S, T>
 where
-    F: SelectFilter<M, S, T> + Send + Sync + 'static,
+    F: SelectFilter<M, S, T> + Clone + Send + Sync + 'static,
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: Sync + Send + 'static,
@@ -98,6 +117,23 @@ where
     pub(crate) inner: Vec<Box<dyn SelectFilterErased<M, S> + Send + Sync>>,
 }
 
+// Implement Clone for SelectFilters
+impl<M, S> Clone for SelectFilters<M, S>
+where
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            inner: self
+                .inner
+                .iter()
+                .map(|cb| dyn_clone::clone_box(&**cb))
+                .collect(),
+        }
+    }
+}
+
 #[allow(dead_code)]
 impl<M, S> SelectFilters<M, S>
 where
@@ -110,7 +146,7 @@ where
 
     pub fn push<F, T>(&mut self, f: F)
     where
-        F: SelectFilter<M, S, T> + Send + Sync + 'static,
+        F: SelectFilter<M, S, T> + Clone + Send + Sync + 'static,
         T: Sync + Send + 'static,
     {
         let boxed = Box::new(SelectModelBoxed {

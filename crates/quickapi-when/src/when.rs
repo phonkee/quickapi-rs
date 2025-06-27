@@ -1,4 +1,30 @@
+/*
+ *  The MIT License (MIT)
+ *
+ *  Copyright (c) 2024-2025, Peter Vrba
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in
+ *  all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ *  THE SOFTWARE.
+ *
+ */
+
 use axum::http::request::Parts;
+use dyn_clone::DynClone;
 use std::marker::PhantomData;
 use std::pin::Pin;
 
@@ -15,7 +41,7 @@ where
 }
 
 #[allow(dead_code)]
-pub(crate) trait WhenErased<S>: Send
+pub(crate) trait WhenErased<S>: Send + DynClone
 where
     S: Clone + Send + Sync + 'static,
 {
@@ -25,8 +51,10 @@ where
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-    ) -> Pin<Box<dyn Future<Output = Result<(), crate::Error>> + Send + 'a>>;
+    ) -> Pin<Box<dyn Future<Output=Result<(), crate::Error>> + Send + 'a>>;
 }
+
+dyn_clone::clone_trait_object!(<S> WhenErased<S>);
 
 pub struct WhenBoxed<F, S, T>
 where
@@ -38,9 +66,24 @@ where
     _phantom: PhantomData<(S, T)>,
 }
 
+// Implement Clone for WhenBoxed
+impl<F, S, T> Clone for WhenBoxed<F, S, T>
+where
+    F: When<S, T> + Send + Sync + Clone + 'static,
+    S: Clone + Send + Sync + 'static,
+    T: 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            _phantom: PhantomData,
+        }
+    }
+}
+
 impl<F, S, T> WhenErased<S> for WhenBoxed<F, S, T>
 where
-    F: When<S, T> + Send + Sync + 'static,
+    F: When<S, T> + Clone + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: Send + 'static,
 {
@@ -48,7 +91,7 @@ where
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-    ) -> Pin<Box<dyn Future<Output = Result<(), crate::Error>> + Send + 'a>> {
+    ) -> Pin<Box<dyn Future<Output=Result<(), crate::Error>> + Send + 'a>> {
         Box::pin(self.inner.when(parts, state))
     }
 }
@@ -61,6 +104,31 @@ where
     pub(crate) view: Box<dyn quickapi_view::ViewTrait<S> + Send + Sync>,
 }
 
+// Implement Clone for WhenView
+impl<S> Clone for WhenView<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            when: dyn_clone::clone_box(&*self.when),
+            view: dyn_clone::clone_box(&*self.view),
+        }
+    }
+}
+
+// Implement Clone for WhenViews
+impl<S> Clone for WhenViews<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.iter().map(|w| w.clone()).collect(),
+        }
+    }
+}
+
 impl<S> WhenView<S>
 where
     S: Clone + Send + Sync + 'static,
@@ -69,12 +137,11 @@ where
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-    ) -> Pin<Box<dyn Future<Output = Result<(), crate::Error>> + Send + 'a>> {
+    ) -> Pin<Box<dyn Future<Output=Result<(), crate::Error>> + Send + 'a>> {
         self.when.when(parts, state)
     }
 }
 
-#[derive(Default)]
 pub struct WhenViews<S>
 where
     S: Clone + Send + Sync + 'static,
@@ -82,15 +149,29 @@ where
     pub(crate) inner: Vec<WhenView<S>>,
 }
 
+impl<S> Default for WhenViews<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    fn default() -> Self {
+        WhenViews::new()
+    }
+}
+
 impl<S> WhenViews<S>
 where
     S: Clone + Send + Sync + 'static,
 {
+    /// new creates a new instance of WhenViews.
+    pub fn new() -> Self {
+        WhenViews { inner: Vec::new() }
+    }
+
     /// add_when adds a view with a condition to the WhenViews.
     pub fn add_when<T, W, V>(&mut self, when: W, view: V)
     where
         T: Send + Sync + 'static,
-        W: When<S, T> + Sync + Send + 'static,
+        W: When<S, T> + Clone + Sync + Send + 'static,
         V: quickapi_view::ViewTrait<S> + Send + Sync + 'static,
     {
         self.inner.push(WhenView {
@@ -115,6 +196,24 @@ where
         }
         Err(crate::Error::NoMatch)
     }
+
+    /// get_views returns list of all matching views.
+    pub async fn get_views<'a>(
+        &'a self,
+        parts: &'a mut Parts,
+        state: &'a S,
+    ) -> Result<Vec<&'a (dyn quickapi_view::ViewTrait<S> + Send + Sync)>, crate::Error> {
+        let mut views = Vec::new();
+        for when_view in &self.inner {
+            if when_view.is_match(parts, state).await.is_ok() {
+                views.push(when_view.view.as_ref());
+            }
+        }
+        match views.len() {
+            0 => Err(crate::Error::NoMatch),
+            _ => Ok(views),
+        }
+    }
 }
 
 #[async_trait::async_trait]
@@ -123,7 +222,7 @@ impl<S, F, Fut> When<S, ()> for F
 where
     S: Clone + Send + Sync + 'static,
     F: Fn() -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = Result<(), crate::Error>> + Send + 'static,
+    Fut: Future<Output=Result<(), crate::Error>> + Send + 'static,
 {
     async fn when(&self, _parts: &mut Parts, _state: &S) -> Result<(), crate::Error> {
         (self)().await
@@ -161,8 +260,11 @@ macro_rules! impl_when_func {
 quickapi_macro::all_the_tuples!(impl_when_func);
 
 #[cfg(test)]
+#[allow(unused_imports)]
 mod tests {
     use super::*;
+    use axum::Extension;
+    use axum::http::Extensions;
 
     // Example function to be used with WhenViews
     pub async fn hello(
@@ -173,7 +275,7 @@ mod tests {
     }
 
     // Example function to be used with WhenViews
-    pub async fn world(_s: ()) -> Result<(), crate::Error> {
+    pub async fn world() -> Result<(), crate::Error> {
         Ok(())
     }
 
@@ -183,5 +285,8 @@ mod tests {
         _when_views.add_when(hello, ());
         _when_views.add_when(world, ());
         _when_views.add_when(async move |_u: axum::extract::OriginalUri| Ok(()), ());
+
+        // let mut ext = Extensions::new();
+        // ext.insert()
     }
 }

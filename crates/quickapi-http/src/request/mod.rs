@@ -22,13 +22,3 @@
  *  THE SOFTWARE.
  *
  */
-
-pub mod create;
-pub mod delete;
-pub mod detail;
-pub mod error;
-pub mod handler;
-pub mod list;
-pub mod prefix;
-
-pub use error::Error;

@@ -23,12 +23,14 @@
  *
  */
 
-pub mod create;
-pub mod delete;
-pub mod detail;
-pub mod error;
-pub mod handler;
-pub mod list;
-pub mod prefix;
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("No match")]
+    NoMatch,
 
-pub use error::Error;
+    #[error("Internal error: {0}")]
+    InternalError(String),
+
+    #[error("Improperly configured: {0}")]
+    ImproperlyConfigured(String),
+}

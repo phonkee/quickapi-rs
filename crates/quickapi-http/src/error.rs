@@ -23,12 +23,8 @@
  *
  */
 
-pub mod create;
-pub mod delete;
-pub mod detail;
-pub mod error;
-pub mod handler;
-pub mod list;
-pub mod prefix;
-
-pub use error::Error;
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("Not Found")]
+    NotFound,
+}

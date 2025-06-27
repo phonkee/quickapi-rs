@@ -22,7 +22,7 @@
  * THE SOFTWARE.
  */
 
-#[derive(Debug, Default, Clone, serde::Serialize)]
+#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
 pub struct SimpleUser {
     pub id: i32,
     pub username: String,
@@ -31,6 +31,15 @@ pub struct SimpleUser {
 impl From<entity::UserModel> for SimpleUser {
     fn from(user: entity::UserModel) -> Self {
         SimpleUser {
+            id: user.id,
+            username: user.username,
+        }
+    }
+}
+
+impl From<SimpleUser> for entity::UserModel {
+    fn from(user: SimpleUser) -> Self {
+        entity::UserModel {
             id: user.id,
             username: user.username,
         }

@@ -22,13 +22,41 @@
  *  THE SOFTWARE.
  *
  */
+use sea_orm::{EntityTrait, Iden, Iterable};
 
-pub mod create;
-pub mod delete;
-pub mod detail;
-pub mod error;
-pub mod handler;
-pub mod list;
-pub mod prefix;
+/// primary_key returns the primary key column name for the given entity type.
+pub fn primary_key<M>() -> Result<String, crate::Error>
+where
+    M: EntityTrait,
+{
+    // Get the first primary key column name as a string
+    Ok(M::PrimaryKey::iter()
+        .next()
+        .ok_or(crate::Error::ImproperlyConfigured(
+            "No primary key found for entity".to_string(),
+        ))?
+        .to_string())
+}
 
-pub use error::Error;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sea_orm::entity::prelude::*;
+
+    #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+    #[sea_orm(table_name = "user")]
+    pub struct Model {
+        #[sea_orm(primary_key)]
+        pub id: i32,
+    }
+
+    #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+    pub enum Relation {}
+
+    impl ActiveModelBehavior for ActiveModel {}
+
+    #[test]
+    fn test_primary_key() {
+        assert_eq!(primary_key::<Entity>().unwrap(), "id".to_owned());
+    }
+}
