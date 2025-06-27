@@ -75,8 +75,8 @@ where
         }
     }
 
-    /// fallback sets the fallback for the DeleteView.
-    pub fn fallback(mut self, fallback: bool) -> Self {
+    /// with_fallback sets the fallback for the DeleteView.
+    pub fn with_fallback(mut self, fallback: bool) -> Self {
         self.fallback = fallback;
         self
     }

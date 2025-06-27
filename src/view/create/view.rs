@@ -174,8 +174,8 @@ where
         self
     }
 
-    /// fallback sets a fallback CreateView that will be used if the current view cannot handle the request.
-    pub fn fallback<Serializer>(mut self, fallback: bool) -> Self {
+    /// with_fallback sets a fallback CreateView that will be used if when conditions are not met.
+    pub fn with_fallback<Serializer>(mut self, fallback: bool) -> Self {
         self.fallback = fallback;
         self
     }

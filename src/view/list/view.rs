@@ -113,11 +113,8 @@ where
         }
     }
 
-    /// fallback method to handle fallback logic
-    pub fn fallback<F>(mut self, _fallback: F) -> Self
-    where
-        F: FnOnce(Self) -> Result<Self, crate::error::Error>,
-    {
+    /// with_fallback method to handle fallback logic
+    pub fn with_fallback<F>(mut self, _fallback: bool) -> Self {
         self.fallback = true;
         self
     }

@@ -154,6 +154,12 @@ where
             fallback: self.fallback,
         }
     }
+
+    /// with_fallback sets the fallback behavior for the DetailView.
+    pub fn with_fallback(mut self, fallback: bool) -> Self {
+        self.fallback = fallback;
+        self
+    }
 }
 
 /// Implementing DetailViewTrait for DetailView to define the detail view behavior.
