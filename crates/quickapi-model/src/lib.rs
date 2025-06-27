@@ -27,6 +27,6 @@ mod callback;
 mod columns;
 mod error;
 
-pub use callback::{BeforeSave, BeforeSaveContainer};
+pub use callback::{ModelCallback, ModelCallbacks};
 pub use columns::primary_key;
 pub use error::Error;

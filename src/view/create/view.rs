@@ -45,7 +45,7 @@ where
     db: DatabaseConnection,
     path: String,
     method: Method,
-    before_save: quickapi_model::BeforeSaveContainer<M, S>,
+    before_save: quickapi_model::ModelCallbacks<M, S>,
     _phantom_data: PhantomData<(M, S, Ser)>,
 }
 
@@ -155,7 +155,7 @@ where
     /// with_before_save sets a before save handler for the CreateView.
     pub fn with_before_save<T>(
         mut self,
-        before_save: impl quickapi_model::BeforeSave<M, S, T> + Clone + Send + Sync + 'static,
+        before_save: impl quickapi_model::ModelCallback<M, S, T> + Clone + Send + Sync + 'static,
     ) -> Self
     where
         T: Send + Sync + 'static,

@@ -31,14 +31,14 @@ use std::pin::Pin;
 
 #[async_trait::async_trait]
 #[allow(dead_code)]
-pub trait BeforeSave<M, S, T>
+pub trait ModelCallback<M, S, T>
 where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: 'static,
 {
     /// filter_select is called to filter the select query.
-    async fn before_save(
+    async fn call(
         &self,
         parts: &mut Parts,
         state: &S,
@@ -47,12 +47,12 @@ where
 }
 
 #[allow(dead_code)]
-pub trait BeforeSaveErased<M, S>: Send + Sync + DynClone
+pub trait ModelCallbackErased<M, S>: Send + Sync + DynClone
 where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    fn callback_before_save<'a>(
+    fn call<'a>(
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
@@ -60,11 +60,11 @@ where
     ) -> Pin<Box<dyn Future<Output = Result<M::Model, crate::Error>> + Send + 'a>>;
 }
 
-dyn_clone::clone_trait_object!(<M, S> BeforeSaveErased<M, S>);
+dyn_clone::clone_trait_object!(<M, S> ModelCallbackErased<M, S>);
 
-pub struct BeforeSaveBoxed<F, M, S, T>
+pub struct ModelCallbackBoxed<F, M, S, T>
 where
-    F: BeforeSave<M, S, T> + Send + Sync + 'static,
+    F: ModelCallback<M, S, T> + Send + Sync + 'static,
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: 'static,
@@ -73,10 +73,10 @@ where
     _phantom: PhantomData<(M, S, T)>,
 }
 
-// Implement Clone for BeforeSaveBoxed
-impl<F, M, S, T> Clone for BeforeSaveBoxed<F, M, S, T>
+// Implement Clone for ModelCallbackBoxed
+impl<F, M, S, T> Clone for ModelCallbackBoxed<F, M, S, T>
 where
-    F: BeforeSave<M, S, T> + Send + Sync + Clone + 'static,
+    F: ModelCallback<M, S, T> + Send + Sync + Clone + 'static,
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: 'static,
@@ -89,45 +89,45 @@ where
     }
 }
 
-impl<F, M, S, T> BeforeSaveErased<M, S> for BeforeSaveBoxed<F, M, S, T>
+impl<F, M, S, T> ModelCallbackErased<M, S> for ModelCallbackBoxed<F, M, S, T>
 where
-    F: BeforeSave<M, S, T> + Clone + Send + Sync + 'static,
+    F: ModelCallback<M, S, T> + Clone + Send + Sync + 'static,
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: Sync + Send + 'static,
 {
-    fn callback_before_save<'a>(
+    fn call<'a>(
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
         model: M::Model,
     ) -> Pin<Box<dyn Future<Output = Result<M::Model, crate::Error>> + Send + 'a>> {
-        Box::pin(self.inner.before_save(parts, state, model))
+        Box::pin(self.inner.call(parts, state, model))
     }
 }
 
-/// BeforeSaveContainer is a container for multiple BeforeSave callbacks.
-pub struct BeforeSaveContainer<M, S>
+/// ModelCallbacks is a container for multiple ModelCallback callbacks.
+pub struct ModelCallbacks<M, S>
 where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    pub(crate) inner: Vec<Box<dyn BeforeSaveErased<M, S> + Send + Sync>>,
+    pub(crate) inner: Vec<Box<dyn ModelCallbackErased<M, S> + Send + Sync>>,
 }
 
-impl<M, S> Default for BeforeSaveContainer<M, S>
+impl<M, S> Default for ModelCallbacks<M, S>
 where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    /// default creates a new BeforeSaveContainer with no callbacks.
+    /// default creates a new ModelCallbackContainer with no callbacks.
     fn default() -> Self {
         Self::new()
     }
 }
 
-// Now you can derive Clone for BeforeSaveContainer
-impl<M, S> Clone for BeforeSaveContainer<M, S>
+// Now you can derive Clone for ModelCallbackContainer
+impl<M, S> Clone for ModelCallbacks<M, S>
 where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
@@ -144,32 +144,69 @@ where
 }
 
 #[allow(dead_code)]
-impl<M, S> BeforeSaveContainer<M, S>
+impl<M, S> ModelCallbacks<M, S>
 where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    /// new creates a new BeforeSaveContainer.
+    /// new creates a new ModelCallbackContainer.
     pub fn new() -> Self {
         Self { inner: Vec::new() }
     }
 
-    /// push adds a new BeforeSave callback to the container.
+    /// push adds a new ModelCallback callback to the container.
     pub fn push<F, T>(&mut self, f: F)
     where
-        F: BeforeSave<M, S, T> + Clone + Send + Sync + 'static,
+        F: ModelCallback<M, S, T> + Clone + Send + Sync + 'static,
         T: Sync + Send + 'static,
     {
-        let boxed = Box::new(BeforeSaveBoxed {
+        let boxed = Box::new(ModelCallbackBoxed {
             inner: f,
             _phantom: PhantomData,
         });
         self.inner.push(boxed);
     }
 
-    /// clear removes all BeforeSave callbacks from the container.
+    /// clear removes all ModelCallback callbacks from the container.
     pub fn clear(&mut self) {
         self.inner.clear();
+    }
+}
+
+/// Implement ModelCallbackErased for ModelCallbackContainer
+impl<M, S> ModelCallbackErased<M, S> for ModelCallbacks<M, S>
+where
+    M: EntityTrait + Send + Sync + 'static,
+    S: Clone + Send + Sync + 'static,
+{
+    fn call<'a>(
+        &'a self,
+        parts: &'a mut Parts,
+        state: &'a S,
+        model: M::Model,
+    ) -> Pin<Box<dyn Future<Output = Result<M::Model, crate::Error>> + Send + 'a>> {
+        Box::pin(async move {
+            let mut model = model;
+            for cb in &self.inner {
+                let result = cb.call(parts, state, model.clone()).await;
+
+                match result {
+                    Ok(updated_model) => {
+                        model = updated_model;
+                    }
+                    Err(e) => {
+                        match e {
+                            crate::Error::NoMatch => {}
+                            _ => {
+                                // If any callback fails, return the error
+                                return Err(e);
+                            }
+                        }
+                    }
+                };
+            }
+            Ok(model)
+        })
     }
 }
 
@@ -177,7 +214,7 @@ macro_rules! impl_before_save_callback_tuple {
     ([$($ty:ident),*]) => {
         #[async_trait::async_trait]
         #[allow(missing_docs, non_snake_case, unused_variables)]
-        impl<F, Fut, M, S, $($ty,)*> BeforeSave<M, S, ($($ty,)* )> for F
+        impl<F, Fut, M, S, $($ty,)*> ModelCallback<M, S, ($($ty,)* )> for F
         where
             M: sea_orm::EntityTrait + Send + Sync + 'static,
             S: Sync + Send + Clone + 'static,
@@ -187,7 +224,7 @@ macro_rules! impl_before_save_callback_tuple {
                 $ty: axum::extract::FromRequestParts<S> + Send + 'static,
             )*
         {
-            async fn before_save(
+            async fn call(
                 &self,
                 _parts: &mut Parts,
                 _state: &S,
@@ -225,18 +262,35 @@ mod tests {
     impl ActiveModelBehavior for ActiveModel {}
 
     // example callback function
-    pub async fn before_save_callback(model: Model) -> Result<Model, crate::Error> {
+    pub async fn before_save_callback(mut model: Model) -> Result<Model, crate::Error> {
         // Here you can modify the model before saving it
-        println!("Before saving model: {:?}", model);
+        model.id = 42;
         Ok(model)
     }
 
-    #[test]
-    fn test_before_save_trait() {
-        let mut _container = BeforeSaveContainer::<Entity, ()>::new();
+    #[tokio::test]
+    async fn test_model_callbacks() {
+        let mut _container = ModelCallbacks::<Entity, ()>::new();
         _container.push(before_save_callback);
         _container.push(async move |m: Model| Ok(m));
 
-        println!("Hello, BeforeSave trait!");
+        // Create a dummy request to test the callback
+        let req = axum::http::Request::builder()
+            .method(axum::http::Method::POST)
+            .uri("/test")
+            .body(axum::body::Body::empty())
+            .unwrap();
+
+        let (mut _parts, _body) = req.into_parts();
+
+        let model_final = _container
+            .call(&mut _parts, &(), Model { id: 1 })
+            .await
+            .unwrap();
+
+        assert_eq!(
+            model_final.id, 42,
+            "Model ID should be modified by the callback"
+        );
     }
 }
