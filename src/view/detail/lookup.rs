@@ -81,10 +81,7 @@ where
         _s: S,
         q: Select<M>,
     ) -> Result<Select<M>, quickapi_view::Error> {
-        // Convert &str to String for consistency with the String implementation
-        let str_value = ToString::to_string(&self);
-
-        PrimaryKeyLookup::Path(str_value)
+        PrimaryKeyLookup::Path(ToString::to_string(&self))
             .lookup(_parts, _s, q)
             .await
     }
