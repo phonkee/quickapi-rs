@@ -53,12 +53,13 @@ where
     db: DatabaseConnection,
     path: String,
     method: Method,
-    ph: PhantomData<(M, S, O)>,
     when: quickapi_when::WhenViews<S>,
     lookup: Arc<dyn Lookup<M, S>>,
     filters: quickapi_filter::SelectFilters<M, S>,
     ser: ModelSerializerJson<O>,
     json_key: Option<quickapi_http::response::key::Key>,
+    fallback: bool,
+    _phantom: PhantomData<(M, S, O)>,
 }
 
 /// Implementing DetailView for creating a new instance.
@@ -79,12 +80,13 @@ where
             db,
             path: path.as_ref().to_string(),
             method,
-            ph: PhantomData,
             when: Default::default(),
             lookup: Arc::new(lookup),
             filters: quickapi_filter::SelectFilters::new(),
             ser: ModelSerializerJson::<O>::new(),
             json_key: Some(DEFAULT_JSON_KEY.into()),
+            fallback: false,
+            _phantom: PhantomData,
         }
     }
 
@@ -143,12 +145,13 @@ where
             db: self.db,
             path: self.path,
             method: self.method,
-            ph: PhantomData,
+            _phantom: PhantomData,
             when: self.when,
             lookup: self.lookup,
             filters: self.filters,
             ser: ModelSerializerJson::<Ser>::new(),
             json_key: self.json_key,
+            fallback: self.fallback,
         }
     }
 }
@@ -173,12 +176,13 @@ where
             db: self.db.clone(),
             path: self.path.clone(),
             method: self.method.clone(),
-            ph: PhantomData,
+            _phantom: PhantomData,
             when: self.when.clone(),
             lookup: self.lookup.clone(),
             filters: self.filters.clone(), // TODO: Verify if this is correct
             ser: self.ser.clone(),
             json_key: self.json_key.clone(),
+            fallback: self.fallback,
         }
     }
 }

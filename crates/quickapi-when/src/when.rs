@@ -51,7 +51,7 @@ where
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-    ) -> Pin<Box<dyn Future<Output=Result<(), crate::Error>> + Send + 'a>>;
+    ) -> Pin<Box<dyn Future<Output = Result<(), crate::Error>> + Send + 'a>>;
 }
 
 dyn_clone::clone_trait_object!(<S> WhenErased<S>);
@@ -91,7 +91,7 @@ where
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-    ) -> Pin<Box<dyn Future<Output=Result<(), crate::Error>> + Send + 'a>> {
+    ) -> Pin<Box<dyn Future<Output = Result<(), crate::Error>> + Send + 'a>> {
         Box::pin(self.inner.when(parts, state))
     }
 }
@@ -137,7 +137,7 @@ where
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-    ) -> Pin<Box<dyn Future<Output=Result<(), crate::Error>> + Send + 'a>> {
+    ) -> Pin<Box<dyn Future<Output = Result<(), crate::Error>> + Send + 'a>> {
         self.when.when(parts, state)
     }
 }
@@ -183,6 +183,11 @@ where
         });
     }
 
+    /// count returns the number of views in WhenViews.
+    pub fn count(&self) -> usize {
+        self.inner.len()
+    }
+
     /// get_view returns the first view that matches the condition.
     pub async fn get_view<'a>(
         &'a self,
@@ -222,7 +227,7 @@ impl<S, F, Fut> When<S, ()> for F
 where
     S: Clone + Send + Sync + 'static,
     F: Fn() -> Fut + Send + Sync + 'static,
-    Fut: Future<Output=Result<(), crate::Error>> + Send + 'static,
+    Fut: Future<Output = Result<(), crate::Error>> + Send + 'static,
 {
     async fn when(&self, _parts: &mut Parts, _state: &S) -> Result<(), crate::Error> {
         (self)().await

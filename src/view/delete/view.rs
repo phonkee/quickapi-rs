@@ -49,6 +49,7 @@ where
     path: String,
     method: Method,
     lookup: Arc<dyn Lookup<M, S>>,
+    fallback: bool,
     _phantom_data: PhantomData<(M, S)>,
 }
 
@@ -69,8 +70,15 @@ where
             path: path.into(),
             method,
             lookup: Arc::new(lookup),
+            fallback: false,
             _phantom_data: Default::default(),
         }
+    }
+
+    /// fallback sets the fallback for the DeleteView.
+    pub fn fallback(mut self, fallback: bool) -> Self {
+        self.fallback = fallback;
+        self
     }
 
     /// with_lookup sets the lookup for the DeleteView.

@@ -46,6 +46,7 @@ where
     path: String,
     method: Method,
     before_save: quickapi_model::ModelCallbacks<M, S>,
+    fallback: bool,
     _phantom_data: PhantomData<(M, S, Ser)>,
 }
 
@@ -64,6 +65,7 @@ where
             path: self.path.clone(),
             method: self.method.clone(),
             before_save: self.before_save.clone(),
+            fallback: self.fallback,
             _phantom_data: PhantomData,
         }
     }
@@ -134,6 +136,7 @@ where
             path: path.into(),
             method,
             before_save: Default::default(),
+            fallback: false,
             _phantom_data: PhantomData,
         })
     }
@@ -148,6 +151,7 @@ where
             path: self.path,
             method: self.method,
             before_save: self.before_save,
+            fallback: false,
             _phantom_data: PhantomData,
         }
     }
@@ -167,6 +171,12 @@ where
     /// remove all before save handlers from the CreateView.
     pub fn clear_before_save(mut self) -> Self {
         self.before_save.clear();
+        self
+    }
+
+    /// fallback sets a fallback CreateView that will be used if the current view cannot handle the request.
+    pub fn fallback<Serializer>(mut self, fallback: bool) -> Self {
+        self.fallback = fallback;
         self
     }
 }

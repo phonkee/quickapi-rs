@@ -193,11 +193,7 @@ where
         let mf = quickapi_view::as_method_filter(&self.method)?;
         let path = format!("{}{}", prefix, self.path);
 
-        debug!(
-            method = self.method.to_string(),
-            path = &path,
-            "list view",
-        );
+        debug!(method = self.method.to_string(), path = &path, "list view",);
 
         // Register the ListView with the axum router
         Ok(router.route(
