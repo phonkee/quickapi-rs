@@ -30,11 +30,12 @@ use axum::Router;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
-use quickapi_filter::SelectFilter;
+use quickapi_filter::{SelectFilter, SelectFilterErased};
 use quickapi_http::response::key::Key;
 use quickapi_view::RouterExt;
 use quickapi_view::ViewTrait;
-use sea_orm::{DatabaseConnection, EntityTrait};
+use sea_orm::QueryTrait;
+use sea_orm::{DatabaseConnection, DbBackend, EntityTrait};
 use serde_json::json;
 use std::default::Default;
 use std::marker::PhantomData;
@@ -206,6 +207,7 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    /// has_fallback method to check if the view has a fallback (used when when conditions are not met)
     fn has_fallback(&self) -> bool {
         self.fallback
     }
@@ -217,6 +219,17 @@ where
         _state: S,
         _body: bytes::Bytes,
     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
+        //
+        // create query first and call filters
+        //
+        let query = self
+            .filters
+            .filter_select_boxed(_parts, &_state, M::find())
+            .await
+            .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
+
+        println!("query: {}", query.build(DbBackend::Postgres).to_string());
+
         Ok(quickapi_http::response::Response {
             data: json!({
                "message": "Hello from ListView",
