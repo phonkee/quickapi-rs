@@ -28,4 +28,4 @@ pub mod map;
 
 pub use error::Error;
 pub use lookup::{Lookup, PrimaryKeyLookup};
-pub use map::{LookupMap, LookupMapValue};
+pub use map::{Map, Value};

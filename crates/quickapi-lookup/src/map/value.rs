@@ -29,13 +29,13 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
-pub enum LookupMapValue {
+pub enum Value {
     Path(String),
     Query(String),
 }
 
 /// Implementation of the `LookupMapValue` for extracting values from request parts.
-impl LookupMapValue {
+impl Value {
     /// from_parts extracts a value from the request parts based on the provided entity type and state.
     pub async fn get_parts_value<M, S>(
         &self,
@@ -47,7 +47,7 @@ impl LookupMapValue {
         S: Clone + Send + Sync + 'static,
     {
         Ok(match self {
-            LookupMapValue::Path(path) => {
+            Value::Path(path) => {
                 let all: Path<HashMap<String, String>> =
                     Path::from_request_parts(_parts, _state).await?;
 
@@ -61,7 +61,7 @@ impl LookupMapValue {
                     })?
                     .clone()
             }
-            LookupMapValue::Query(name) => {
+            Value::Query(name) => {
                 let all: axum::extract::Query<HashMap<String, String>> =
                     axum::extract::Query::from_request_parts(_parts, _state)
                         .await
@@ -96,8 +96,10 @@ mod tests {
     use axum::response::IntoResponse;
     use axum::routing::get;
     use axum_test::TestServer;
-
-    use sea_orm::entity::prelude::*;
+    use sea_orm::DerivePrimaryKey;
+    use sea_orm::{
+        ActiveModelBehavior, DeriveEntityModel, DeriveRelation, EnumIter, PrimaryKeyTrait,
+    };
 
     #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
     #[sea_orm(table_name = "user")]
@@ -120,7 +122,7 @@ mod tests {
                     let mut r = r;
                     let (mut _parts, _body) = r.into_parts();
 
-                    let val = LookupMapValue::Path("id".to_owned());
+                    let val = Value::Path("id".to_owned());
                     let final_val = val
                         .get_parts_value::<Entity, ()>(&mut _parts, &())
                         .await
@@ -150,7 +152,7 @@ mod tests {
                     let mut r = r;
                     let (mut _parts, _body) = r.into_parts();
 
-                    let val = LookupMapValue::Query("id".to_owned());
+                    let val = Value::Query("id".to_owned());
                     let final_val = val
                         .get_parts_value::<Entity, ()>(&mut _parts, &())
                         .await
