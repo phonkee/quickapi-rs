@@ -236,7 +236,8 @@ where
     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
         let lookup = self.lookup.clone();
         let _select = M::find();
-        let _select = lookup.lookup(&mut _parts, &_state, _select).await?;
+        // TODO: remove unwrap() and handle errors properly
+        let _select = lookup.lookup(&mut _parts, &_state, _select).await.unwrap();
         debug!("DetailView: lookup completed");
         Ok(quickapi_http::response::Response::default())
     }

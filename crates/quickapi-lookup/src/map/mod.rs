@@ -25,10 +25,12 @@
 use crate::Error;
 use crate::Lookup;
 use axum::http::request::Parts;
-use sea_orm::QueryTrait;
+use sea_orm::QueryFilter;
+use sea_orm::prelude::Expr;
 use sea_orm::{EntityTrait, Select};
 use std::collections::HashMap;
 use std::marker::PhantomData;
+use std::str::FromStr;
 
 mod value;
 
@@ -95,7 +97,28 @@ where
 {
     // lookup converts the LookupMap into a Select query based on the provided parts and state.
     async fn lookup(&self, _parts: &mut Parts, _s: &S, _q: Select<M>) -> Result<Select<M>, Error> {
-        for (_key, _value) in &self.map {}
+        let mut _q = _q;
+        for (_key, _value) in &self.map {
+            let _col = M::Column::from_str(&_key).map_err(|_| {
+                Error::ImproperlyConfigured("Failed to parse primary key column".to_owned())
+            })?;
+
+            let _val = _value
+                .get_parts_value::<M, S>(_parts, _s)
+                .await
+                .map_err(|e| {
+                    Error::ImproperlyConfigured(format!(
+                        "Failed to get value for key '{}': {}",
+                        _key, e
+                    ))
+                })?;
+
+            // TODO: can we do this better? more typesafe?
+            // create a column expression for the entity
+            let col = Expr::col(_col);
+
+            _q = _q.filter(col.eq(_val));
+        }
         Ok(_q)
     }
 }
@@ -107,6 +130,7 @@ mod tests {
     use axum::routing::get;
     use axum_test::TestServer;
     use sea_orm::DbBackend;
+    use sea_orm::QueryTrait;
     use sea_orm::entity::prelude::*;
     use serde::Serialize;
 
@@ -125,9 +149,6 @@ mod tests {
     #[tokio::test]
     #[allow(unused_mut)]
     async fn test_lookup_map() {
-        let mut map: LookupMap<Entity, ()> = Default::default();
-        println!("{:#?}", map);
-
         let app = Router::new().route(
             "/users/{id}",
             get(async move |r: axum::extract::Request| {
@@ -142,16 +163,17 @@ mod tests {
 
                 let _select = _m.lookup(&mut _parts, &(), Entity::find()).await.unwrap();
 
-                println!(
-                    "query: {:?}",
-                    _select.build(DbBackend::Postgres).to_string()
-                );
-
-                "Hello, World!"
+                _select.build(DbBackend::Postgres).to_string()
             }),
         );
 
         let server = TestServer::new(app).unwrap();
-        let _response = server.get("/users/123").await;
+        let binding = server.get("/users/123").await;
+        let _response = binding.as_bytes();
+        assert!(
+            std::str::from_utf8(_response)
+                .unwrap()
+                .contains("WHERE \"id\" = '123'")
+        );
     }
 }
