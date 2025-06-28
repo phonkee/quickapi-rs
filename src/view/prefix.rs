@@ -46,7 +46,11 @@ where
     fn clone(&self) -> Self {
         Prefix {
             path: self.path.clone(),
-            views: self.views.iter().map(|v| dyn_clone::clone_box(&**v)).collect(),
+            views: self
+                .views
+                .iter()
+                .map(|v| dyn_clone::clone_box(&**v))
+                .collect(),
         }
     }
 }
@@ -101,6 +105,9 @@ where
         _prefix: &str,
     ) -> Result<Router<S>, Error> {
         let mut router = _router;
+        let _span = tracing::debug_span!("", prefix = _prefix);
+        let _x = _span.enter();
+
         for view in &self.views {
             // Register each view with the router using the prefix
             let prefixed_path = format!("{}{}", _prefix, self.path);

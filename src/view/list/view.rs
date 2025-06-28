@@ -217,8 +217,32 @@ where
     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
         debug!("hello from ListView handle_view");
 
+        // check if we have when conditions
+        if !self.when.is_empty() {
+            let mut parts_clone = _parts.clone();
+            let _views = self
+                .when
+                .get_views(&mut parts_clone, &_state)
+                .await
+                .unwrap();
+
+            // iterate over the views and handle them
+            for view in _views {
+                // handle the view
+                let response = view
+                    .handle_view(&mut _parts.clone(), _state.clone(), _body)
+                    .await?;
+                return Ok(response);
+            }
+
+            return Ok(quickapi_http::response::Response {
+                data: serde_json::Value::Number(42.into()),
+                ..Default::default()
+            });
+        }
+
         Ok(quickapi_http::response::Response {
-            data: serde_json::Value::Null,
+            data: serde_json::Value::Number(42.into()),
             ..Default::default()
         })
     }

@@ -188,6 +188,11 @@ where
         self.inner.len()
     }
 
+    /// is_empty checks if there are no views in WhenViews.
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
     /// get_view returns the first view that matches the condition.
     pub async fn get_view<'a>(
         &'a self,
