@@ -34,9 +34,7 @@ use quickapi_filter::{SelectFilter, SelectFilterErased};
 use quickapi_http::response::key::Key;
 use quickapi_view::RouterExt;
 use quickapi_view::ViewTrait;
-use sea_orm::QueryTrait;
-use sea_orm::{DatabaseConnection, DbBackend, EntityTrait};
-use serde_json::json;
+use sea_orm::{DatabaseConnection, EntityTrait};
 use std::default::Default;
 use std::marker::PhantomData;
 use tracing::debug;
@@ -178,7 +176,7 @@ impl<M, S, O> RouterExt<S> for ListView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<M as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
     /// register_router_with_prefix method to register the ListView with an axum router
     fn register_router_with_prefix(
@@ -205,7 +203,7 @@ impl<M, S, O> ViewTrait<S> for ListView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<M as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
     /// has_fallback method to check if the view has a fallback (used when when conditions are not met)
     fn has_fallback(&self) -> bool {
@@ -228,12 +226,25 @@ where
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
-        println!("query: {}", query.build(DbBackend::Postgres).to_string());
+        // get objects from the database
+        let _objects = query.all(&self.db).await.unwrap();
+
+        println!("Objects: {:?}", _objects);
+
+        // convert objects to the desired type using the serializer
+        // If the serializer is not set, we use the default one.
+
+        let _objects = _objects
+            .into_iter()
+            .map(|o| {
+                self.ser
+                    .serialize_json(o)
+                    .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))
+            })
+            .collect::<Result<Vec<_>, _>>()?;
 
         Ok(quickapi_http::response::Response {
-            data: json!({
-               "message": "Hello from ListView",
-            }),
+            data: serde_json::Value::Array(_objects),
             ..Default::default()
         })
     }
