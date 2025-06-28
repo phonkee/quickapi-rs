@@ -27,9 +27,13 @@ use axum::http::request::Parts;
 use sea_orm::QueryFilter;
 use sea_orm::prelude::Expr;
 use sea_orm::{EntityTrait, Select};
+use std::borrow::ToOwned;
 use std::collections::HashMap;
 use std::marker::PhantomData;
 use std::str::FromStr;
+
+/// PRIMARY_KEY to be used as a constant for primary key lookups.
+const PRIMARY_KEY: &str = "__primary_key__";
 
 /// LookupMap is a structure that holds a mapping of string keys to LookupValue.
 #[derive(Clone, Debug)]
@@ -106,10 +110,20 @@ where
     async fn lookup(&self, _parts: &mut Parts, _s: &S, _q: Select<M>) -> Result<Select<M>, Error> {
         let mut _q = _q;
         for (_key, _value) in &self.map {
+            // check if the key is a primary key, otherwise treat it as a regular column
+            let _key = match _key.as_str() {
+                PRIMARY_KEY => quickapi_model::primary_key::<M>().map_err(|_| {
+                    Error::ImproperlyConfigured("Failed to get primary key for entity".to_owned())
+                })?,
+                _ => _key.to_owned(),
+            };
+
+            // get the column and value for the key
             let _col = M::Column::from_str(&_key).map_err(|_| {
                 Error::ImproperlyConfigured("Failed to parse primary key column".to_owned())
             })?;
 
+            // get the value from the request parts
             let _val = _value
                 .get_parts_value::<M, S>(_parts, _s)
                 .await
