@@ -24,9 +24,9 @@
  */
 use crate::Error;
 use crate::view::delete::DeleteView;
-use crate::view::detail::lookup::Lookup;
 use crate::view::{detail::DetailView, list::ListView};
 use axum::http::Method;
+use quickapi_lookup::Lookup;
 use sea_orm::{EntityTrait, Iden, Iterable};
 
 /// Create a new instance of QuickApi with the provided database connection.

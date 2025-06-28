@@ -6,6 +6,7 @@ edition = "2024"
 [dependencies]
 quickapi-filter = { path = "crates/quickapi-filter" }
 quickapi-http = { path = "crates/quickapi-http" }
+quickapi-lookup = { path = "crates/quickapi-lookup" }
 quickapi-macro = { path = "crates/quickapi-macro" }
 quickapi-model = { path = "crates/quickapi-model" }
 quickapi-view = { path = "crates/quickapi-view" }

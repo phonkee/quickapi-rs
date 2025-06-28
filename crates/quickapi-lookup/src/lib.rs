@@ -22,14 +22,10 @@
  *  THE SOFTWARE.
  *
  */
-#[derive(Debug, thiserror::Error)]
-pub enum Error {
-    #[error("No match")]
-    NoMatch,
+mod error;
+pub mod lookup;
+pub mod map;
 
-    #[error("Internal error: {0}")]
-    InternalError(String),
-
-    #[error("Improperly configured: {0}")]
-    ImproperlyConfigured(String),
-}
+pub use error::Error;
+pub use lookup::{Lookup, PrimaryKeyLookup};
+pub use map::{LookupMap, LookupMapValue};

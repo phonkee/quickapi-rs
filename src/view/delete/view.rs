@@ -23,13 +23,13 @@
  *
  */
 
-use crate::view::detail::lookup::Lookup;
 use crate::view::handler::Handler;
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
+use quickapi_lookup::Lookup;
 use quickapi_view::ViewTrait;
 use quickapi_view::as_method_filter;
 use sea_orm::DatabaseConnection;

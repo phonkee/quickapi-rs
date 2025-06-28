@@ -26,6 +26,7 @@ mod serializers;
 
 use quickapi::RouterExt;
 use quickapi::filter_common::paginator::Paginator;
+use quickapi_lookup::PrimaryKeyLookup;
 use sea_orm::Select;
 use std::time::Duration;
 use tracing::{debug, info};
@@ -96,11 +97,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .register_router(router)?;
 
     // add viewset for Order entity
-    let router = api
-        .prefix("/api/order")
-        .with_filter(api.delete::<entity::Order>("/{pk}")?.with_lookup("pk"))
-        .with_filter(api.detail::<entity::Order>("some/order/{pk}", "pk")?)
-        .register_router(router)?;
+    let router =
+        api.prefix("/api/order")
+            .with_filter(api.delete::<entity::Order>("/{pk}")?.with_lookup("pk"))
+            .with_filter(api.detail::<entity::Order>(
+                "some/order/{pk}",
+                PrimaryKeyLookup::Path("pk".to_owned()),
+            )?)
+            .register_router(router)?;
 
     // add multiple prefixes and from tuple of views
     let router = (

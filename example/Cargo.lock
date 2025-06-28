@@ -616,6 +616,7 @@ dependencies = [
  "entity",
  "quickapi",
  "quickapi-filter",
+ "quickapi-lookup",
  "quickapi-when",
  "sea-orm",
  "serde",
@@ -1626,6 +1627,7 @@ dependencies = [
  "dyn-clone",
  "quickapi-filter",
  "quickapi-http",
+ "quickapi-lookup",
  "quickapi-macro",
  "quickapi-model",
  "quickapi-view",
@@ -1661,6 +1663,21 @@ dependencies = [
  "axum",
  "axum-test",
  "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "quickapi-lookup"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum",
+ "axum-test",
+ "quickapi-model",
+ "quickapi-view",
+ "sea-orm",
+ "serde",
  "thiserror",
  "tokio",
 ]

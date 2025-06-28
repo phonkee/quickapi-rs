@@ -22,10 +22,10 @@
  *  THE SOFTWARE.
  *
  */
+
 use axum::extract::FromRequestParts;
 use axum::extract::Path;
 use axum::http::request::Parts;
-use quickapi_view::Error;
 use sea_orm::QueryFilter;
 use sea_orm::prelude::Expr;
 use sea_orm::{EntityTrait, Select};
@@ -43,9 +43,9 @@ where
     async fn lookup(
         &self,
         parts: &mut Parts,
-        _s: S,
+        _s: &S,
         q: Select<M>,
-    ) -> Result<Select<M>, quickapi_view::Error>;
+    ) -> Result<Select<M>, crate::Error>;
 }
 
 /// String implementation of Lookup trait. It does lookup by a primary key.
@@ -58,9 +58,9 @@ where
     async fn lookup(
         &self,
         _parts: &mut Parts,
-        _s: S,
+        _s: &S,
         q: Select<M>,
-    ) -> Result<Select<M>, quickapi_view::Error> {
+    ) -> Result<Select<M>, crate::Error> {
         PrimaryKeyLookup::Path(self.clone())
             .lookup(_parts, _s, q)
             .await
@@ -78,9 +78,9 @@ where
     async fn lookup(
         &self,
         _parts: &mut Parts,
-        _s: S,
+        _s: &S,
         q: Select<M>,
-    ) -> Result<Select<M>, quickapi_view::Error> {
+    ) -> Result<Select<M>, crate::Error> {
         PrimaryKeyLookup::Path(ToString::to_string(&self))
             .lookup(_parts, _s, q)
             .await
@@ -99,9 +99,17 @@ where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    async fn lookup(&self, _parts: &mut Parts, _s: S, _q: Select<M>) -> Result<Select<M>, Error> {
+    async fn lookup(
+        &self,
+        _parts: &mut Parts,
+        _s: &S,
+        _q: Select<M>,
+    ) -> Result<Select<M>, crate::Error> {
         let _pk = quickapi_model::primary_key::<M>().map_err(|err| {
-            Error::ImproperlyConfigured(format!("Failed to get primary key for entity: {}", err))
+            crate::Error::ImproperlyConfigured(format!(
+                "Failed to get primary key for entity: {}",
+                err
+            ))
         })?;
         let _value = match self {
             PrimaryKeyLookup::Path(key) => {
@@ -111,7 +119,10 @@ where
                 all.0
                     .get(key)
                     .ok_or_else(|| {
-                        Error::ImproperlyConfigured(format!("No value found for key '{}'", &key))
+                        crate::Error::ImproperlyConfigured(format!(
+                            "No value found for key '{}'",
+                            &key
+                        ))
                     })?
                     .clone()
             }
@@ -120,7 +131,7 @@ where
                     axum::extract::Query::from_request_parts(_parts, &_s)
                         .await
                         .map_err(|_| {
-                            Error::ImproperlyConfigured(
+                            crate::Error::ImproperlyConfigured(
                                 "Failed to extract query parameters".to_owned(),
                             )
                         })?;
@@ -129,14 +140,17 @@ where
                 all.0
                     .get(key)
                     .ok_or_else(|| {
-                        Error::ImproperlyConfigured(format!("No value found for key '{}'", &key))
+                        crate::Error::ImproperlyConfigured(format!(
+                            "No value found for key '{}'",
+                            &key
+                        ))
                     })?
                     .clone()
             }
         };
 
         let col = M::Column::from_str(&_pk).map_err(|_| {
-            Error::ImproperlyConfigured("Failed to parse primary key column".to_owned())
+            crate::Error::ImproperlyConfigured("Failed to parse primary key column".to_owned())
         })?;
 
         Ok(_q.filter(Expr::col(col).eq(_value)))

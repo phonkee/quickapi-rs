@@ -22,14 +22,16 @@
  *  THE SOFTWARE.
  *
  */
+use axum::extract::rejection::PathRejection;
+
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("No match")]
-    NoMatch,
-
-    #[error("Internal error: {0}")]
-    InternalError(String),
-
     #[error("Improperly configured: {0}")]
     ImproperlyConfigured(String),
+
+    #[error("Not found: {0}")]
+    NotFound(String),
+
+    #[error("Path error: {0}")]
+    PathError(#[from] PathRejection),
 }

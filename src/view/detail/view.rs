@@ -26,13 +26,13 @@
 use crate::Error;
 use crate::serializer::ModelSerializerJson;
 use crate::view::detail::DetailViewTrait;
-use crate::view::detail::lookup::Lookup;
 use crate::view::handler::Handler;
 use axum::Router;
 use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
+use quickapi_lookup::Lookup;
 use quickapi_view::ModelViewTrait;
 use quickapi_view::as_method_filter;
 use sea_orm::{DatabaseConnection, EntityTrait};
@@ -236,7 +236,7 @@ where
     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
         let lookup = self.lookup.clone();
         let _select = M::find();
-        let _select = lookup.lookup(&mut _parts, _state.clone(), _select).await?;
+        let _select = lookup.lookup(&mut _parts, &_state, _select).await?;
         debug!("DetailView: lookup completed");
         Ok(quickapi_http::response::Response::default())
     }
