@@ -1624,6 +1624,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum",
+ "bytes",
  "dyn-clone",
  "quickapi-filter",
  "quickapi-http",
@@ -1705,6 +1706,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum",
+ "bytes",
  "dyn-clone",
  "quickapi-filter",
  "quickapi-http",

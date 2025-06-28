@@ -35,4 +35,4 @@ pub use quickapi::new;
 pub use quickapi_filter::Error as FilterError;
 pub use quickapi_filter::common as filter_common;
 
-pub use quickapi_view::{ModelViewTrait, RouterExt, ViewTrait};
+pub use quickapi_view::{RouterExt, ViewTrait};

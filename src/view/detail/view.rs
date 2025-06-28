@@ -28,13 +28,11 @@ use crate::serializer::ModelSerializerJson;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use axum::Router;
-use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
 use quickapi_lookup::Lookup;
-use quickapi_view::ModelViewTrait;
-use quickapi_view::as_method_filter;
+use quickapi_view::{ViewTrait, as_method_filter};
 use sea_orm::{DatabaseConnection, EntityTrait};
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -228,11 +226,15 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    fn has_fallback(&self) -> bool {
+        self.fallback
+    }
+
     async fn handle_view(
         &self,
         mut _parts: &mut Parts,
         _state: S,
-        _body: Body,
+        _body: bytes::Bytes,
     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
         let lookup = self.lookup.clone();
         let _select = M::find();
@@ -241,22 +243,30 @@ where
         debug!("DetailView: lookup completed");
         Ok(quickapi_http::response::Response::default())
     }
-}
 
-/// Implementing ModelViewTrait for DetailView to define the model view behavior.
-#[async_trait::async_trait]
-impl<M, S, O> ModelViewTrait<M, S> for DetailView<M, S, O>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    async fn handle_view(
-        &self,
-        parts: &mut Parts,
-        state: S,
-        body: Body,
-    ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
-        quickapi_view::ViewTrait::<S>::handle_view(self, parts, state, body).await
+    async fn get_when_views<'a>(
+        &'a self,
+        _parts: &'a mut Parts,
+        _state: &'a S,
+    ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, quickapi_view::Error> {
+        Ok(vec![])
     }
 }
+
+// /// Implementing ModelViewTrait for DetailView to define the model view behavior.
+// #[async_trait::async_trait]
+// impl<M, S, O> ModelViewTrait<M, S> for DetailView<M, S, O>
+// where
+//     M: EntityTrait,
+//     S: Clone + Send + Sync + 'static,
+//     O: serde::Serialize + Clone + Send + Sync + 'static,
+// {
+//     async fn handle_view(
+//         &self,
+//         parts: &mut Parts,
+//         state: S,
+//         body: Body,
+//     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
+//         quickapi_view::ViewTrait::<S>::handle_view(self, parts, state, body).await
+//     }
+// }

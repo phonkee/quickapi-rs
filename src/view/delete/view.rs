@@ -25,13 +25,13 @@
 
 use crate::view::handler::Handler;
 use axum::Router;
-use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
 use quickapi_lookup::Lookup;
-use quickapi_view::ViewTrait;
 use quickapi_view::as_method_filter;
+use quickapi_view::{Error, ViewTrait};
+use quickapi_when::WhenViews;
 use sea_orm::DatabaseConnection;
 use std::marker::PhantomData;
 use std::sync::Arc;
@@ -48,6 +48,7 @@ where
     db: DatabaseConnection,
     path: String,
     method: Method,
+    when: WhenViews<S>,
     lookup: Arc<dyn Lookup<M, S>>,
     fallback: bool,
     _phantom_data: PhantomData<(M, S)>,
@@ -69,6 +70,7 @@ where
             db,
             path: path.into(),
             method,
+            when: Default::default(),
             lookup: Arc::new(lookup),
             fallback: false,
             _phantom_data: Default::default(),
@@ -95,15 +97,26 @@ where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
+    fn has_fallback(&self) -> bool {
+        self.fallback
+    }
     async fn handle_view(
         &self,
         _parts: &mut Parts,
         _state: S,
-        _body: Body,
+        _body: bytes::Bytes,
     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
         Err(quickapi_view::Error::ImproperlyConfigured(
             "nope".to_owned(),
         ))
+    }
+
+    async fn get_when_views<'a>(
+        &'a self,
+        _parts: &'a mut Parts,
+        _state: &'a S,
+    ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error> {
+        Ok(vec![])
     }
 }
 

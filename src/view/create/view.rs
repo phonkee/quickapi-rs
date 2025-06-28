@@ -25,12 +25,11 @@
 
 use crate::view::handler::Handler;
 use axum::Router;
-use axum::body::Body;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
 use quickapi_http::Response;
-use quickapi_view::{Error, as_method_filter};
+use quickapi_view::{Error, ViewTrait, as_method_filter};
 use sea_orm::{DatabaseConnection, EntityTrait};
 use std::marker::PhantomData;
 use tracing::debug;
@@ -45,6 +44,7 @@ where
     db: DatabaseConnection,
     path: String,
     method: Method,
+    when: quickapi_when::WhenViews<S>,
     before_save: quickapi_model::ModelCallbacks<M, S>,
     fallback: bool,
     _phantom_data: PhantomData<(M, S, Ser)>,
@@ -64,29 +64,11 @@ where
             db: self.db.clone(),
             path: self.path.clone(),
             method: self.method.clone(),
+            when: self.when.clone(),
             before_save: self.before_save.clone(),
             fallback: self.fallback,
             _phantom_data: PhantomData,
         }
-    }
-}
-
-/// Implement the ViewTrait for CreateView, which defines how the view handles requests.
-#[async_trait::async_trait]
-impl<M, S, Ser> quickapi_view::ViewTrait<S> for CreateView<M, S, Ser>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    Ser: serde::Serialize + for<'a> serde::Deserialize<'a> + Into<M::Model> + Sync + Send + 'static,
-    <M as EntityTrait>::Model: serde::Serialize,
-{
-    async fn handle_view(
-        &self,
-        _parts: &mut Parts,
-        _state: S,
-        _body: Body,
-    ) -> Result<Response, Error> {
-        todo!()
     }
 }
 
@@ -135,6 +117,7 @@ where
             db,
             path: path.into(),
             method,
+            when: Default::default(),
             before_save: Default::default(),
             fallback: false,
             _phantom_data: PhantomData,
@@ -150,6 +133,7 @@ where
             db: self.db,
             path: self.path,
             method: self.method,
+            when: self.when,
             before_save: self.before_save,
             fallback: false,
             _phantom_data: PhantomData,
@@ -178,5 +162,42 @@ where
     pub fn with_fallback<Serializer>(mut self, fallback: bool) -> Self {
         self.fallback = fallback;
         self
+    }
+}
+
+/// Implement the ViewTrait for CreateView, which defines how the view handles requests.
+#[async_trait::async_trait]
+impl<M, S, Ser> ViewTrait<S> for CreateView<M, S, Ser>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    Ser: serde::Serialize + for<'a> serde::Deserialize<'a> + Into<M::Model> + Sync + Send + 'static,
+    <M as EntityTrait>::Model: serde::Serialize,
+{
+    async fn handle_view(
+        &self,
+        _parts: &mut Parts,
+        _state: S,
+        _body: bytes::Bytes,
+    ) -> Result<Response, Error> {
+        todo!()
+    }
+
+    /// get_when_views returns a vector of views that should be executed when the CreateView is called.
+    async fn get_when_views<'a>(
+        &'a self,
+        _parts: &'a mut Parts,
+        _state: &'a S,
+    ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error> {
+        // Return an empty vector as CreateView does not have any when views.
+        self.when
+            .get_views(_parts, _state)
+            .await
+            .map_err(|e| Error::ImproperlyConfigured(e.to_string()))
+    }
+
+    /// has_fallback returns true if the CreateView has a fallback defined (if when does not matches).
+    fn has_fallback(&self) -> bool {
+        self.fallback
     }
 }

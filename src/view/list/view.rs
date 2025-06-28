@@ -28,13 +28,11 @@ use crate::serializer::ModelSerializerJson;
 use crate::view::handler::Handler;
 use crate::view::list::ListViewTrait;
 use axum::Router;
-use axum::body::Body;
-use axum::http::Method;
 use axum::http::request::Parts;
+use axum::http::{Method, StatusCode};
 use axum::routing::on;
 use quickapi_filter::SelectFilter;
 use quickapi_http::response::key::Key;
-use quickapi_view::ModelViewTrait;
 use quickapi_view::RouterExt;
 use quickapi_view::ViewTrait;
 use sea_orm::{DatabaseConnection, EntityTrait};
@@ -208,12 +206,16 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
+    fn has_fallback(&self) -> bool {
+        self.fallback
+    }
+
     /// handle_view method to process the view request
     async fn handle_view(
         &self,
         _parts: &mut Parts,
         _state: S,
-        _body: Body,
+        _body: bytes::Bytes,
     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
         debug!("hello from ListView handle_view");
 
@@ -235,10 +237,14 @@ where
                 return Ok(response);
             }
 
-            return Ok(quickapi_http::response::Response {
-                data: serde_json::Value::Number(42.into()),
-                ..Default::default()
-            });
+            // we have not fallback, so we return an error
+            if !self.fallback {
+                return Ok(quickapi_http::response::Response {
+                    data: serde_json::Value::Number(42.into()),
+                    status: StatusCode::NOT_FOUND,
+                    ..Default::default()
+                });
+            }
         }
 
         Ok(quickapi_http::response::Response {
@@ -246,25 +252,33 @@ where
             ..Default::default()
         })
     }
-}
 
-#[async_trait::async_trait]
-impl<M, S, O> ModelViewTrait<M, S> for ListView<M, S, O>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    /// handle_view method to process the model view request
-    async fn handle_view(
-        &self,
-        _parts: &mut Parts,
-        _state: S,
-        _body: Body,
-    ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
-        ViewTrait::<S>::handle_view(self, _parts, _state, _body).await
+    async fn get_when_views<'a>(
+        &'a self,
+        _parts: &'a mut Parts,
+        _state: &'a S,
+    ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, quickapi_view::Error> {
+        Ok(vec![])
     }
 }
+
+// #[async_trait::async_trait]
+// impl<M, S, O> ModelViewTrait<M, S> for ListView<M, S, O>
+// where
+//     M: EntityTrait,
+//     S: Clone + Send + Sync + 'static,
+//     O: serde::Serialize + Clone + Send + Sync + 'static,
+// {
+//     /// handle_view method to process the model view request
+//     async fn handle_view(
+//         &self,
+//         _parts: &mut Parts,
+//         _state: S,
+//         _body: Body,
+//     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
+//         ViewTrait::<S>::handle_view(self, _parts, _state, _body).await
+//     }
+// }
 
 #[async_trait::async_trait]
 impl<M, S, O> ListViewTrait<M, S> for ListView<M, S, O>

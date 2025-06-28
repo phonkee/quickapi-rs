@@ -24,10 +24,9 @@
  */
 
 use axum::Router;
-use axum::body::Body;
 use axum::http::request::Parts;
 use quickapi_http::Response;
-use quickapi_view::Error;
+use quickapi_view::{Error, ViewTrait};
 
 /// Prefix is a struct that contains multiple views under a common path prefix.
 #[allow(dead_code)]
@@ -36,7 +35,7 @@ where
     S: Clone + Send + Sync + 'static,
 {
     pub(crate) path: String,
-    pub(crate) views: Vec<Box<dyn quickapi_view::ViewTrait<S> + Send + Sync>>,
+    pub(crate) views: Vec<Box<dyn ViewTrait<S> + Send + Sync>>,
 }
 
 impl<S> Clone for Prefix<S>
@@ -84,13 +83,26 @@ impl<S> quickapi_view::ViewTrait<S> for Prefix<S>
 where
     S: Clone + Send + Sync + 'static,
 {
+    // TODO: no we does not have fallback view by default
+    fn has_fallback(&self) -> bool {
+        // Prefix does not have a fallback view by default
+        false
+    }
     async fn handle_view(
         &self,
         _parts: &mut Parts,
         _state: S,
-        _body: Body,
+        _body: bytes::Bytes,
     ) -> Result<Response, Error> {
         todo!()
+    }
+
+    async fn get_when_views<'a>(
+        &'a self,
+        _parts: &'a mut Parts,
+        _state: &'a S,
+    ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error> {
+        Ok(vec![])
     }
 }
 

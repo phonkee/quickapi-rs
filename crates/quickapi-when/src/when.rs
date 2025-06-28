@@ -219,10 +219,7 @@ where
                 views.push(when_view.view.as_ref());
             }
         }
-        match views.len() {
-            0 => Err(crate::Error::NoMatch),
-            _ => Ok(views),
-        }
+        Ok(views)
     }
 }
 
