@@ -193,7 +193,7 @@ where
         self.when
             .get_views(_parts, _state)
             .await
-            .map_err(|e| Error::ImproperlyConfigured(e.to_string()))
+            .map_err(|e| Error::InternalError(Box::new(e)))
     }
 
     /// has_fallback returns true if the CreateView has a fallback defined (if when does not matches).

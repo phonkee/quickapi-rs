@@ -117,9 +117,11 @@ where
         _parts: &'a mut Parts,
         _state: &'a S,
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error> {
-        Ok(vec![])
+        self.when
+            .get_views(_parts, _state)
+            .await
+            .map_err(|e| Error::InternalError(Box::new(e)))
     }
-
 }
 
 /// Implement the RouterExt trait for DeleteView

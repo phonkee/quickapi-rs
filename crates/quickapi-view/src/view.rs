@@ -102,7 +102,16 @@ where
         }
 
         // now let's run the actual view logic
-        self.handle_view(_parts, _state, _body.clone()).await
+        match self.handle_view(_parts, _state, _body.clone()).await {
+            Ok(response) => {
+                // if we have a response, we return it
+                Ok(response.with_header(axum::http::header::CONTENT_TYPE, "application/json"))
+            }
+            Err(e) => {
+                // if we have an error, we return it
+                Err(e)
+            }
+        }
     }
 }
 
@@ -111,11 +120,6 @@ impl<S> ViewTrait<S> for ()
 where
     S: Clone + Send + Sync + 'static,
 {
-    /// has_fallback returns true if the view has a fallback view (no match in whens or no whens).
-    fn has_fallback(&self) -> bool {
-        true
-    }
-
     /// handle_view runs the view logic.
     async fn handle_view(
         &self,
@@ -133,5 +137,10 @@ where
         _state: &'a S,
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error> {
         Ok(vec![])
+    }
+
+    /// has_fallback returns true if the view has a fallback view (no match in whens or no whens).
+    fn has_fallback(&self) -> bool {
+        true
     }
 }

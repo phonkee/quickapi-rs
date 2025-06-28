@@ -57,4 +57,7 @@ pub enum Error {
 
     #[error("Path rejection: {0}")]
     PathRejection(#[from] axum::extract::rejection::PathRejection),
+
+    #[error("Internal error: {0}")]
+    InternalError(#[from] Box<dyn std::error::Error>),
 }

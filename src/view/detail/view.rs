@@ -250,6 +250,9 @@ where
         _parts: &'a mut Parts,
         _state: &'a S,
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, quickapi_view::Error> {
-        Ok(vec![])
+        self.when
+            .get_views(_parts, _state)
+            .await
+            .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))
     }
 }
