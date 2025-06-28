@@ -24,10 +24,12 @@
  */
 mod serializers;
 
+use axum::extract::Query;
 use quickapi::RouterExt;
 use quickapi::filter_common::paginator::Paginator;
 use quickapi_lookup::PrimaryKeyLookup;
 use sea_orm::Select;
+use serde::Deserialize;
 use std::time::Duration;
 use tracing::{debug, info};
 
@@ -41,12 +43,29 @@ pub async fn primary_key_filter(
     Ok(_query)
 }
 
+// filter_search_query filters the search query
+pub async fn filter_search_query(
+    _query: Select<entity::User>,
+    _search: Option<Query<QuerySearch>>,
+) -> Result<Select<entity::User>, quickapi_filter::Error> {
+    // get id query parameter
+    println!("Search query: {:?}", _search);
+    Ok(_query)
+}
+
 // MAX_DB_CONNECTION_TIMEOUT_SECONDS is the maximum time in seconds to wait for a database connection
 const MAX_DB_CONNECTION_TIMEOUT_SECONDS: u64 = 5;
 
 /// when_condition is a condition that will be checked before applying the view
 pub async fn when_condition(_x: axum::extract::OriginalUri) -> Result<(), quickapi_when::Error> {
     Ok(())
+}
+
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+pub struct QuerySearch {
+    #[serde(rename = "q")]
+    query: Option<String>,
 }
 
 #[tokio::main]
