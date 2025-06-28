@@ -47,6 +47,12 @@ where
         state: &S,
         query: Select<M>,
     ) -> Result<Select<M>, crate::Error>;
+
+    /// id is an optional method to return an identifier for the filter.
+    /// this is useful for filter that needs to be just once in the SelectFilters.
+    fn id(&self) -> Option<String> {
+        None
+    }
 }
 
 #[allow(dead_code)]
@@ -61,6 +67,11 @@ where
         state: &'a S,
         query: Select<M>,
     ) -> Pin<Box<dyn Future<Output = Result<Select<M>, crate::Error>> + Send + 'a>>;
+
+    /// id is an optional method to return an identifier for the filter.
+    fn id(&self) -> Option<String> {
+        None
+    }
 }
 
 dyn_clone::clone_trait_object!(<M, S> SelectFilterErased<M, S>);
@@ -99,6 +110,7 @@ where
     S: Clone + Send + Sync + 'static,
     T: Sync + Send + 'static,
 {
+    /// filter_select_boxed is called to filter the select query.
     fn filter_select_boxed<'a>(
         &'a self,
         parts: &'a mut Parts,
@@ -106,6 +118,11 @@ where
         query: Select<M>,
     ) -> Pin<Box<dyn Future<Output = Result<Select<M>, crate::Error>> + Send + 'a>> {
         Box::pin(self.inner.filter_select(parts, state, query))
+    }
+
+    /// id returns the identifier of the filter if it exists.
+    fn id(&self) -> Option<String> {
+        self.inner.id()
     }
 }
 
@@ -142,10 +159,12 @@ where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
+    // new creates a new instance of SelectFilters.
     pub fn new() -> Self {
         Self { inner: Vec::new() }
     }
 
+    // push adds a new filter to the SelectFilters. checks if the filter is already present.
     pub fn push<F, T>(&mut self, f: F)
     where
         F: SelectFilter<M, S, T> + Clone + Send + Sync + 'static,
@@ -155,7 +174,28 @@ where
             inner: f,
             _phantom: PhantomData,
         });
+
+        // replace the filter if it already exists
+        if let Some(id) = boxed.id() {
+            if let Some(pos) = self
+                .inner
+                .iter()
+                .position(|f| f.id().as_deref() == Some(&id))
+            {
+                self.inner[pos] = boxed;
+                return; // Exit early if we replaced an existing filter
+            }
+        }
+
         self.inner.push(boxed);
+    }
+
+    // delete removes a filter from the SelectFilters by its id.
+    pub fn delete<F>(&mut self, id: &str)
+    where
+        F: SelectFilter<M, S, ()> + Send + Sync + 'static,
+    {
+        self.inner.retain(|f| f.id().as_deref() != Some(id));
     }
 }
 
