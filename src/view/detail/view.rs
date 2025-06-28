@@ -244,6 +244,7 @@ where
         Ok(quickapi_http::response::Response::default())
     }
 
+    /// get_when_views returns a vector of when views for the DetailView.
     async fn get_when_views<'a>(
         &'a self,
         _parts: &'a mut Parts,
@@ -251,22 +252,9 @@ where
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, quickapi_view::Error> {
         Ok(vec![])
     }
-}
 
-// /// Implementing ModelViewTrait for DetailView to define the model view behavior.
-// #[async_trait::async_trait]
-// impl<M, S, O> ModelViewTrait<M, S> for DetailView<M, S, O>
-// where
-//     M: EntityTrait,
-//     S: Clone + Send + Sync + 'static,
-//     O: serde::Serialize + Clone + Send + Sync + 'static,
-// {
-//     async fn handle_view(
-//         &self,
-//         parts: &mut Parts,
-//         state: S,
-//         body: Body,
-//     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
-//         quickapi_view::ViewTrait::<S>::handle_view(self, parts, state, body).await
-//     }
-// }
+    /// has_when_views checks if the DetailView has any when views.
+    fn has_when_views(&self) -> bool {
+        !self.when.is_empty()
+    }
+}

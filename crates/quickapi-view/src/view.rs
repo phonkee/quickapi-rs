@@ -45,10 +45,13 @@ where
         &'a self,
         _parts: &'a mut Parts,
         _state: &'a S,
-    ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error>;
+    ) -> Result<Vec<&(dyn ViewTrait<S> + Send + Sync)>, Error>;
 
     /// has_fallback returns true if the view has a fallback view.
     fn has_fallback(&self) -> bool;
+
+    /// has_when_views returns true if the view has any when views.
+    fn has_when_views(&self) -> bool;
 
     /// run runs top level view logic.
     /// This is the entry point for the view and is only implemented in trait. all other trait methods must be implemented to work properly
@@ -58,8 +61,13 @@ where
         _state: S,
         _body: bytes::Bytes,
     ) -> Result<quickapi_http::response::Response, Error> {
-        let mut _parts = _parts.clone();
-        let when_views = self.get_when_views(&mut _parts, &_state).await?.clone();
+        let mut _original_parts = _parts.clone();
+
+        // list all views
+        let when_views = self
+            .get_when_views(&mut _original_parts, &_state)
+            .await?
+            .clone();
 
         for _when_view in when_views {
             // how to clone body here?
@@ -68,7 +76,10 @@ where
 
         let _ = when_views;
 
-        todo!()
+        Ok(quickapi_http::response::Response {
+            data: serde_json::Value::Object(serde_json::Map::new()),
+            ..Default::default()
+        })
     }
 }
 
@@ -99,5 +110,10 @@ where
         _state: &'a S,
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error> {
         Ok(vec![])
+    }
+
+    /// has_when_views returns true if the view has any when views.
+    fn has_when_views(&self) -> bool {
+        false
     }
 }

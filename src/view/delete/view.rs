@@ -111,12 +111,18 @@ where
         ))
     }
 
+    /// get_when_views returns a list of when views for the DeleteView.
     async fn get_when_views<'a>(
         &'a self,
         _parts: &'a mut Parts,
         _state: &'a S,
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error> {
         Ok(vec![])
+    }
+
+    /// has_when_views returns true if the view has any when views.
+    fn has_when_views(&self) -> bool {
+        !self.when.is_empty()
     }
 }
 

@@ -1712,6 +1712,7 @@ dependencies = [
  "quickapi-http",
  "quickapi-macro",
  "sea-orm",
+ "serde_json",
  "thiserror",
 ]
 

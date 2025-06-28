@@ -253,6 +253,7 @@ where
         })
     }
 
+    /// get_when_views method to retrieve views based on conditions
     async fn get_when_views<'a>(
         &'a self,
         _parts: &'a mut Parts,
@@ -260,32 +261,9 @@ where
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, quickapi_view::Error> {
         Ok(vec![])
     }
-}
 
-// #[async_trait::async_trait]
-// impl<M, S, O> ModelViewTrait<M, S> for ListView<M, S, O>
-// where
-//     M: EntityTrait,
-//     S: Clone + Send + Sync + 'static,
-//     O: serde::Serialize + Clone + Send + Sync + 'static,
-// {
-//     /// handle_view method to process the model view request
-//     async fn handle_view(
-//         &self,
-//         _parts: &mut Parts,
-//         _state: S,
-//         _body: Body,
-//     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
-//         ViewTrait::<S>::handle_view(self, _parts, _state, _body).await
-//     }
-// }
-
-#[async_trait::async_trait]
-impl<M, S, O> ListViewTrait<M, S> for ListView<M, S, O>
-where
-    M: EntityTrait,
-    S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
-{
-    // Additional methods specific to ListViewTrait can be implemented here
+    /// has_when_views method to check if there are any when conditions
+    fn has_when_views(&self) -> bool {
+        !self.when.is_empty()
+    }
 }

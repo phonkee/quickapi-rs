@@ -28,6 +28,9 @@ use quickapi_view::ViewTrait;
 use std::marker::PhantomData;
 use std::pin::Pin;
 
+/// TODO: make this configurable
+const MAX_BODY_SIZE: usize = 1_048_576; // 0 means no limit
+
 #[derive(Clone)]
 pub(crate) struct Handler<S, V>(V, PhantomData<S>)
 where
@@ -60,7 +63,9 @@ where
 
         Box::pin(async move {
             // read body into bytes
-            let body = axum::body::to_bytes(body, 0).await.unwrap_or_default();
+            let body = axum::body::to_bytes(body, MAX_BODY_SIZE)
+                .await
+                .unwrap_or_default();
 
             // prepare json response partials (keys)
             parts

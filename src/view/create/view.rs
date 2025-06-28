@@ -200,4 +200,9 @@ where
     fn has_fallback(&self) -> bool {
         self.fallback
     }
+
+    /// has_when_views returns true if the CreateView has any when views defined.
+    fn has_when_views(&self) -> bool {
+        !self.when.is_empty()
+    }
 }
