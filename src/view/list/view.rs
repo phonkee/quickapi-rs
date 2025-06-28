@@ -75,7 +75,7 @@ where
         ListView {
             db: self.db.clone(),
             path: self.path.clone(),
-            filters: quickapi_filter::SelectFilters::new(),
+            filters: self.filters.clone(),
             when: quickapi_when::WhenViews::new(),
             _phantom_data: PhantomData,
             method: self.method.clone(),
