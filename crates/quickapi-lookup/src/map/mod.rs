@@ -70,7 +70,7 @@ where
 {
     /// from converts a HashMap<String, LookupValue> into a LookupMap<M, S>
     fn from(map: HashMap<String, LookupMapValue>) -> Self {
-        let mut result = Self::new();
+        let mut result = Self::default();
         result.map = map;
         result
     }
@@ -82,9 +82,21 @@ where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    /// new creates a new empty LookupMap.
-    pub fn new() -> Self {
-        Self::default()
+    // update updates other LookupMap with the current one.
+    pub fn update(self, other: impl Into<Self>) -> Self {
+        let mut result = self;
+        for (key, value) in other.into().map {
+            result = result.with(key, value);
+        }
+        // This method is a no-op in this context, as LookupMap is immutable.
+        // It can be used to chain methods if needed.
+        result
+    }
+
+    /// with adds a key-value pair to the LookupMap.
+    pub fn with(mut self, key: impl Into<String>, value: LookupMapValue) -> Self {
+        self.map.insert(key.into(), value);
+        self
     }
 }
 
