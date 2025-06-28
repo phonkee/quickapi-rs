@@ -252,9 +252,4 @@ where
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, quickapi_view::Error> {
         Ok(vec![])
     }
-
-    /// has_when_views checks if the DetailView has any when views.
-    fn has_when_views(&self) -> bool {
-        !self.when.is_empty()
-    }
 }

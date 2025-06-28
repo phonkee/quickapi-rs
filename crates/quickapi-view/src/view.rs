@@ -50,36 +50,59 @@ where
     /// has_fallback returns true if the view has a fallback view.
     fn has_fallback(&self) -> bool;
 
-    /// has_when_views returns true if the view has any when views.
-    fn has_when_views(&self) -> bool;
-
     /// run runs top level view logic.
     /// This is the entry point for the view and is only implemented in trait. all other trait methods must be implemented to work properly
     async fn run(
         &self,
         _parts: &mut Parts,
         _state: S,
-        _body: bytes::Bytes,
+        _body: &bytes::Bytes,
     ) -> Result<quickapi_http::response::Response, Error> {
         let mut _original_parts = _parts.clone();
 
+        // check if we have when views
         // list all views
-        let when_views = self
-            .get_when_views(&mut _original_parts, &_state)
-            .await?
-            .clone();
+        let when_views = self.get_when_views(&mut _original_parts, &_state).await?;
 
-        for _when_view in when_views {
-            // how to clone body here?
-            // let result = when_view.run(&mut _parts, _state.clone(), _body).await;
+        // when we have when views, we try to run them
+        if !when_views.is_empty() {
+            // prepare parts to be reused
+            let mut _view_parts = _parts.clone();
+
+            // iterate over all when views and try to run them
+            for when_view in when_views {
+                // how to clone body here?
+                match when_view
+                    .run(&mut _view_parts, _state.clone(), &_body)
+                    .await
+                {
+                    Ok(_response) => {
+                        //if we have a response, we return it
+                        return Ok(_response);
+                    }
+                    Err(e) => match e {
+                        Error::NoMatch => continue,
+                        _ => {
+                            // if we have an error, we return it
+                            return Err(e);
+                        }
+                    },
+                };
+            }
+
+            // now that we are here and tried everything, check if we have a fallback view
+            if !self.has_fallback() {
+                // Not found nothing
+                return Ok(quickapi_http::response::Response {
+                    data: serde_json::Value::Null,
+                    status: axum::http::StatusCode::NOT_FOUND,
+                    ..Default::default()
+                });
+            }
         }
 
-        let _ = when_views;
-
-        Ok(quickapi_http::response::Response {
-            data: serde_json::Value::Object(serde_json::Map::new()),
-            ..Default::default()
-        })
+        // now let's run the actual view logic
+        self.handle_view(_parts, _state, _body.clone()).await
     }
 }
 
@@ -110,10 +133,5 @@ where
         _state: &'a S,
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error> {
         Ok(vec![])
-    }
-
-    /// has_when_views returns true if the view has any when views.
-    fn has_when_views(&self) -> bool {
-        false
     }
 }

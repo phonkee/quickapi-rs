@@ -104,10 +104,6 @@ where
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error> {
         Ok(vec![])
     }
-
-    fn has_when_views(&self) -> bool {
-        false
-    }
 }
 
 /// Prefix implements the RouterExt trait for registering routers with a path prefix.

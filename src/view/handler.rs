@@ -73,7 +73,7 @@ where
                 .insert(quickapi_http::response::partials::Partials::<S>::default());
 
             self.0
-                .run(&mut parts, state, body)
+                .run(&mut parts, state, &body)
                 .await
                 .unwrap()
                 .into_response()

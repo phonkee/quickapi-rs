@@ -26,16 +26,16 @@
 use crate::Error;
 use crate::serializer::ModelSerializerJson;
 use crate::view::handler::Handler;
-use crate::view::list::ListViewTrait;
 use axum::Router;
+use axum::http::Method;
 use axum::http::request::Parts;
-use axum::http::{Method, StatusCode};
 use axum::routing::on;
 use quickapi_filter::SelectFilter;
 use quickapi_http::response::key::Key;
 use quickapi_view::RouterExt;
 use quickapi_view::ViewTrait;
 use sea_orm::{DatabaseConnection, EntityTrait};
+use serde_json::json;
 use std::default::Default;
 use std::marker::PhantomData;
 use tracing::debug;
@@ -217,38 +217,10 @@ where
         _state: S,
         _body: bytes::Bytes,
     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
-        debug!("hello from ListView handle_view");
-
-        // check if we have when conditions
-        if !self.when.is_empty() {
-            let mut parts_clone = _parts.clone();
-            let _views = self
-                .when
-                .get_views(&mut parts_clone, &_state)
-                .await
-                .unwrap();
-
-            // iterate over the views and handle them
-            for view in _views {
-                // handle the view
-                let response = view
-                    .handle_view(&mut _parts.clone(), _state.clone(), _body)
-                    .await?;
-                return Ok(response);
-            }
-
-            // we have not fallback, so we return an error
-            if !self.fallback {
-                return Ok(quickapi_http::response::Response {
-                    data: serde_json::Value::Number(42.into()),
-                    status: StatusCode::NOT_FOUND,
-                    ..Default::default()
-                });
-            }
-        }
-
         Ok(quickapi_http::response::Response {
-            data: serde_json::Value::Number(42.into()),
+            data: json!({
+               "message": "Hello from ListView",
+            }),
             ..Default::default()
         })
     }
@@ -260,10 +232,5 @@ where
         _state: &'a S,
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, quickapi_view::Error> {
         Ok(vec![])
-    }
-
-    /// has_when_views method to check if there are any when conditions
-    fn has_when_views(&self) -> bool {
-        !self.when.is_empty()
     }
 }

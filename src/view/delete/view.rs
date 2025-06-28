@@ -120,10 +120,6 @@ where
         Ok(vec![])
     }
 
-    /// has_when_views returns true if the view has any when views.
-    fn has_when_views(&self) -> bool {
-        !self.when.is_empty()
-    }
 }
 
 /// Implement the RouterExt trait for DeleteView
