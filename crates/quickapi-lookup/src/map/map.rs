@@ -108,7 +108,10 @@ where
 {
     // lookup converts the LookupMap into a Select query based on the provided parts and state.
     async fn lookup(&self, _parts: &mut Parts, _s: &S, _q: Select<M>) -> Result<Select<M>, Error> {
+        // prepare mutable query
         let mut _q = _q;
+
+        // iterate over keys and values in the map, where key is model column name and value is map::Value
         for (_key, _value) in &self.map {
             // check if the key is a primary key, otherwise treat it as a regular column
             let _key = match _key.as_str() {

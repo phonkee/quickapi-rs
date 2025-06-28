@@ -23,13 +23,10 @@
  *
  */
 
-use axum::extract::FromRequestParts;
-use axum::extract::Path;
 use axum::http::request::Parts;
 use sea_orm::QueryFilter;
 use sea_orm::prelude::Expr;
 use sea_orm::{EntityTrait, Select};
-use std::collections::HashMap;
 use std::str::FromStr;
 
 /// Lookup for primary key or other unique identifier in the database.
@@ -112,41 +109,14 @@ where
             ))
         })?;
         let _value = match self {
-            PrimaryKeyLookup::Path(key) => {
-                let all: Path<HashMap<String, String>> =
-                    Path::from_request_parts(_parts, &_s).await?;
-
-                all.0
-                    .get(key)
-                    .ok_or_else(|| {
-                        crate::Error::ImproperlyConfigured(format!(
-                            "No value found for key '{}'",
-                            &key
-                        ))
-                    })?
-                    .clone()
-            }
-            PrimaryKeyLookup::Query(key) => {
-                let all: axum::extract::Query<HashMap<String, String>> =
-                    axum::extract::Query::from_request_parts(_parts, &_s)
-                        .await
-                        .map_err(|_| {
-                            crate::Error::ImproperlyConfigured(
-                                "Failed to extract query parameters".to_owned(),
-                            )
-                        })?;
-                // Here we would extract the primary key from the query parameters
-                // Implement logic to filter the query based on the key
-                all.0
-                    .get(key)
-                    .ok_or_else(|| {
-                        crate::Error::ImproperlyConfigured(format!(
-                            "No value found for key '{}'",
-                            &key
-                        ))
-                    })?
-                    .clone()
-            }
+            PrimaryKeyLookup::Path(key) => super::Value::Path(key.clone())
+                .get_parts_value::<M, S>(_parts, _s)
+                .await?
+                .clone(),
+            PrimaryKeyLookup::Query(key) => super::Value::Query(key.clone())
+                .get_parts_value::<M, S>(_parts, _s)
+                .await?
+                .clone(),
         };
 
         let col = M::Column::from_str(&_pk).map_err(|_| {
