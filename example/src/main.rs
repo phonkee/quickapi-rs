@@ -54,13 +54,14 @@ pub struct QuerySearch {
 
 // filter_search_query filters the search query
 pub async fn filter_search_query_username(
-    _query: Select<entity::User>,
-    _search: Query<QuerySearch>,
+    query: Select<entity::User>,
+    search: Query<QuerySearch>,
 ) -> Result<Select<entity::User>, quickapi_filter::Error> {
     // if query is present, filter by username
-    let _query = match _search.0 {
-        QuerySearch { query: Some(q) } => _query.filter(entity::user::Column::Username.contains(q)),
-        _ => _query,
+    let _query = if let Some(s) = search.0.query {
+        query.filter(entity::user::Column::Username.contains(s))
+    } else {
+        query
     };
 
     Ok(_query)

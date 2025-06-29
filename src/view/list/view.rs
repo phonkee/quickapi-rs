@@ -51,7 +51,6 @@ where
 {
     db: DatabaseConnection,
     pub filters: quickapi_filter::SelectFilters<M, S>,
-    // when condition to apply logic
     when: quickapi_when::WhenViews<S>,
     path: String,
     method: Method,
