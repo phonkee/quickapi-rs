@@ -31,6 +31,9 @@ pub enum Error {
     #[error("View error: {0}")]
     FilterError(#[from] quickapi_filter::Error),
 
+    #[error("Database error: {0}")]
+    DatabaseError(#[from] sea_orm::DbErr),
+
     // #[error("Not implemented: {0}")]
     // NotImplemented(String),
     //

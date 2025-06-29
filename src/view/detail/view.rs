@@ -41,7 +41,6 @@ use tracing::debug;
 const DEFAULT_JSON_KEY: &str = "object";
 
 /// DetailView is a view for displaying details of a single entity.
-#[allow(dead_code)]
 pub struct DetailView<M, S, O>
 where
     M: EntityTrait,
@@ -101,7 +100,7 @@ where
     {
         let mut clone = self.clone();
         clone.when = Default::default();
-        let mut _result = _f(clone)?;
+        let _result = _f(clone)?;
         self.when.add_when(_when, _result);
         Ok(self)
     }

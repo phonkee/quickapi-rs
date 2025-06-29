@@ -57,7 +57,7 @@ where
     fallback: bool,
     _phantom_data: PhantomData<M>,
     ser: ModelSerializerJson<O>,
-    json_key: Option<Key>,
+    wrap_json_key: Option<Key>,
 }
 
 /// Implementing Clone for ListView to allow cloning of the view.
@@ -79,7 +79,7 @@ where
             method: self.method.clone(),
             fallback: false,
             ser: self.ser.clone(),
-            json_key: self.json_key.clone(),
+            wrap_json_key: self.wrap_json_key.clone(),
         }
     }
 }
@@ -106,7 +106,7 @@ where
             _phantom_data: PhantomData,
             fallback: false,
             ser: ModelSerializerJson::<O>::new(),
-            json_key: Some(DEFAULT_JSON_KEY.into()),
+            wrap_json_key: Some(DEFAULT_JSON_KEY.into()),
         }
     }
 
@@ -120,16 +120,18 @@ where
     #[allow(unused_mut)]
     pub fn when<F, T, Ser>(
         mut self,
-        _when: impl quickapi_when::When<S, T> + Send + Sync + 'static,
+        _when: impl quickapi_when::When<S, T> + Clone + Send + Sync + 'static,
         _f: F,
     ) -> Result<Self, Error>
     where
-        Ser: Clone + serde::Serialize + Send + Sync + 'static,
+        Ser: Clone + serde::Serialize + Send + Sync + 'static + From<<M as EntityTrait>::Model>,
         F: Fn(ListView<M, S, O>) -> Result<ListView<M, S, Ser>, Error>,
+        T: Sync + Send + 'static,
     {
-        // TODO: implement this
-        // let mut _result = _f(self.clone_without_when())?;
-        // self.when.add_view(_when, _result);
+        let mut clone = self.clone();
+        clone.when = Default::default();
+        let mut _result = _f(clone)?;
+        self.when.add_when(_when, _result);
         Ok(self)
     }
 
@@ -144,9 +146,15 @@ where
         self
     }
 
-    /// with_json_key sets the object json key in response.
-    pub fn with_json_key(mut self, key: impl Into<Option<Key>>) -> Self {
-        self.json_key = key.into();
+    /// wrap_result_key method sets key to wrap result in JSON response
+    pub fn wrap_result_key(mut self, key: impl Into<Key>) -> Self {
+        self.wrap_json_key = Some(key.into());
+        self
+    }
+
+    /// no_wrap_result_key method sets key to not wrap result in JSON response
+    pub fn no_wrap_result_key(mut self) -> Self {
+        self.wrap_json_key = None;
         self
     }
 
@@ -165,7 +173,7 @@ where
             _phantom_data: PhantomData,
             fallback: self.fallback,
             ser: ModelSerializerJson::<Ser>::new(),
-            json_key: self.json_key,
+            wrap_json_key: self.wrap_json_key,
         }
     }
 }
@@ -226,15 +234,11 @@ where
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
-        // get objects from the database
-        let _objects = query.all(&self.db).await.unwrap();
-
-        println!("Objects: {:?}", _objects);
-
         // convert objects to the desired type using the serializer
         // If the serializer is not set, we use the default one.
-
-        let _objects = _objects
+        let objects = query
+            .all(&self.db)
+            .await?
             .into_iter()
             .map(|o| {
                 self.ser
@@ -243,8 +247,16 @@ where
             })
             .collect::<Result<Vec<_>, _>>()?;
 
+        let objects = serde_json::Value::Array(objects);
+
+        let objects = if let Some(key) = self.wrap_json_key.clone() {
+            serde_json::Value::Object(serde_json::Map::from_iter(vec![(key.into(), objects)]))
+        } else {
+            objects
+        };
+
         Ok(quickapi_http::response::Response {
-            data: serde_json::Value::Array(_objects),
+            data: objects,
             ..Default::default()
         })
     }
