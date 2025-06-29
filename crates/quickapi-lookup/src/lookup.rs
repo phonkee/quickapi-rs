@@ -125,10 +125,7 @@ where
 
         // col.def().get_column_type()
         let expr = quickapi_model::to_simple_expr(col, _value.clone()).map_err(|err| {
-            crate::Error::ImproperlyConfigured(format!(
-                "Failed to convert value '{}' for column {:?}: {}",
-                _value, col, err
-            ))
+            crate::Error::Internal(Box::new(err))
         })?;
 
         Ok(_q.filter(Expr::col(col).eq(expr)))

@@ -27,7 +27,7 @@ pub enum Error {
     #[error("No match")]
     NoMatch,
 
-    #[error("Internal error: {0}")]
+    #[error("{0}")]
     InternalError(String),
 
     #[error("Improperly configured: {0}")]

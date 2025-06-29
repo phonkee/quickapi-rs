@@ -45,16 +45,46 @@ pub fn to_simple_expr(col: impl ColumnTrait, value: String) -> Result<SimpleExpr
         ColumnType::String(_len) => SimpleExpr::Value(Value::String(Some(Box::new(value)))),
         ColumnType::Text => SimpleExpr::Value(Value::String(Some(Box::new(value)))),
         ColumnType::Blob => SimpleExpr::Value(Value::Bytes(Some(Box::new(value.into_bytes())))),
-        ColumnType::Integer => {
-            SimpleExpr::Value(Value::Int(Some(value.parse::<i32>().map_err(|_| {
-                error_value!(col, value, i32)
-            })?)))
-        }
-        ColumnType::BigInteger => {
-            SimpleExpr::Value(Value::BigInt(Some(value.parse::<i64>().map_err(|_| {
-                error_value!(col, value, i64)
-            })?)))
-        }
+        ColumnType::TinyInteger => SimpleExpr::Value(Value::TinyInt(Some(
+            value
+                .parse::<i8>()
+                .map_err(|_| error_value!(col, value, i8))?,
+        ))),
+        ColumnType::SmallInteger => SimpleExpr::Value(Value::SmallInt(Some(
+            value
+                .parse::<i16>()
+                .map_err(|_| error_value!(col, value, i16))?,
+        ))),
+        ColumnType::Integer => SimpleExpr::Value(Value::Int(Some(
+            value
+                .parse::<i32>()
+                .map_err(|_| error_value!(col, value, i32))?,
+        ))),
+        ColumnType::BigInteger => SimpleExpr::Value(Value::BigInt(Some(
+            value
+                .parse::<i64>()
+                .map_err(|_| error_value!(col, value, i64))?,
+        ))),
+        ColumnType::TinyUnsigned => SimpleExpr::Value(Value::TinyUnsigned(Some(
+            value
+                .parse::<u8>()
+                .map_err(|_| error_value!(col, value, u8))?,
+        ))),
+        ColumnType::SmallUnsigned => SimpleExpr::Value(Value::SmallUnsigned(Some(
+            value
+                .parse::<u16>()
+                .map_err(|_| error_value!(col, value, u16))?,
+        ))),
+        ColumnType::Unsigned => SimpleExpr::Value(Value::Unsigned(Some(
+            value
+                .parse::<u32>()
+                .map_err(|_| error_value!(col, value, u32))?,
+        ))),
+        ColumnType::BigUnsigned => SimpleExpr::Value(Value::BigUnsigned(Some(
+            value
+                .parse::<u64>()
+                .map_err(|_| error_value!(col, value, u64))?,
+        ))),
         _ => {
             todo!("finish all")
         }

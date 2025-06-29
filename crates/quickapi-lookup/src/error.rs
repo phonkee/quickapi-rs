@@ -35,6 +35,6 @@ pub enum Error {
     #[error("Path error: {0}")]
     PathError(#[from] PathRejection),
 
-
-
+    #[error("{0}")]
+    Internal(#[from] Box<dyn std::error::Error + Send + Sync + 'static>),
 }
