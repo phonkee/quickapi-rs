@@ -36,6 +36,7 @@ use quickapi_http::response::{Key, Response};
 use quickapi_lookup::Lookup;
 use quickapi_view::{ViewTrait, as_method_filter};
 use sea_orm::{DatabaseConnection, EntityTrait};
+use serde_json::json;
 use std::marker::PhantomData;
 use std::sync::Arc;
 use tracing::debug;
@@ -239,21 +240,21 @@ where
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
-
-        quickapi_macro::debug_query!(&query.clone());
-
-
         // now perform the query
-        let _object = &query.clone()
+        let result = query
+            .clone()
             .one(&self.db)
             .await
-            .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
+            .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)));
 
-        return Ok(Response::default());
+        let _object = result?;
 
         // check for result
         let Some(object) = _object else {
-            return Ok(Response::new(serde_json::Value::Null));
+            return Ok(Response::new(json!({
+                "error": "Not Found",
+                "message": "The requested resource was not found."
+            })));
         };
 
         let serialized = self
@@ -269,7 +270,7 @@ where
             None => serialized,
         };
 
-        Ok(Response::default())
+        Ok(Response::new(object))
     }
 
     /// get_when_views returns a vector of when views for the DetailView.

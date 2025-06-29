@@ -34,4 +34,7 @@ pub enum Error {
 
     #[error("Path error: {0}")]
     PathError(#[from] PathRejection),
+
+
+
 }
