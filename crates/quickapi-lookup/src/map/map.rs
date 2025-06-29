@@ -107,43 +107,49 @@ where
     S: Clone + Send + Sync + 'static,
 {
     // lookup converts the LookupMap into a Select query based on the provided parts and state.
-    async fn lookup(&self, _parts: &mut Parts, _s: &S, _q: Select<M>) -> Result<Select<M>, Error> {
+    async fn lookup(
+        &self,
+        parts: &mut Parts,
+        state: &S,
+        query: Select<M>,
+    ) -> Result<Select<M>, Error> {
         // prepare mutable query
-        let mut _q = _q;
+        let mut query = query;
 
         // iterate over keys and values in the map, where key is model column name and value is map::Value
-        for (_key, _value) in &self.map {
+        for (key, value) in &self.map {
             // check if the key is a primary key, otherwise treat it as a regular column
-            let _key = match _key.as_str() {
+            let key = match key.as_str() {
                 PRIMARY_KEY => quickapi_model::primary_key::<M>().map_err(|_| {
                     Error::ImproperlyConfigured("Failed to get primary key for entity".to_owned())
                 })?,
-                _ => _key.to_owned(),
+                _ => key.to_owned(),
             };
 
             // get the column and value for the key
-            let _col = M::Column::from_str(&_key).map_err(|_| {
+            let col = M::Column::from_str(&key).map_err(|_| {
                 Error::ImproperlyConfigured("Failed to parse primary key column".to_owned())
             })?;
 
             // get the value from the request parts
-            let _val = _value
-                .get_parts_value::<M, S>(_parts, _s)
+            let val = value
+                .get_parts_value::<M, S>(parts, state)
                 .await
                 .map_err(|e| {
                     Error::ImproperlyConfigured(format!(
                         "Failed to get value for key '{}': {}",
-                        _key, e
+                        key, e
                     ))
                 })?;
 
-            // TODO: can we do this better? more typesafe?
-            // create a column expression for the entity
-            let col = Expr::col(_col);
+            // col.def().get_column_type()
+            let expr = quickapi_model::to_simple_expr(col, val.clone())
+                .map_err(|err| Error::Internal(Box::new(err)))?;
 
-            _q = _q.filter(col.eq(_val));
+            // now filter query
+            query = query.filter(Expr::col(col).eq(expr));
         }
-        Ok(_q)
+        Ok(query)
     }
 }
 

@@ -117,13 +117,11 @@ where
                 .clone(),
         };
 
-        // sea_orm::prelude::ColumnType::string
-
+        // get column from primary key string
         let col = M::Column::from_str(&_pk).map_err(|_| {
             crate::Error::ImproperlyConfigured("Failed to parse primary key column".to_owned())
         })?;
 
-        // col.def().get_column_type()
         let expr = quickapi_model::to_simple_expr(col, _value.clone()).map_err(|err| {
             crate::Error::Internal(Box::new(err))
         })?;
