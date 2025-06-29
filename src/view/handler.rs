@@ -23,8 +23,10 @@
  *
  */
 
+use axum::Json;
 use axum::response::{IntoResponse, Response};
 use quickapi_view::ViewTrait;
+use serde_json::json;
 use std::marker::PhantomData;
 use std::pin::Pin;
 
@@ -72,11 +74,21 @@ where
                 .extensions
                 .insert(quickapi_http::response::partials::Partials::<S>::default());
 
-            self.0
-                .run(&mut parts, &state, &body)
-                .await
-                .unwrap()
-                .into_response()
+            match self.0.run(&mut parts, &state, &body).await {
+                Ok(response) => {
+                    // Otherwise, we convert the response to a generic response.
+                    response.into_response()
+                }
+                Err(err) => {
+                    (
+                        axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(json!({
+                            "error": err.to_string(),
+                        })),
+                    )
+                        .into_response()
+                }
+            }
         })
     }
 }
