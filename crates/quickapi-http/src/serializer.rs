@@ -76,9 +76,10 @@ where
     pub fn deserialize_json<M>(&self, _data: &bytes::Bytes) -> Result<M::Model, crate::error::Error>
     where
         M: sea_orm::EntityTrait,
-        M::Model: From<S>,
+    // M::Model: From<S>,
     {
         let _intermediate: S = serde_json::from_slice(&_data)?;
-        Ok(_intermediate.into())
+        todo!()
+        // Ok(_intermediate.into())
     }
 }
