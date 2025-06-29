@@ -58,13 +58,11 @@ pub async fn filter_search_query_username(
     search: Query<QuerySearch>,
 ) -> Result<Select<entity::User>, quickapi_filter::Error> {
     // if query is present, filter by username
-    let _query = if let Some(s) = search.0.query {
+    Ok(if let Some(s) = search.0.query {
         query.filter(entity::user::Column::Username.contains(s))
     } else {
         query
-    };
-
-    Ok(_query)
+    })
 }
 
 // MAX_DB_CONNECTION_TIMEOUT_SECONDS is the maximum time in seconds to wait for a database connection
