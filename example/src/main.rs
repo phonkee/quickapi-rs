@@ -72,6 +72,20 @@ pub async fn when_condition(_x: axum::extract::OriginalUri) -> Result<(), quicka
     Ok(())
 }
 
+#[derive(Debug, Deserialize)]
+#[allow(dead_code)]
+pub struct QueryFormat {
+    format: Option<String>,
+}
+
+/// when_condition is a condition that will be checked before applying the view
+pub async fn when_condition_format(_x: Query<QueryFormat>) -> Result<(), quickapi_when::Error> {
+    match &_x.format {
+        Some(format) if format == "full" => Ok(()),
+        _ => Err(quickapi_when::Error::NoMatch),
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // prepare tracing subscriber
@@ -140,7 +154,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // .with_filter(primary_key_filter)
         // .with_filter(filter_search_query_username)
         .with_serializer::<serializers::UsernameOnly>()
-        .wrap_result_key("users")
+        .when(when_condition_format, |v| {
+            Ok(v.with_serializer::<serializers::SimpleUser>())
+        })?
+        .wrap_result_key("user")
         // .when(async move |search: Query<QuerySearch>| {
         //     if search.query.is_some() {
         //         Ok(())
