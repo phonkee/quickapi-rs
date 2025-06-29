@@ -57,8 +57,13 @@ impl<S> QuickApi<S> {
     where
         M: EntityTrait,
         S: Clone + Send + Sync + 'static,
-        <M as EntityTrait>::Model:
-            serde::Serialize + for<'a> serde::Deserialize<'a> + Into<M::Model>,
+        <M as EntityTrait>::Model: Default
+            + serde::Serialize
+            + for<'a> serde::Deserialize<'a>
+            + Into<M::Model>
+            + Sync
+            + Send
+            + 'static,
     {
         let _path_method = path_method.into();
         crate::view::create::CreateView::<M, S, M::Model>::new(

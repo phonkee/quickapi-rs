@@ -27,4 +27,7 @@
 pub enum Error {
     #[error("Not Found")]
     NotFound,
+
+    #[error("Serde error: {0}")]
+    SerdeError(#[from] serde_json::Error),
 }

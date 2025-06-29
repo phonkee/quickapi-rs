@@ -154,10 +154,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // .with_filter(primary_key_filter)
         // .with_filter(filter_search_query_username)
         .with_serializer::<serializers::UsernameOnly>()
+        .wrap_result_key("user")
         .when(when_condition_format, |v| {
             Ok(v.with_serializer::<serializers::SimpleUser>())
         })?
-        .wrap_result_key("user")
         // .when(async move |search: Query<QuerySearch>| {
         //     if search.query.is_some() {
         //         Ok(())

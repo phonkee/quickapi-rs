@@ -73,10 +73,7 @@ where
             // iterate over all when views and try to run them
             for when_view in when_views {
                 // how to clone body here?
-                match when_view
-                    .run(&mut _view_parts, _state, &_body)
-                    .await
-                {
+                match when_view.run(&mut _view_parts, _state, &_body).await {
                     // We got response, we return it
                     Ok(_response) => {
                         return Ok(_response);
@@ -153,4 +150,7 @@ where
 
     /// no_wrap_result_key disables wrapping the result in a JSON object with a specific key.
     fn no_wrap_result_key(self) -> Self;
+
+    // get_wrap_result_key returns the key used to wrap the result.
+    fn get_wrap_result_key(&self) -> Option<quickapi_http::response::key::Key>;
 }

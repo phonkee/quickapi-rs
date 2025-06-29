@@ -308,4 +308,9 @@ where
         self.wrap_json_key = None;
         self
     }
+
+    /// get_wrap_result_key method to retrieve the key used for wrapping the JSON response
+    fn get_wrap_result_key(&self) -> Option<Key> {
+        self.wrap_json_key.clone()
+    }
 }

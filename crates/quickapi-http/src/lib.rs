@@ -26,6 +26,7 @@
 mod error;
 pub mod request;
 pub mod response;
+pub mod serializer;
 
 pub use error::Error;
 pub use response::Response;

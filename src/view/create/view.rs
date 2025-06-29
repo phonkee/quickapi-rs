@@ -29,6 +29,7 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
 use quickapi_http::Response;
+use quickapi_http::serializer::ModelDeserializerJson;
 use quickapi_view::{Error, ViewTrait, as_method_filter};
 use sea_orm::{DatabaseConnection, EntityTrait};
 use std::marker::PhantomData;
@@ -39,7 +40,14 @@ pub struct CreateView<M, S, Ser>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    Ser: serde::Serialize + for<'a> serde::Deserialize<'a> + Into<M::Model>,
+    Ser: Clone
+        + Default
+        + serde::Serialize
+        + for<'a> serde::Deserialize<'a>
+        + Into<M::Model>
+        + Sync
+        + Send
+        + 'static,
 {
     db: DatabaseConnection,
     path: String,
@@ -47,6 +55,7 @@ where
     when: quickapi_when::WhenViews<S>,
     before_save: quickapi_model::ModelCallbacks<M, S>,
     fallback: bool,
+    serializer: ModelDeserializerJson<Ser>,
     _phantom_data: PhantomData<(M, S, Ser)>,
 }
 
@@ -57,7 +66,14 @@ impl<M, S, Ser> Clone for CreateView<M, S, Ser>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    Ser: serde::Serialize + for<'a> serde::Deserialize<'a> + Into<M::Model>,
+    Ser: Clone
+        + Default
+        + serde::Serialize
+        + for<'a> serde::Deserialize<'a>
+        + Into<M::Model>
+        + Sync
+        + Send
+        + 'static,
 {
     fn clone(&self) -> Self {
         Self {
@@ -67,6 +83,7 @@ where
             when: self.when.clone(),
             before_save: self.before_save.clone(),
             fallback: self.fallback,
+            serializer: self.serializer.clone(),
             _phantom_data: PhantomData,
         }
     }
@@ -77,7 +94,14 @@ impl<M, S, Ser> quickapi_view::RouterExt<S> for CreateView<M, S, Ser>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    Ser: serde::Serialize + for<'a> serde::Deserialize<'a> + Into<M::Model> + Sync + Send + 'static,
+    Ser: Clone
+        + Default
+        + serde::Serialize
+        + for<'a> serde::Deserialize<'a>
+        + Into<M::Model>
+        + Sync
+        + Send
+        + 'static,
     <M as EntityTrait>::Model: serde::Serialize,
 {
     fn register_router_with_prefix(
@@ -104,7 +128,14 @@ impl<M, S, Ser> CreateView<M, S, Ser>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    Ser: serde::Serialize + for<'a> serde::Deserialize<'a> + Into<M::Model>,
+    Ser: Clone
+        + Default
+        + serde::Serialize
+        + for<'a> serde::Deserialize<'a>
+        + Into<M::Model>
+        + Sync
+        + Send
+        + 'static,
     <M as EntityTrait>::Model: serde::Serialize,
 {
     // Creates a new instance of CreateView with the specified database connection, path, and method.
@@ -120,6 +151,7 @@ where
             when: Default::default(),
             before_save: Default::default(),
             fallback: false,
+            serializer: ModelDeserializerJson::<Ser>::new(),
             _phantom_data: PhantomData,
         })
     }
@@ -127,7 +159,14 @@ where
     /// with_serializer sets custom serializer for the CreateView.
     pub fn with_serializer<Serializer>(self) -> CreateView<M, S, Serializer>
     where
-        Serializer: serde::Serialize + for<'a> serde::Deserialize<'a> + Into<M::Model>,
+        Serializer: Clone
+            + Default
+            + serde::Serialize
+            + for<'a> serde::Deserialize<'a>
+            + Into<M::Model>
+            + Sync
+            + Send
+            + 'static,
     {
         CreateView {
             db: self.db,
@@ -135,6 +174,7 @@ where
             method: self.method,
             when: self.when,
             before_save: self.before_save,
+            serializer: ModelDeserializerJson::<Serializer>::new(),
             fallback: false,
             _phantom_data: PhantomData,
         }
@@ -171,7 +211,14 @@ impl<M, S, Ser> ViewTrait<S> for CreateView<M, S, Ser>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    Ser: serde::Serialize + for<'a> serde::Deserialize<'a> + Into<M::Model> + Sync + Send + 'static,
+    Ser: Clone
+        + Default
+        + serde::Serialize
+        + for<'a> serde::Deserialize<'a>
+        + Into<M::Model>
+        + Sync
+        + Send
+        + 'static,
     <M as EntityTrait>::Model: serde::Serialize,
 {
     async fn handle_view(
