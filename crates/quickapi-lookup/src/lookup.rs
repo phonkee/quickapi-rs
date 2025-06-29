@@ -58,9 +58,7 @@ where
         _s: &S,
         q: Select<M>,
     ) -> Result<Select<M>, crate::Error> {
-        PrimaryKeyLookup::Path(self.clone())
-            .lookup(_parts, _s, q)
-            .await
+        PrimaryKey::Path(self.clone()).lookup(_parts, _s, q).await
     }
 }
 
@@ -78,20 +76,20 @@ where
         _s: &S,
         q: Select<M>,
     ) -> Result<Select<M>, crate::Error> {
-        PrimaryKeyLookup::Path(ToString::to_string(&self))
+        PrimaryKey::Path(ToString::to_string(&self))
             .lookup(_parts, _s, q)
             .await
     }
 }
 
 /// PrimaryKeyLookup is used to specify how to look up the primary key in the request.
-pub enum PrimaryKeyLookup {
+pub enum PrimaryKey {
     Path(String),
     Query(String),
 }
 
-#[async_trait::async_trait]
-impl<M, S> Lookup<M, S> for PrimaryKeyLookup
+ #[async_trait::async_trait]
+impl<M, S> Lookup<M, S> for PrimaryKey
 where
     M: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
@@ -109,11 +107,11 @@ where
             ))
         })?;
         let _value = match self {
-            PrimaryKeyLookup::Path(key) => super::Value::Path(key.clone())
+            PrimaryKey::Path(key) => super::Value::Path(key.clone())
                 .get_parts_value::<M, S>(_parts, _s)
                 .await?
                 .clone(),
-            PrimaryKeyLookup::Query(key) => super::Value::Query(key.clone())
+            PrimaryKey::Query(key) => super::Value::Query(key.clone())
                 .get_parts_value::<M, S>(_parts, _s)
                 .await?
                 .clone(),

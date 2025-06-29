@@ -27,5 +27,5 @@ pub mod lookup;
 pub mod map;
 
 pub use error::Error;
-pub use lookup::{Lookup, PrimaryKeyLookup};
+pub use lookup::{Lookup, PrimaryKey};
 pub use map::{Map, Value};

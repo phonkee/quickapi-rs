@@ -27,7 +27,7 @@ mod serializers;
 use axum::extract::Query;
 use quickapi::filter_common::paginator::Paginator;
 use quickapi::prelude::*;
-use quickapi_lookup::PrimaryKeyLookup;
+use quickapi_lookup::PrimaryKey;
 use sea_orm::ColumnTrait;
 use sea_orm::QueryFilter;
 use sea_orm::Select;
@@ -135,7 +135,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let detail_endpoint = api
     // add list view for User entity
-        .detail::<entity::User>("/api/user/{id}", PrimaryKeyLookup::Path("id".into()))?
+        .detail::<entity::User>("/api/user/{id}", PrimaryKey::Path("id".into()))?
         // .with_filter(Paginator::default())
         // .with_filter(primary_key_filter)
         // .with_filter(filter_search_query_username)

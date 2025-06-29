@@ -232,59 +232,43 @@ where
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
+        // prepare lookup
         let lookup = self.lookup.clone();
         let query = lookup
             .lookup(&mut parts, &_state, query.clone())
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
-        let _object = &query
+
+        quickapi_macro::debug_query!(&query.clone());
+
+
+        // now perform the query
+        let _object = &query.clone()
             .one(&self.db)
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
+        return Ok(Response::default());
+
+        // check for result
         let Some(object) = _object else {
             return Ok(Response::new(serde_json::Value::Null));
         };
 
-        if let Some(key) = &self.wrap_json_key {
-            let serialized = self
-                .ser
-                .serialize_json(object.clone())
-                .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
-            return Ok(Response::new(serde_json::json!({ key: serialized })));
-        }
-
-
-        let _serialized = self
+        let serialized = self
             .ser
             .serialize_json(object.clone())
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
+        let object = match &self.wrap_json_key {
+            Some(key) => serde_json::Value::Object(serde_json::Map::from_iter(vec![(
+                Into::<String>::into(key.clone()),
+                serialized,
+            )])),
+            None => serialized,
+        };
 
-
-        // let object = match object {
-        //     Some(obj) => {
-        //         let serialized = self
-        //             .ser
-        //             .serialize_json(obj)
-        //             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
-        //
-        //         match &self.wrap_json_key {
-        //             Some(key) => Ok(Response::new(json!({ key: serialized }))),
-        //             None => Ok(Response::new(serialized)),
-        //         }
-        //     }
-        //     None => Ok(Response::new(json!({
-        //         "error": "Not Found",
-        //     }))
-        //     .with_status(axum::http::StatusCode::NOT_FOUND))?,
-        // };
-
-        // let _select = M::find();
-        // // TODO: remove unwrap() and handle errors properly
-        // let _select = lookup.lookup(&mut _parts, &_state, _select).await.unwrap();
-        // debug!("DetailView: lookup completed");
         Ok(Response::default())
     }
 
