@@ -33,7 +33,6 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 
 #[async_trait::async_trait]
-#[allow(dead_code)]
 pub trait SelectFilter<M, S, T>
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
@@ -55,7 +54,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 pub trait SelectFilterErased<M, S>: Send + Sync + DynClone
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
@@ -153,7 +151,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 impl<M, S> SelectFilters<M, S>
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,

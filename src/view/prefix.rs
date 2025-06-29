@@ -38,6 +38,7 @@ where
     pub(crate) views: Vec<Box<dyn ViewTrait<S> + Send + Sync>>,
 }
 
+/// Prefix implements Clone to allow cloning of the struct.
 impl<S> Clone for Prefix<S>
 where
     S: Clone + Send + Sync + 'static,
@@ -91,12 +92,13 @@ where
     async fn handle_view(
         &self,
         _parts: &mut Parts,
-        _state: S,
-        _body: bytes::Bytes,
+        _state: &S,
+        _body: &bytes::Bytes,
     ) -> Result<Response, Error> {
         todo!()
     }
 
+    /// get_when_views returns an empty vector for Prefix, as it does not have when views.
     async fn get_when_views<'a>(
         &'a self,
         _parts: &'a mut Parts,

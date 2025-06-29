@@ -103,8 +103,8 @@ where
     async fn handle_view(
         &self,
         _parts: &mut Parts,
-        _state: S,
-        _body: bytes::Bytes,
+        _state: &S,
+        _body: &bytes::Bytes,
     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
         Err(quickapi_view::Error::ImproperlyConfigured(
             "nope".to_owned(),

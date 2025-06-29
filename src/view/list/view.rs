@@ -74,7 +74,7 @@ where
             db: self.db.clone(),
             path: self.path.clone(),
             filters: self.filters.clone(),
-            when: quickapi_when::WhenViews::new(),
+            when: self.when.clone(),
             _phantom_data: PhantomData,
             method: self.method.clone(),
             fallback: false,
@@ -186,10 +186,7 @@ where
         debug!(method = self.method.to_string(), path = &path, "list view",);
 
         // Register the ListView with the axum router
-        Ok(router.route(
-            self.path.clone().as_str(),
-            on(mf, Handler::new(self.clone())),
-        ))
+        Ok(router.route(&path, on(mf, Handler::new(self.clone()))))
     }
 }
 
@@ -201,17 +198,12 @@ where
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + From<<M as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
-    /// has_fallback method to check if the view has a fallback (used when when conditions are not met)
-    fn has_fallback(&self) -> bool {
-        self.fallback
-    }
-
     /// handle_view method to process the view request
     async fn handle_view(
         &self,
         _parts: &mut Parts,
-        _state: S,
-        _body: bytes::Bytes,
+        _state: &S,
+        _body: &bytes::Bytes,
     ) -> Result<Response, quickapi_view::Error> {
         //
         // create query first and call filters
@@ -258,6 +250,11 @@ where
             .get_views(_parts, _state)
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))
+    }
+
+    /// has_fallback method to check if the view has a fallback (used when when conditions are not met)
+    fn has_fallback(&self) -> bool {
+        self.fallback
     }
 }
 

@@ -31,6 +31,7 @@ use axum::Router;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
+use quickapi_filter::SelectFilterErased;
 use quickapi_lookup::Lookup;
 use quickapi_view::{ViewTrait, as_method_filter};
 use sea_orm::{DatabaseConnection, EntityTrait};
@@ -219,23 +220,32 @@ where
 
 /// Implementing View for DetailView to render the detail view.
 #[async_trait::async_trait]
-impl<M, S, O> quickapi_view::ViewTrait<S> for DetailView<M, S, O>
+impl<M, S, O> ViewTrait<S> for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
-    fn has_fallback(&self) -> bool {
-        self.fallback
-    }
-
     async fn handle_view(
         &self,
         mut _parts: &mut Parts,
-        _state: S,
-        _body: bytes::Bytes,
+        _state: &S,
+        _body: &bytes::Bytes,
     ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
+        let mut parts = _parts.clone();
+
+        let query = self
+            .filters
+            .filter_select_boxed(_parts, &_state, M::find())
+            .await
+            .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
+
         let lookup = self.lookup.clone();
+        lookup
+            .lookup(&mut parts, &_state, query)
+            .await
+            .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
+
         let _select = M::find();
         // TODO: remove unwrap() and handle errors properly
         let _select = lookup.lookup(&mut _parts, &_state, _select).await.unwrap();
@@ -253,5 +263,9 @@ where
             .get_views(_parts, _state)
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))
+    }
+
+    fn has_fallback(&self) -> bool {
+        self.fallback
     }
 }

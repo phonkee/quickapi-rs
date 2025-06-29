@@ -37,8 +37,8 @@ where
     async fn handle_view(
         &self,
         parts: &mut Parts,
-        state: S,
-        body: bytes::Bytes,
+        state: &S,
+        body: &bytes::Bytes,
     ) -> Result<Response, Error>;
 
     /// get_when_views returns a vector of views that should be executed based on the request and state.
@@ -56,7 +56,7 @@ where
     async fn run(
         &self,
         _parts: &mut Parts,
-        _state: S,
+        _state: &S,
         _body: &bytes::Bytes,
     ) -> Result<Response, Error> {
         let mut _original_parts = _parts.clone();
@@ -74,7 +74,7 @@ where
             for when_view in when_views {
                 // how to clone body here?
                 match when_view
-                    .run(&mut _view_parts, _state.clone(), &_body)
+                    .run(&mut _view_parts, _state, &_body)
                     .await
                 {
                     // We got response, we return it
@@ -100,7 +100,7 @@ where
         }
 
         // now let's run the actual view logic
-        match self.handle_view(_parts, _state, _body.clone()).await {
+        match self.handle_view(_parts, &_state, _body).await {
             Ok(response) => {
                 // if we have a response, we return it
                 Ok(response.with_header(axum::http::header::CONTENT_TYPE, "application/json"))
@@ -122,8 +122,8 @@ where
     async fn handle_view(
         &self,
         _parts: &mut Parts,
-        _state: S,
-        _body: bytes::Bytes,
+        _state: &S,
+        _body: &bytes::Bytes,
     ) -> Result<Response, Error> {
         Ok(Response::default())
     }

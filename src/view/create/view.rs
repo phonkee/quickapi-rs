@@ -177,8 +177,8 @@ where
     async fn handle_view(
         &self,
         _parts: &mut Parts,
-        _state: S,
-        _body: bytes::Bytes,
+        _state: &S,
+        _body: &bytes::Bytes,
     ) -> Result<Response, Error> {
         todo!()
     }

@@ -110,18 +110,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     .register_router(router)?;
 
     // add list view for User entity
-    let router = api
+    let list_endpoint = api
         .list::<entity::User>("/api/user")?
         .with_filter(Paginator::default())
         .with_filter(primary_key_filter)
         .with_filter(filter_search_query_username)
         .with_serializer::<serializers::UsernameOnly>()
         .wrap_result_key("users")
+        .when(async move |search: Query<QuerySearch>| {
+            if search.query.is_some() {
+                Ok(())
+            } else {
+                Err(quickapi_when::Error::NoMatch)
+            }
+        }, |v| {
+            // change serializer for this condition
+            Ok(v.with_serializer::<serializers::SimpleUser>())
+        }).unwrap()
         // .when(when_condition, |v| {
         //     // change serializer for this condition
         //     Ok(v.with_serializer::<serializers::SimpleUser>())
         // })?
-        .register_router(router)?;
+        ;
+    let router = list_endpoint.register_router(router)?;
 
     // add viewset for Order entity
     let router =
