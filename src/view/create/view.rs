@@ -35,6 +35,8 @@ use sea_orm::{DatabaseConnection, EntityTrait};
 use std::marker::PhantomData;
 use tracing::debug;
 
+use quickapi_model::ModelCallbackErased;
+
 /// CreateView is a struct that represents a view for creating new records in the database.
 #[derive(Clone)]
 pub struct CreateView<M, S, Ser>
@@ -121,7 +123,7 @@ where
     /// with_serializer sets custom serializer for the CreateView.
     pub fn with_serializer<Serializer>(self) -> CreateView<M, S, Serializer>
     where
-        Serializer: Clone + for<'a> serde::Deserialize<'a> +  Sync + Send + 'static,
+        Serializer: Clone + for<'a> serde::Deserialize<'a> + Sync + Send + 'static,
         <M as EntityTrait>::Model: From<Serializer>,
     {
         CreateView {
@@ -176,9 +178,22 @@ where
         _state: &S,
         _body: &bytes::Bytes,
     ) -> Result<Response, Error> {
+        let mut _parts = _parts.clone();
+
+        // deserialize the body into the model (via the serializer)
         let _instance: M::Model = self
             .serializer
             .deserialize_json::<M>(_body)
+            .map_err(|e| Error::InternalError(Box::new(e)))?;
+
+        // now we need to call before_save handlers
+        // TODO: add validations
+
+        // apply before_save handlers
+        let _instance = &self
+            .before_save
+            .call(&mut _parts, _state, _instance)
+            .await
             .map_err(|e| Error::InternalError(Box::new(e)))?;
 
         todo!()

@@ -79,7 +79,6 @@ where
         <M as sea_orm::EntityTrait>::Model: From<S>,
     {
         let _intermediate: S = serde_json::from_slice(&_data)?;
-        todo!()
-        // Ok(_intermediate.into())
+        Ok(_intermediate.into())
     }
 }

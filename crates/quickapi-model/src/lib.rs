@@ -28,7 +28,7 @@ mod columns;
 mod error;
 mod expr;
 
-pub use callback::{ModelCallback, ModelCallbacks};
+pub use callback::{ModelCallback, ModelCallbacks, ModelCallbackErased};
 pub use columns::primary_key;
 pub use error::Error;
 pub use expr::to_simple_expr;
