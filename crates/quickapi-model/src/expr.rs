@@ -25,28 +25,38 @@
 use sea_orm::sea_query::SimpleExpr;
 use sea_orm::{ColumnTrait, ColumnType, Value};
 
+macro_rules! error_value {
+    ($col:expr, $value:expr, $ty:ident) => {
+        crate::Error::ImproperlyConfigured(format!(
+            "Failed to parse value '{}' as {} for column {:?}",
+            $value,
+            stringify!($ty),
+            $col
+        ))
+    };
+}
+
 /// to_simple_expr converts a column and a value into a SimpleExpr.
-pub fn to_simple_expr(
-    col: impl ColumnTrait,
-    value: String,
-) -> Result<SimpleExpr, crate::Error> {
+pub fn to_simple_expr(col: impl ColumnTrait, value: String) -> Result<SimpleExpr, crate::Error> {
     let binding = col.def();
     let def = binding.get_column_type();
     Ok(match def {
+        ColumnType::Char(_len) => SimpleExpr::Value(Value::String(Some(Box::new(value)))),
         ColumnType::String(_len) => SimpleExpr::Value(Value::String(Some(Box::new(value)))),
+        ColumnType::Text => SimpleExpr::Value(Value::String(Some(Box::new(value)))),
+        ColumnType::Blob => SimpleExpr::Value(Value::Bytes(Some(Box::new(value.into_bytes())))),
         ColumnType::Integer => {
             SimpleExpr::Value(Value::Int(Some(value.parse::<i32>().map_err(|_| {
-                crate::Error::ImproperlyConfigured(format!(
-                    "Failed to parse value '{}' as i32 for column {:?}",
-                    value, col
-                ))
+                error_value!(col, value, i32)
+            })?)))
+        }
+        ColumnType::BigInteger => {
+            SimpleExpr::Value(Value::BigInt(Some(value.parse::<i64>().map_err(|_| {
+                error_value!(col, value, i64)
             })?)))
         }
         _ => {
-            return Err(crate::Error::ImproperlyConfigured(format!(
-                "Unsupported column type for primary key: {:?}",
-                col.def().get_column_type()
-            )));
+            todo!("finish all")
         }
     })
 }
