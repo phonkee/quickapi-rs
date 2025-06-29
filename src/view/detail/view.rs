@@ -32,6 +32,7 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
 use quickapi_filter::SelectFilterErased;
+use quickapi_http::response::Key;
 use quickapi_lookup::Lookup;
 use quickapi_view::{ViewTrait, as_method_filter};
 use sea_orm::{DatabaseConnection, EntityTrait};
@@ -55,7 +56,7 @@ where
     lookup: Arc<dyn Lookup<M, S>>,
     filters: quickapi_filter::SelectFilters<M, S>,
     ser: ModelSerializerJson<O>,
-    json_key: Option<quickapi_http::response::key::Key>,
+    wrap_json_key: Option<Key>,
     fallback: bool,
     _phantom: PhantomData<(M, S, O)>,
 }
@@ -82,7 +83,7 @@ where
             lookup: Arc::new(lookup),
             filters: quickapi_filter::SelectFilters::new(),
             ser: ModelSerializerJson::<O>::new(),
-            json_key: Some(DEFAULT_JSON_KEY.into()),
+            wrap_json_key: Some(DEFAULT_JSON_KEY.into()),
             fallback: false,
             _phantom: PhantomData,
         }
@@ -104,15 +105,6 @@ where
         let _result = _f(clone)?;
         self.when.add_when(_when, _result);
         Ok(self)
-    }
-
-    /// wrap_response_key wraps the response key for the DetailView.
-    pub fn wrap_response_key(
-        mut self,
-        key: impl Into<Option<quickapi_http::response::key::Key>>,
-    ) -> Self {
-        self.json_key = key.into();
-        self
     }
 
     /// with_lookup sets the lookup for the DetailView.
@@ -148,7 +140,7 @@ where
             lookup: self.lookup,
             filters: self.filters,
             ser: ModelSerializerJson::<Ser>::new(),
-            json_key: self.json_key,
+            wrap_json_key: self.wrap_json_key,
             fallback: self.fallback,
         }
     }
@@ -185,7 +177,7 @@ where
             lookup: self.lookup.clone(),
             filters: self.filters.clone(), // TODO: Verify if this is correct
             ser: self.ser.clone(),
-            json_key: self.json_key.clone(),
+            wrap_json_key: self.wrap_json_key.clone(),
             fallback: self.fallback,
         }
     }
@@ -267,5 +259,25 @@ where
 
     fn has_fallback(&self) -> bool {
         self.fallback
+    }
+}
+
+/// Implementing ViewWrapResultTrait for ListView to handle JSON response wrapping
+impl<M, S, O> quickapi_view::ViewWrapResultTrait<S> for DetailView<M, S, O>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<M as EntityTrait>::Model> + Clone + Send + Sync + 'static,
+{
+    /// wrap_result_key method to set a custom key for the JSON response
+    fn wrap_result_key(mut self, key: impl Into<Key>) -> Self {
+        self.wrap_json_key = Some(key.into());
+        self
+    }
+
+    /// no_wrap_result_key method to disable wrapping the JSON response in a key
+    fn no_wrap_result_key(mut self) -> Self {
+        self.wrap_json_key = None;
+        self
     }
 }

@@ -25,9 +25,8 @@
 mod serializers;
 
 use axum::extract::Query;
-use quickapi::RouterExt;
-use quickapi::ViewWrapResultTrait;
 use quickapi::filter_common::paginator::Paginator;
+use quickapi::prelude::*;
 use quickapi_lookup::PrimaryKeyLookup;
 use sea_orm::ColumnTrait;
 use sea_orm::QueryFilter;
@@ -134,42 +133,68 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ;
     let router = list_endpoint.register_router(router)?;
 
+    let detail_endpoint = api
+    // add list view for User entity
+        .detail::<entity::User>("/api/user/{id}", PrimaryKeyLookup::Path("id".into()))?
+        // .with_filter(Paginator::default())
+        // .with_filter(primary_key_filter)
+        // .with_filter(filter_search_query_username)
+        // .with_serializer::<serializers::UsernameOnly>()
+        .wrap_result_key("users")
+        // .when(async move |search: Query<QuerySearch>| {
+        //     if search.query.is_some() {
+        //         Ok(())
+        //     } else {
+        //         Err(quickapi_when::Error::NoMatch)
+        //     }
+        // }, |v| {
+        //     // change serializer for this condition
+        //     Ok(v.with_serializer::<serializers::SimpleUser>())
+        // }).unwrap()
+        // .when(when_condition, |v| {
+        //     // change serializer for this condition
+        //     Ok(v.with_serializer::<serializers::SimpleUser>())
+        // })?
+        ;
+
+    let router = detail_endpoint.register_router(router)?;
+
     // add viewset for Order entity
-    let router =
-        api.prefix("/api/order")
-            .with_filter(api.delete::<entity::Order>("/{pk}")?.with_lookup("pk"))
-            .with_filter(api.detail::<entity::Order>(
-                "some/order/{pk}",
-                PrimaryKeyLookup::Path("pk".to_owned()),
-            )?)
-            .register_router(router)?;
-
-    // add multiple prefixes and from tuple of views
-    let router = (
-        api.prefix("/api/internal/order/").with_filter(
-            api.prefix("secret/")
-                .with_filter(api.detail::<entity::Order>("some/order/{pk}", "pk")?),
-        ),
-        api.delete::<entity::Order>("/secret/{pk}")?
-            .with_lookup("pk"),
-        api.detail::<entity::Order>("/secret/{pk}", "pk")?,
-        (
-            // if you exceed the maximum number of views, you can use tuple to group them
-            api.list::<entity::Order>("/secret/")?,
-        ),
-    )
-        .register_router(router)?;
-
-    // TODO: create view
-    let router = api
-        .create::<entity::User>("/api/user")?
-        .with_serializer::<serializers::SimpleUser>()
-        .with_before_save(async move |m: entity::UserModel| {
-            // do something with model before saving
-            debug!("Before save: {:?}", m);
-            Ok(m)
-        })
-        .register_router(router)?;
+    // let router =
+    //     api.prefix("/api/order")
+    //         .with_filter(api.delete::<entity::Order>("/{pk}")?.with_lookup("pk"))
+    //         .with_filter(api.detail::<entity::Order>(
+    //             "some/order/{pk}",
+    //             PrimaryKeyLookup::Path("pk".to_owned()),
+    //         )?)
+    //         .register_router(router)?;
+    //
+    // // add multiple prefixes and from tuple of views
+    // let router = (
+    //     api.prefix("/api/internal/order/").with_filter(
+    //         api.prefix("secret/")
+    //             .with_filter(api.detail::<entity::Order>("some/order/{pk}", "pk")?),
+    //     ),
+    //     api.delete::<entity::Order>("/secret/{pk}")?
+    //         .with_lookup("pk"),
+    //     api.detail::<entity::Order>("/secret/{pk}", "pk")?,
+    //     (
+    //         // if you exceed the maximum number of views, you can use tuple to group them
+    //         api.list::<entity::Order>("/secret/")?,
+    //     ),
+    // )
+    //     .register_router(router)?;
+    //
+    // // TODO: create view
+    // let router = api
+    //     .create::<entity::User>("/api/user")?
+    //     .with_serializer::<serializers::SimpleUser>()
+    //     .with_before_save(async move |m: entity::UserModel| {
+    //         // do something with model before saving
+    //         debug!("Before save: {:?}", m);
+    //         Ok(m)
+    //     })
+    //     .register_router(router)?;
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;
