@@ -47,6 +47,7 @@ where
         + Sync
         + Send
         + 'static,
+    <M as EntityTrait>::Model: From<Ser>,
 {
     db: DatabaseConnection,
     path: String,
@@ -69,6 +70,7 @@ where
         + Sync
         + Send
         + 'static,
+    <M as EntityTrait>::Model: From<Ser>,
 {
     fn register_router_with_prefix(
         &self,
@@ -94,15 +96,9 @@ impl<M, S, Ser> CreateView<M, S, Ser>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    Ser: Clone
-        + Default
-        + serde::Serialize
-        + for<'a> serde::Deserialize<'a>
-        // + Into<M::Model>
-        + Sync
-        + Send
-        + 'static,
-    <M as EntityTrait>::Model: serde::Serialize,
+    Ser:
+        Clone + Default + serde::Serialize + for<'a> serde::Deserialize<'a> + Sync + Send + 'static,
+    <M as EntityTrait>::Model: From<Ser>,
 {
     // Creates a new instance of CreateView with the specified database connection, path, and method.
     pub(crate) fn new(
@@ -125,14 +121,8 @@ where
     /// with_serializer sets custom serializer for the CreateView.
     pub fn with_serializer<Serializer>(self) -> CreateView<M, S, Serializer>
     where
-        Serializer: Clone
-            + Default
-            + serde::Serialize
-            + for<'a> serde::Deserialize<'a>
-            + Into<M::Model>
-            + Sync
-            + Send
-            + 'static,
+        Serializer: Clone + for<'a> serde::Deserialize<'a> +  Sync + Send + 'static,
+        <M as EntityTrait>::Model: From<Serializer>,
     {
         CreateView {
             db: self.db,
@@ -177,7 +167,8 @@ impl<M, S, Ser> ViewTrait<S> for CreateView<M, S, Ser>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    Ser: Clone + for<'a> serde::Deserialize<'a> +  Sync + Send + 'static,
+    Ser: Clone + for<'a> serde::Deserialize<'a> + Sync + Send + 'static,
+    <M as EntityTrait>::Model: From<Ser>,
 {
     async fn handle_view(
         &self,
@@ -185,7 +176,7 @@ where
         _state: &S,
         _body: &bytes::Bytes,
     ) -> Result<Response, Error> {
-        let instance: M::Model = self
+        let _instance: M::Model = self
             .serializer
             .deserialize_json::<M>(_body)
             .map_err(|e| Error::InternalError(Box::new(e)))?;
