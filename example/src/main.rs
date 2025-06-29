@@ -139,7 +139,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // .with_filter(Paginator::default())
         // .with_filter(primary_key_filter)
         // .with_filter(filter_search_query_username)
-        // .with_serializer::<serializers::UsernameOnly>()
+        .with_serializer::<serializers::UsernameOnly>()
         .wrap_result_key("users")
         // .when(async move |search: Query<QuerySearch>| {
         //     if search.query.is_some() {

@@ -32,7 +32,7 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
 use quickapi_filter::SelectFilterErased;
-use quickapi_http::response::Key;
+use quickapi_http::response::{Key, Response};
 use quickapi_lookup::Lookup;
 use quickapi_view::{ViewTrait, as_method_filter};
 use sea_orm::{DatabaseConnection, EntityTrait};
@@ -96,9 +96,9 @@ where
         _f: F,
     ) -> Result<Self, Error>
     where
-        Ser: Clone + serde::Serialize + Send + Sync + 'static,
+        Ser: Clone + serde::Serialize + Send + Sync + 'static + From<<M as EntityTrait>::Model>,
         F: Fn(DetailView<M, S, O>) -> Result<DetailView<M, S, Ser>, Error>,
-        T: Send + Sync + 'static,
+        T: Sync + Send + 'static,
     {
         let mut clone = self.clone();
         clone.when = Default::default();
@@ -157,7 +157,7 @@ impl<M, S, O> DetailViewTrait<M, S> for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<M as EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
 }
 
@@ -188,7 +188,7 @@ impl<M, S, O> quickapi_view::RouterExt<S> for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<M as EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
     /// register_router_with_prefix method to register the DetailView with an axum router.
     fn register_router_with_prefix(
@@ -216,14 +216,14 @@ impl<M, S, O> ViewTrait<S> for DetailView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<M as EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
     async fn handle_view(
         &self,
         mut _parts: &mut Parts,
         _state: &S,
         _body: &bytes::Bytes,
-    ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
+    ) -> Result<Response, quickapi_view::Error> {
         let mut parts = _parts.clone();
 
         let query = self
@@ -233,18 +233,59 @@ where
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
         let lookup = self.lookup.clone();
-        lookup
-            .lookup(&mut parts, &_state, query)
+        let query = lookup
+            .lookup(&mut parts, &_state, query.clone())
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
-        debug!("DetailView: lookup completed");
+        let _object = &query
+            .one(&self.db)
+            .await
+            .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
-        let _select = M::find();
-        // TODO: remove unwrap() and handle errors properly
-        let _select = lookup.lookup(&mut _parts, &_state, _select).await.unwrap();
-        debug!("DetailView: lookup completed");
-        Ok(quickapi_http::response::Response::default())
+        let Some(object) = _object else {
+            return Ok(Response::new(serde_json::Value::Null));
+        };
+
+        if let Some(key) = &self.wrap_json_key {
+            let serialized = self
+                .ser
+                .serialize_json(object.clone())
+                .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
+            return Ok(Response::new(serde_json::json!({ key: serialized })));
+        }
+
+
+        let _serialized = self
+            .ser
+            .serialize_json(object.clone())
+            .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
+
+
+
+        // let object = match object {
+        //     Some(obj) => {
+        //         let serialized = self
+        //             .ser
+        //             .serialize_json(obj)
+        //             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
+        //
+        //         match &self.wrap_json_key {
+        //             Some(key) => Ok(Response::new(json!({ key: serialized }))),
+        //             None => Ok(Response::new(serialized)),
+        //         }
+        //     }
+        //     None => Ok(Response::new(json!({
+        //         "error": "Not Found",
+        //     }))
+        //     .with_status(axum::http::StatusCode::NOT_FOUND))?,
+        // };
+
+        // let _select = M::find();
+        // // TODO: remove unwrap() and handle errors properly
+        // let _select = lookup.lookup(&mut _parts, &_state, _select).await.unwrap();
+        // debug!("DetailView: lookup completed");
+        Ok(Response::default())
     }
 
     /// get_when_views returns a vector of when views for the DetailView.
