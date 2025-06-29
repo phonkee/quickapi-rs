@@ -238,6 +238,8 @@ where
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
+        debug!("DetailView: lookup completed");
+
         let _select = M::find();
         // TODO: remove unwrap() and handle errors properly
         let _select = lookup.lookup(&mut _parts, &_state, _select).await.unwrap();
