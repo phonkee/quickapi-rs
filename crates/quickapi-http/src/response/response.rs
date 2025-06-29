@@ -26,9 +26,9 @@ use crate::response::partials::Partials;
 
 #[derive(Clone, Debug)]
 pub struct Response {
-    pub data: serde_json::Value,
-    pub status: axum::http::StatusCode,
-    pub headers: axum::http::HeaderMap,
+    data: serde_json::Value,
+    status: axum::http::StatusCode,
+    headers: axum::http::HeaderMap,
 }
 
 /// Default implementation for JsonResponse
@@ -37,7 +37,10 @@ impl Default for Response {
         Response {
             data: serde_json::Value::Null,
             status: axum::http::StatusCode::OK,
-            headers: axum::http::HeaderMap::new(),
+            headers: axum::http::HeaderMap::from_iter(vec![(
+                axum::http::header::CONTENT_TYPE,
+                axum::http::header::HeaderValue::from_static("application/json"),
+            )]),
         }
     }
 }

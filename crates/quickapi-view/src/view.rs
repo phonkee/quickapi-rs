@@ -25,6 +25,7 @@
 use crate::Error;
 use axum::http::request::Parts;
 use dyn_clone::DynClone;
+use quickapi_http::response::Response;
 
 /// ViewTrait defines the behavior of a view in the application.
 #[async_trait::async_trait]
@@ -38,7 +39,7 @@ where
         parts: &mut Parts,
         state: S,
         body: bytes::Bytes,
-    ) -> Result<quickapi_http::response::Response, Error>;
+    ) -> Result<Response, Error>;
 
     /// get_when_views returns a vector of views that should be executed based on the request and state.
     async fn get_when_views<'a>(
@@ -57,7 +58,7 @@ where
         _parts: &mut Parts,
         _state: S,
         _body: &bytes::Bytes,
-    ) -> Result<quickapi_http::response::Response, Error> {
+    ) -> Result<Response, Error> {
         let mut _original_parts = _parts.clone();
 
         // check if we have when views
@@ -76,10 +77,11 @@ where
                     .run(&mut _view_parts, _state.clone(), &_body)
                     .await
                 {
+                    // We got response, we return it
                     Ok(_response) => {
-                        //if we have a response, we return it
                         return Ok(_response);
                     }
+                    // We got an error, we check if it is a NoMatch error
                     Err(e) => match e {
                         Error::NoMatch => continue,
                         _ => {
@@ -92,12 +94,8 @@ where
 
             // now that we are here and tried everything, check if we have a fallback view
             if !self.has_fallback() {
-                // Not found nothing
-                return Ok(quickapi_http::response::Response {
-                    data: serde_json::Value::Null,
-                    status: axum::http::StatusCode::NOT_FOUND,
-                    ..Default::default()
-                });
+                return Ok(Response::new(serde_json::Value::Null)
+                    .with_status(axum::http::StatusCode::NOT_FOUND));
             }
         }
 
@@ -126,8 +124,8 @@ where
         _parts: &mut Parts,
         _state: S,
         _body: bytes::Bytes,
-    ) -> Result<quickapi_http::response::Response, Error> {
-        Ok(quickapi_http::response::Response::default())
+    ) -> Result<Response, Error> {
+        Ok(Response::default())
     }
 
     /// get_when_views returns a list of views that match given request parts and state.

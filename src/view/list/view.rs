@@ -31,6 +31,7 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
 use quickapi_filter::{SelectFilter, SelectFilterErased};
+use quickapi_http::response::Response;
 use quickapi_http::response::key::Key;
 use quickapi_view::RouterExt;
 use quickapi_view::ViewTrait;
@@ -212,7 +213,7 @@ where
         _parts: &mut Parts,
         _state: S,
         _body: bytes::Bytes,
-    ) -> Result<quickapi_http::response::Response, quickapi_view::Error> {
+    ) -> Result<Response, quickapi_view::Error> {
         //
         // create query first and call filters
         //
@@ -235,18 +236,17 @@ where
             })
             .collect::<Result<Vec<_>, _>>()?;
 
-        let objects = serde_json::Value::Array(objects);
+        // prepare array of objects
+        let mut objects = serde_json::Value::Array(objects);
 
-        let objects = if let Some(key) = self.wrap_json_key.clone() {
-            serde_json::Value::Object(serde_json::Map::from_iter(vec![(key.into(), objects)]))
-        } else {
-            objects
-        };
+        // should we wrap the JSON response in a key?
+        if let Some(key) = self.wrap_json_key.clone() {
+            objects =
+                serde_json::Value::Object(serde_json::Map::from_iter(vec![(key.into(), objects)]));
+        }
 
-        Ok(quickapi_http::response::Response {
-            data: objects,
-            ..Default::default()
-        })
+        // return the response with the serialized objects
+        Ok(Response::new(objects))
     }
 
     /// get_when_views method to retrieve views based on conditions
@@ -262,17 +262,20 @@ where
     }
 }
 
+/// Implementing ViewWrapResultTrait for ListView to handle JSON response wrapping
 impl<M, S, O> quickapi_view::ViewWrapResultTrait<S> for ListView<M, S, O>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + From<<M as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
+    /// wrap_result_key method to set a custom key for the JSON response
     fn wrap_result_key(mut self, key: impl Into<Key>) -> Self {
         self.wrap_json_key = Some(key.into());
         self
     }
 
+    /// no_wrap_result_key method to disable wrapping the JSON response in a key
     fn no_wrap_result_key(mut self) -> Self {
         self.wrap_json_key = None;
         self
