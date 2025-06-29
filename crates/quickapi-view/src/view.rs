@@ -144,3 +144,15 @@ where
         true
     }
 }
+
+#[async_trait::async_trait]
+pub trait ViewWrapResultTrait<S>: ViewTrait<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    /// wrap_result_key is used to wrap the result in a JSON object with a specific key.
+    fn wrap_result_key(self, key: impl Into<quickapi_http::response::key::Key>) -> Self;
+
+    /// no_wrap_result_key disables wrapping the result in a JSON object with a specific key.
+    fn no_wrap_result_key(self) -> Self;
+}

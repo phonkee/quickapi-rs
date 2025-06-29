@@ -146,18 +146,6 @@ where
         self
     }
 
-    /// wrap_result_key method sets key to wrap result in JSON response
-    pub fn wrap_result_key(mut self, key: impl Into<Key>) -> Self {
-        self.wrap_json_key = Some(key.into());
-        self
-    }
-
-    /// no_wrap_result_key method sets key to not wrap result in JSON response
-    pub fn no_wrap_result_key(mut self) -> Self {
-        self.wrap_json_key = None;
-        self
-    }
-
     /// with_serializer method to set a custom serializer
     pub fn with_serializer<Ser>(self) -> ListView<M, S, Ser>
     where
@@ -271,5 +259,22 @@ where
             .get_views(_parts, _state)
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))
+    }
+}
+
+impl<M, S, O> quickapi_view::ViewWrapResultTrait<S> for ListView<M, S, O>
+where
+    M: EntityTrait,
+    S: Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<M as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
+{
+    fn wrap_result_key(mut self, key: impl Into<Key>) -> Self {
+        self.wrap_json_key = Some(key.into());
+        self
+    }
+
+    fn no_wrap_result_key(mut self) -> Self {
+        self.wrap_json_key = None;
+        self
     }
 }

@@ -26,6 +26,7 @@ mod serializers;
 
 use axum::extract::Query;
 use quickapi::RouterExt;
+use quickapi::ViewWrapResultTrait;
 use quickapi::filter_common::paginator::Paginator;
 use quickapi_lookup::PrimaryKeyLookup;
 use sea_orm::ColumnTrait;
