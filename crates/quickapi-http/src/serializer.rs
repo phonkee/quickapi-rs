@@ -61,7 +61,7 @@ where
     _phantom: std::marker::PhantomData<S>,
 }
 
-impl <S> ModelDeserializerJson<S>
+impl<S> ModelDeserializerJson<S>
 where
     S: for<'a> serde::Deserialize<'a> + Clone + Send + Sync + 'static,
 {
@@ -73,10 +73,12 @@ where
     }
 
     /// Deserializes the provided JSON value into the specified type.
-    pub fn deserialize_json(
-        &self,
-        data: serde_json::Value,
-    ) -> Result<S, crate::error::Error> {
-        Ok(serde_json::from_value(data)?)
+    pub fn deserialize_json<M>(&self, _data: &bytes::Bytes) -> Result<M::Model, crate::error::Error>
+    where
+        M: sea_orm::EntityTrait,
+        M::Model: From<S>,
+    {
+        let _intermediate: S = serde_json::from_slice(&_data)?;
+        Ok(_intermediate.into())
     }
 }

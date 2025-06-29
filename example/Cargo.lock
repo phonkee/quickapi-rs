@@ -1663,6 +1663,8 @@ version = "0.1.0"
 dependencies = [
  "axum",
  "axum-test",
+ "bytes",
+ "sea-orm",
  "serde",
  "serde_json",
  "thiserror",
