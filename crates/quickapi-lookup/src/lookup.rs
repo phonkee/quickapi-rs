@@ -24,9 +24,8 @@
  */
 
 use axum::http::request::Parts;
+use sea_orm::QueryFilter;
 use sea_orm::prelude::Expr;
-use sea_orm::sea_query::{ColumnType, SimpleExpr};
-use sea_orm::{ColumnTrait, QueryFilter, Value};
 use sea_orm::{EntityTrait, Select};
 use std::str::FromStr;
 
@@ -125,36 +124,13 @@ where
         })?;
 
         // col.def().get_column_type()
-        let expr = self.to_simple_expr(col, _value)?;
+        let expr = quickapi_model::to_simple_expr(col, _value.clone()).map_err(|err| {
+            crate::Error::ImproperlyConfigured(format!(
+                "Failed to convert value '{}' for column {:?}: {}",
+                _value, col, err
+            ))
+        })?;
 
         Ok(_q.filter(Expr::col(col).eq(expr)))
-    }
-}
-
-impl PrimaryKey {
-    pub fn to_simple_expr(
-        &self,
-        col: impl ColumnTrait,
-        value: String,
-    ) -> Result<SimpleExpr, crate::Error> {
-        let binding = col.def();
-        let def = binding.get_column_type();
-        Ok(match def {
-            ColumnType::String(_len) => SimpleExpr::Value(Value::String(Some(Box::new(value)))),
-            ColumnType::Integer => {
-                SimpleExpr::Value(Value::Int(Some(value.parse::<i32>().map_err(|_| {
-                    crate::Error::ImproperlyConfigured(format!(
-                        "Failed to parse value '{}' as i32 for column {:?}",
-                        value, col
-                    ))
-                })?)))
-            }
-            _ => {
-                return Err(crate::Error::ImproperlyConfigured(format!(
-                    "Unsupported column type for primary key: {:?}",
-                    col.def().get_column_type()
-                )));
-            }
-        })
     }
 }

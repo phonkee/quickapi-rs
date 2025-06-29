@@ -22,13 +22,31 @@
  *  THE SOFTWARE.
  *
  */
+use sea_orm::sea_query::SimpleExpr;
+use sea_orm::{ColumnTrait, ColumnType, Value};
 
-mod callback;
-mod columns;
-mod error;
-mod expr;
-
-pub use callback::{ModelCallback, ModelCallbacks};
-pub use columns::primary_key;
-pub use error::Error;
-pub use expr::to_simple_expr;
+/// to_simple_expr converts a column and a value into a SimpleExpr.
+pub fn to_simple_expr(
+    col: impl ColumnTrait,
+    value: String,
+) -> Result<SimpleExpr, crate::Error> {
+    let binding = col.def();
+    let def = binding.get_column_type();
+    Ok(match def {
+        ColumnType::String(_len) => SimpleExpr::Value(Value::String(Some(Box::new(value)))),
+        ColumnType::Integer => {
+            SimpleExpr::Value(Value::Int(Some(value.parse::<i32>().map_err(|_| {
+                crate::Error::ImproperlyConfigured(format!(
+                    "Failed to parse value '{}' as i32 for column {:?}",
+                    value, col
+                ))
+            })?)))
+        }
+        _ => {
+            return Err(crate::Error::ImproperlyConfigured(format!(
+                "Unsupported column type for primary key: {:?}",
+                col.def().get_column_type()
+            )));
+        }
+    })
+}
