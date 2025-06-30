@@ -141,7 +141,7 @@ Delete view is used to delete single entity by single field, usually by primary 
 
 # Example
 
-Working example is available in [example](./example) directory.
+Working example is available in [example](./example/src/main.rs) directory.
 
 
 
