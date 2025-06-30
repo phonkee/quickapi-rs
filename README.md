@@ -42,7 +42,7 @@ If you return `NoMatch` quickapi will continue to evaluate next when condition.
 
 ### List View
 
-List view is used to list all entities of given type. You can filter them, and use predefined filter basic blocks such as :
+List view is used to list all entities of given type. You can filter them, and use predefined filter basic blocks such as:
 
 - Paginator -  This filter allows you to paginate results by providing `page` and `per_page` query parameters.
 
@@ -137,6 +137,13 @@ Delete view is used to delete single entity by single field, usually by primary 
 
 > [!WARNING]  
 > Not implemented yet. Work in progress.
+
+
+
+# TODO:
+
+This project is in early development stage. A lot of work was already done, but there is still a lot to do.
+List and Detail views are implemented, but Create, Update and Delete views are not yet implemented.
 
 
 # Author
