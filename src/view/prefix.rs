@@ -26,7 +26,8 @@
 use axum::Router;
 use axum::http::request::Parts;
 use quickapi_http::Response;
-use quickapi_view::{Error, ViewTrait};
+use quickapi_view::{Error, RouterExt, ViewTrait};
+use tracing::{Level, span};
 
 /// Prefix is a struct that contains multiple views under a common path prefix.
 #[allow(dead_code)]
@@ -35,7 +36,7 @@ where
     S: Clone + Send + Sync + 'static,
 {
     pub(crate) path: String,
-    pub(crate) views: Vec<Box<dyn ViewTrait<S> + Send + Sync>>,
+    pub(crate) views: Vec<Box<dyn RouterExt<S> + Send + Sync>>,
 }
 
 /// Prefix implements Clone to allow cloning of the struct.
@@ -68,10 +69,11 @@ where
         }
     }
 
-    /// add_view adds a view to the Prefix.
-    pub fn with_filter<V>(mut self, view: V) -> Self
+    /// with_view adds a view to the Prefix.
+    #[allow(unused_mut)]
+    pub fn with_view<V>(mut self, view: V) -> Self
     where
-        V: quickapi_view::ViewTrait<S> + Send + Sync + 'static,
+        V: RouterExt<S> + Send + Sync + 'static,
     {
         self.views.push(Box::new(view));
         self
@@ -84,11 +86,6 @@ impl<S> quickapi_view::ViewTrait<S> for Prefix<S>
 where
     S: Clone + Send + Sync + 'static,
 {
-    // TODO: no we does not have fallback view by default
-    fn has_fallback(&self) -> bool {
-        // Prefix does not have a fallback view by default
-        false
-    }
     async fn handle_view(
         &self,
         _parts: &mut Parts,
@@ -97,7 +94,6 @@ where
     ) -> Result<Response, Error> {
         todo!()
     }
-
     /// get_when_views returns an empty vector for Prefix, as it does not have when views.
     async fn get_when_views<'a>(
         &'a self,
@@ -105,6 +101,12 @@ where
         _state: &'a S,
     ) -> Result<Vec<&'a (dyn ViewTrait<S> + Send + Sync)>, Error> {
         Ok(vec![])
+    }
+
+    // TODO: no we does not have fallback view by default
+    fn has_fallback(&self) -> bool {
+        // Prefix does not have a fallback view by default
+        false
     }
 }
 
@@ -119,8 +121,12 @@ where
         _prefix: &str,
     ) -> Result<Router<S>, Error> {
         let mut router = _router;
-        let _span = tracing::debug_span!("API prefix", prefix = _prefix);
+
+        let _span = span!(Level::DEBUG, "API prefix", prefix = _prefix);
         let _x = _span.enter();
+
+        // let _span = tracing::debug_span!("API prefix", prefix = _prefix);
+        // let _x = _span.enter();
 
         for view in &self.views {
             // Register each view with the router using the prefix
