@@ -43,7 +43,7 @@ use tracing::debug;
 const DEFAULT_JSON_KEY: &str = "objects";
 
 /// ListView is a view for displaying a list of entities.
-pub struct ListView<M, S, O>
+pub struct ListView<M, S, O = <M as EntityTrait>::Model>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
