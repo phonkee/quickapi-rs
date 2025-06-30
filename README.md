@@ -139,6 +139,12 @@ Delete view is used to delete single entity by single field, usually by primary 
 > Not implemented yet. Work in progress.
 
 
+# Example
+
+Working example is available in [example](./example) directory.
+
+
+
 
 # TODO:
 
