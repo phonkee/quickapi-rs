@@ -64,6 +64,7 @@ pub async fn filter_search_query_username(
     })
 }
 
+
 // MAX_DB_CONNECTION_TIMEOUT_SECONDS is the maximum time in seconds to wait for a database connection
 const MAX_DB_CONNECTION_TIMEOUT_SECONDS: u64 = 5;
 
@@ -137,6 +138,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Ok(v.with_serializer::<serializers::SimpleUser>())
         })?.register_router(router)?;
 
+    // Create View example (Still in development)
+    let router = api
+        .create::<entity::User>("/api/user")?
+        .with_serializer::<serializers::CreateUser>()
+        .with_before_save(async move |m: entity::UserModel| {
+            // do something with model before saving
+            debug!("Before save: {:?}", m);
+            Ok(m)
+        })
+        .register_router(router)?;
+
+
     // // add multiple prefixed views as a tuple and use single register_router call
     // let router = (
     //     api.prefix("/api/internal/order/")
@@ -150,17 +163,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     ),
     // )
     //     .register_router(router)?;
-    //
-    // // TODO: create view
-    // let router = api
-    //     .create::<entity::User>("/api/user")?
-    //     .with_serializer::<serializers::SimpleUser>()
-    //     .with_before_save(async move |m: entity::UserModel| {
-    //         // do something with model before saving
-    //         debug!("Before save: {:?}", m);
-    //         Ok(m)
-    //     })
-    //     .register_router(router)?;
+
 
     // prepare listener
     let listener = tokio::net::TcpListener::bind("127.0.0.1:4148").await?;

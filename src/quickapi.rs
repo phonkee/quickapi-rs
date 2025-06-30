@@ -57,8 +57,7 @@ impl<S> QuickApi<S> {
     where
         M: EntityTrait,
         S: Clone + Send + Sync + 'static,
-        <M as EntityTrait>::Model: Default
-            + serde::Serialize
+        <M as EntityTrait>::Model: serde::Serialize
             + for<'a> serde::Deserialize<'a>
             + Into<M::Model>
             + Sync

@@ -98,8 +98,7 @@ impl<M, S, Ser> CreateView<M, S, Ser>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    Ser:
-        Clone + Default + serde::Serialize + for<'a> serde::Deserialize<'a> + Sync + Send + 'static,
+    Ser: Clone + serde::Serialize + for<'a> serde::Deserialize<'a> + Sync + Send + 'static,
     <M as EntityTrait>::Model: From<Ser>,
 {
     // Creates a new instance of CreateView with the specified database connection, path, and method.
