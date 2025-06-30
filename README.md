@@ -53,14 +53,18 @@ pub struct QueryFormat {
     format: Option<String>,
 }
 
-/// when_condition is a condition that will be checked before applying the view
-pub async fn when_condition_format(_x: Query<QueryFormat>) -> Result<(), quickapi_when::Error> {
-    match &_x.format {
-        Some(format) if format == "full" => Ok(()),
-        _ => Err(quickapi_when::Error::NoMatch),
-    }
+// filter_search_query filters the search query
+pub async fn filter_search_query_username(
+    query: Select<entity::User>,
+    search: Query<QuerySearch>,
+) -> Result<Select<entity::User>, quickapi_filter::Error> {
+    // if query is present, filter by username
+    Ok(if let Some(s) = search.0.query {
+        query.filter(entity::user::Column::Username.contains(s))
+    } else {
+        query
+    })
 }
-
 
 // add list view for User entity
 let router = api
@@ -101,15 +105,14 @@ pub async fn when_condition_format(_x: Query<QueryFormat>) -> Result<(), quickap
     }
 }
 
-
-    // add detail view for User entity
-    let router = api
-        .detail::<entity::User>("/api/user/{id}", PrimaryKey::Path("id".into()))?
-        .with_serializer::<serializers::UsernameOnly>()
-        .wrap_result_key("user")
-        .when(when_condition_format, |v| {
-            Ok(v.with_serializer::<serializers::SimpleUser>())
-        })?.register_router(router)?;
+// add detail view for User entity
+let router = api
+    .detail::<entity::User>("/api/user/{id}", PrimaryKey::Path("id".into()))?
+    .with_serializer::<serializers::UsernameOnly>()
+    .wrap_result_key("user")
+    .when(when_condition_format, |v| {
+        Ok(v.with_serializer::<serializers::SimpleUser>())
+    })?.register_router(router)?;
 
 ```
 

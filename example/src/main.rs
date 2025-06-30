@@ -123,13 +123,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_filter(filter_search_query_username)
         .with_serializer::<serializers::UsernameOnly>()
         .wrap_result_key("users")
-        .when(async move |search: Query<QuerySearch>| {
-            if search.query.is_some() {
-                Ok(())
-            } else {
-                Err(quickapi_when::Error::NoMatch)
-            }
-        }, |v| {
+        .when(when_condition_format, |v| {
             // change serializer for this condition
             Ok(v.with_serializer::<serializers::SimpleUser>())
         })?.register_router(router)?;
