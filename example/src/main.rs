@@ -97,36 +97,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_max_level(tracing::Level::DEBUG)
         .init();
 
+
+    // instantiate quickapi with database connection instance
+    debug!("Connecting to database");
+
     // prepare database connection options
     let mut db_opts = sea_orm::ConnectOptions::new(
         "postgres://quickapi-example:quickapi-example@localhost:5432/quickapi-example",
     );
     let db_opts = db_opts.connect_timeout(Duration::from_secs(MAX_DB_CONNECTION_TIMEOUT_SECONDS));
 
-    // instantiate quickapi with database connection instance
-    debug!("Connecting to database");
     let api = quickapi::new::<()>(
         sea_orm::Database::connect(db_opts.clone())
             .await
             .expect("cannot connect to database"),
     );
 
-    // prepare axum router instance so we can register views(viewsets) to it
+    // prepare axum router instance so we can register views to it
     let router = axum::Router::new();
 
-    // // try new api
-    // let router = api
-    //     .detail::<entity::User>("/hello/world/{id}", "id")?
-    //     .when(when_condition, |v| {
-    //         Ok(v.with_serializer::<serializers::SimpleUser>())
-    //     })?
-    //     .register_router(router)?;
-
     // add list view for User entity
-    let list_endpoint = api
+    let router = api
         .list::<entity::User>("/api/user")?
         .with_filter(Paginator::default())
-        .with_filter(primary_key_filter)
         .with_filter(filter_search_query_username)
         .with_serializer::<serializers::UsernameOnly>()
         .wrap_result_key("users")
@@ -139,42 +132,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }, |v| {
             // change serializer for this condition
             Ok(v.with_serializer::<serializers::SimpleUser>())
-        }).unwrap()
-        // .when(when_condition, |v| {
-        //     // change serializer for this condition
-        //     Ok(v.with_serializer::<serializers::SimpleUser>())
-        // })?
-        ;
-    let router = list_endpoint.register_router(router)?;
+        })?.register_router(router)?;
 
-    let detail_endpoint = api
-    // add list view for User entity
+    // add detail view for User entity
+    let router = api
         .detail::<entity::User>("/api/user/{id}", PrimaryKey::Path("id".into()))?
-        // .with_filter(Paginator::default())
-        // .with_filter(primary_key_filter)
-        // .with_filter(filter_search_query_username)
         .with_serializer::<serializers::UsernameOnly>()
         .wrap_result_key("user")
         .when(when_condition_format, |v| {
             Ok(v.with_serializer::<serializers::SimpleUser>())
-        })?
-        // .when(async move |search: Query<QuerySearch>| {
-        //     if search.query.is_some() {
-        //         Ok(())
-        //     } else {
-        //         Err(quickapi_when::Error::NoMatch)
-        //     }
-        // }, |v| {
-        //     // change serializer for this condition
-        //     Ok(v.with_serializer::<serializers::SimpleUser>())
-        // }).unwrap()
-        // .when(when_condition, |v| {
-        //     // change serializer for this condition
-        //     Ok(v.with_serializer::<serializers::SimpleUser>())
-        // })?
-        ;
-
-    let router = detail_endpoint.register_router(router)?;
+        })?.register_router(router)?;
 
     // add viewset for Order entity
     // let router =
