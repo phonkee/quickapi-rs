@@ -144,13 +144,11 @@ Delete view is used to delete single entity by single field, usually by primary 
 Working example is available in [example](./example/src/main.rs) directory.
 
 
-
-
 # TODO:
 
 This project is in early development stage. A lot of work was already done, but there is still a lot to do.
+A lot of features are working, but there need to be some polishing and testing.
 List and Detail views are implemented, but Create, Update and Delete views are not yet implemented.
-
 
 # Author
 
