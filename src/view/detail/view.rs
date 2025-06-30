@@ -203,7 +203,7 @@ where
         debug!(
             method = self.method.to_string(),
             path = &path,
-            "detail view",
+            "API detail",
         );
 
         // Register the ListView with the axum router

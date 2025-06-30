@@ -94,7 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .compact()
         .with_target(false)
         .with_thread_names(true)
-        .with_line_number(true)
+        // .with_line_number(true)
         .with_max_level(tracing::Level::DEBUG)
         .init();
 

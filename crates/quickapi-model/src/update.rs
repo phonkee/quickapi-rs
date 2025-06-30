@@ -25,7 +25,7 @@
 use serde::de::DeserializeOwned;
 
 #[async_trait::async_trait]
-pub trait Update<M>: Sized + DeserializeOwned + Send + Sync
+pub trait UpdateModelTrait<M>: Sized + DeserializeOwned + Send + Sync
 where
     M: sea_orm::EntityTrait + Send + Sync + 'static,
     <M as sea_orm::EntityTrait>::Model: Send + Sync + 'static,

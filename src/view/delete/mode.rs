@@ -23,15 +23,10 @@
  *
  */
 
-mod callback;
-mod columns;
-mod error;
-mod expr;
-mod update;
-
-pub use callback::{ModelCallback, ModelCallbackErased, ModelCallbacks};
-pub use columns::primary_key;
-pub use error::Error;
-pub use expr::to_simple_expr;
-
-pub use update::UpdateModelTrait;
+/// Mode enum defines the mode of the delete operation. if single, only one instance is deleted, if multiple, all instances matching the criteria are deleted.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub enum DeleteMode {
+    #[default]
+    Single,
+    Multiple,
+}

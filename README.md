@@ -180,6 +180,8 @@ This project is in early development stage. A lot of work was already done, but 
 A lot of features are working, but there need to be some polishing and testing.
 List and Detail views are implemented, but Create, Update and Delete views are not yet implemented.
 
+- [ ] Paginator not filter, but separate field in views that it supports
+
 # Author
 
 Peter Vrba <phonkee@phonkee.eu>

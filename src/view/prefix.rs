@@ -119,7 +119,7 @@ where
         _prefix: &str,
     ) -> Result<Router<S>, Error> {
         let mut router = _router;
-        let _span = tracing::debug_span!("", prefix = _prefix);
+        let _span = tracing::debug_span!("API prefix", prefix = _prefix);
         let _x = _span.enter();
 
         for view in &self.views {

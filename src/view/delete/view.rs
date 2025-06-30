@@ -48,6 +48,7 @@ where
     db: DatabaseConnection,
     path: String,
     method: Method,
+    mode: super::DeleteMode,
     when: WhenViews<S>,
     lookup: Arc<dyn Lookup<M, S>>,
     fallback: bool,
@@ -70,6 +71,7 @@ where
             db,
             path: path.into(),
             method,
+            mode: Default::default(),
             when: Default::default(),
             lookup: Arc::new(lookup),
             fallback: false,
@@ -88,6 +90,12 @@ where
         self.lookup = Arc::new(lookup);
         self
     }
+
+    /// with_mode sets the mode for the DeleteView.
+    pub fn with_mode(mut self, mode: super::DeleteMode) -> Self {
+        self.mode = mode;
+        self
+    }
 }
 
 /// Implement the ViewTrait for DeleteView
@@ -97,9 +105,6 @@ where
     M: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
-    fn has_fallback(&self) -> bool {
-        self.fallback
-    }
     async fn handle_view(
         &self,
         _parts: &mut Parts,
@@ -110,7 +115,6 @@ where
             "nope".to_owned(),
         ))
     }
-
     /// get_when_views returns a list of when views for the DeleteView.
     async fn get_when_views<'a>(
         &'a self,
@@ -121,6 +125,10 @@ where
             .get_views(_parts, _state)
             .await
             .map_err(|e| Error::InternalError(Box::new(e)))
+    }
+
+    fn has_fallback(&self) -> bool {
+        self.fallback
     }
 }
 
@@ -141,7 +149,7 @@ where
         debug!(
             method = self.method.to_string(),
             path = &path,
-            "delete view",
+            "API delete",
         );
 
         // Register the ListView with the axum router
