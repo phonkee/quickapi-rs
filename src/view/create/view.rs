@@ -32,6 +32,7 @@ use quickapi_http::Response;
 use quickapi_http::serializer::ModelDeserializerJson;
 use quickapi_view::{Error, ViewTrait, as_method_filter};
 use sea_orm::{DatabaseConnection, EntityTrait};
+use serde::de::DeserializeOwned;
 use std::marker::PhantomData;
 use tracing::debug;
 
@@ -44,8 +45,7 @@ where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     Ser: Clone
-        + for<'a> serde::Deserialize<'a>
-        // + Into<M::Model>
+        + DeserializeOwned
         + Sync
         + Send
         + 'static,
@@ -67,8 +67,7 @@ where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
     Ser: Clone
-        + for<'a> serde::Deserialize<'a>
-        // + Into<M::Model>
+        + DeserializeOwned
         + Sync
         + Send
         + 'static,
@@ -98,7 +97,7 @@ impl<M, S, Ser> CreateView<M, S, Ser>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    Ser: Clone + serde::Serialize + for<'a> serde::Deserialize<'a> + Sync + Send + 'static,
+    Ser: Clone + serde::Serialize + DeserializeOwned + Sync + Send + 'static,
     <M as EntityTrait>::Model: From<Ser>,
 {
     // Creates a new instance of CreateView with the specified database connection, path, and method.
@@ -122,7 +121,7 @@ where
     /// with_serializer sets custom serializer for the CreateView.
     pub fn with_serializer<Serializer>(self) -> CreateView<M, S, Serializer>
     where
-        Serializer: Clone + for<'a> serde::Deserialize<'a> + Sync + Send + 'static,
+        Serializer: Clone + DeserializeOwned + Sync + Send + 'static,
         <M as EntityTrait>::Model: From<Serializer>,
     {
         CreateView {
@@ -170,7 +169,7 @@ impl<M, S, Ser> ViewTrait<S> for CreateView<M, S, Ser>
 where
     M: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    Ser: Clone + for<'a> serde::Deserialize<'a> + Sync + Send + 'static,
+    Ser: Clone + DeserializeOwned + Sync + Send + 'static,
     <M as EntityTrait>::Model: From<Ser>,
 {
     async fn handle_view(

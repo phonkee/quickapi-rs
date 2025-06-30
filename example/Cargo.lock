@@ -1699,6 +1699,7 @@ dependencies = [
  "dyn-clone",
  "quickapi-macro",
  "sea-orm",
+ "serde",
  "thiserror",
  "tokio",
 ]

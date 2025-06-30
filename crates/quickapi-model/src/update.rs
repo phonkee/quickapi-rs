@@ -22,14 +22,14 @@
  *  THE SOFTWARE.
  *
  */
+use serde::de::DeserializeOwned;
 
-mod callback;
-mod columns;
-mod error;
-mod expr;
-mod update;
-
-pub use callback::{ModelCallback, ModelCallbacks, ModelCallbackErased};
-pub use columns::primary_key;
-pub use error::Error;
-pub use expr::to_simple_expr;
+#[async_trait::async_trait]
+pub trait Update<M>: Sized + DeserializeOwned + Send + Sync
+where
+    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    <M as sea_orm::EntityTrait>::Model: Send + Sync + 'static,
+{
+    /// Update model with the given value.
+    fn update(&self, value: M::Model) -> Result<M::Model, crate::Error>;
+}
