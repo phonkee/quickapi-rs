@@ -137,24 +137,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             Ok(v.with_serializer::<serializers::SimpleUser>())
         })?.register_router(router)?;
 
-    // add viewset for Order entity
-    // let router =
-    //     api.prefix("/api/order")
-    //         .with_filter(api.delete::<entity::Order>("/{pk}")?.with_lookup("pk"))
-    //         .with_filter(api.detail::<entity::Order>(
-    //             "some/order/{pk}",
-    //             PrimaryKeyLookup::Path("pk".to_owned()),
-    //         )?)
-    //         .register_router(router)?;
-    //
-    // // add multiple prefixes and from tuple of views
+    // // add multiple prefixed views as a tuple and use single register_router call
     // let router = (
-    //     api.prefix("/api/internal/order/").with_filter(
-    //         api.prefix("secret/")
-    //             .with_filter(api.detail::<entity::Order>("some/order/{pk}", "pk")?),
+    //     api.prefix("/api/internal/order/")
+    //          api.delete::<entity::Order>("/secret/{pk}", "id")?
+    //              .with_lookup("pk"),
     //     ),
-    //     api.delete::<entity::Order>("/secret/{pk}")?
-    //         .with_lookup("pk"),
     //     api.detail::<entity::Order>("/secret/{pk}", "pk")?,
     //     (
     //         // if you exceed the maximum number of views, you can use tuple to group them
