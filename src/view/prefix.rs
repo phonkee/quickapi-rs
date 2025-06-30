@@ -27,7 +27,6 @@ use axum::Router;
 use axum::http::request::Parts;
 use quickapi_http::Response;
 use quickapi_view::{Error, RouterExt, ViewTrait};
-use tracing::{Level, span};
 
 /// Prefix is a struct that contains multiple views under a common path prefix.
 #[allow(dead_code)]
@@ -121,16 +120,12 @@ where
         _prefix: &str,
     ) -> Result<Router<S>, Error> {
         let mut router = _router;
-
-        let _span = span!(Level::DEBUG, "API prefix", prefix = _prefix);
+        let prefixed_path = format!("{}{}", _prefix, self.path);
+        let _span = tracing::debug_span!("API prefix", prefix = &prefixed_path);
         let _x = _span.enter();
-
-        // let _span = tracing::debug_span!("API prefix", prefix = _prefix);
-        // let _x = _span.enter();
 
         for view in &self.views {
             // Register each view with the router using the prefix
-            let prefixed_path = format!("{}{}", _prefix, self.path);
             let updated_router =
                 view.register_router_with_prefix(router.clone(), &prefixed_path)?;
             router = updated_router;
