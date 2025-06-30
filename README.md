@@ -123,6 +123,20 @@ Create view is used to create new entity of given type. It accepts JSON body wit
 > [!WARNING]  
 > Not implemented yet. Work in progress.
 
+```rust
+// Create View example (Still in development)
+let router = api
+    .create::<entity::User>("/api/user")?
+    .with_serializer::<serializers::CreateUser>()
+    .with_before_save(async move |m: entity::UserModel| {
+        // do something with model before saving
+        debug!("Before save: {:?}", m);
+        Ok(m)
+    })
+    .register_router(router)?;
+```
+
+
 
 ### Update View
 
