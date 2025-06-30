@@ -28,6 +28,7 @@ pub struct CreateUser {
     pub username: String,
 }
 
+// TODO: should this be TryFrom instead of From?
 impl From<CreateUser> for entity::UserModel {
     fn from(create_user: CreateUser) -> Self {
         entity::UserModel {
