@@ -48,9 +48,17 @@ List view is used to list all entities of given type. You can filter them, and u
 
 ```rust
 #[derive(Debug, Deserialize)]
-#[allow(dead_code)]
 pub struct QueryFormat {
     format: Option<String>,
+}
+
+#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
+pub struct UsernameOnly(pub String);
+
+impl From<entity::UserModel> for UsernameOnly {
+    fn from(user: entity::UserModel) -> Self {
+        UsernameOnly(user.username)
+    }
 }
 
 // filter_search_query filters the search query
@@ -71,7 +79,7 @@ let router = api
     .list::<entity::User>("/api/user")?
     .with_filter(Paginator::default())
     .with_filter(filter_search_query_username)
-    .with_serializer::<serializers::UsernameOnly>()
+    .with_serializer::<UsernameOnly>()
     .wrap_result_key("users")
     .when(async move |search: Query<QuerySearch>| {
         if search.query.is_some() {
@@ -92,9 +100,17 @@ You can filter it, use when conditions and serializers.:
 
 ```rust
 #[derive(Debug, Deserialize)]
-#[allow(dead_code)]
 pub struct QueryFormat {
     format: Option<String>,
+}
+
+#[derive(Debug, Default, Clone, serde::Serialize, serde::Deserialize)]
+pub struct UsernameOnly(pub String);
+
+impl From<entity::UserModel> for UsernameOnly {
+    fn from(user: entity::UserModel) -> Self {
+        UsernameOnly(user.username)
+    }
 }
 
 /// when_condition is a condition that will be checked before applying the view
@@ -108,7 +124,7 @@ pub async fn when_condition_format(_x: Query<QueryFormat>) -> Result<(), quickap
 // add detail view for User entity
 let router = api
     .detail::<entity::User>("/api/user/{id}", PrimaryKey::Path("id".into()))?
-    .with_serializer::<serializers::UsernameOnly>()
+    .with_serializer::<UsernameOnly>()
     .wrap_result_key("user")
     .when(when_condition_format, |v| {
         Ok(v.with_serializer::<serializers::SimpleUser>())
