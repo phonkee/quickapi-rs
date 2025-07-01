@@ -40,38 +40,38 @@ use quickapi_model::ModelCallbackErased;
 
 /// CreateView is a struct that represents a view for creating new records in the database.
 #[derive(Clone)]
-pub struct CreateView<M, S, Ser>
+pub struct CreateView<E, S, Ser>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
     Ser: Clone
         + DeserializeOwned
         + Sync
         + Send
         + 'static,
-    <M as EntityTrait>::Model: From<Ser>,
+    <E as EntityTrait>::Model: From<Ser>,
 {
     db: DatabaseConnection,
     path: String,
     method: Method,
     when: quickapi_when::WhenViews<S>,
-    before_save: quickapi_model::ModelCallbacks<M, S>,
+    before_save: quickapi_model::ModelCallbacks<E, S>,
     fallback: bool,
     serializer: ModelDeserializerJson<Ser>,
-    _phantom_data: PhantomData<(M, S, Ser)>,
+    _phantom_data: PhantomData<(E, S, Ser)>,
 }
 
 /// CreateView implementation for registering the view with an axum router.
-impl<M, S, Ser> quickapi_view::RouterExt<S> for CreateView<M, S, Ser>
+impl<E, S, Ser> quickapi_view::RouterExt<S> for CreateView<E, S, Ser>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
     Ser: Clone
         + DeserializeOwned
         + Sync
         + Send
         + 'static,
-    <M as EntityTrait>::Model: From<Ser>,
+    <E as EntityTrait>::Model: From<Ser>,
 {
     fn register_router_with_prefix(
         &self,
@@ -93,12 +93,12 @@ where
 }
 
 /// CreateView implementation for creating a new view for creating records in the database.
-impl<M, S, Ser> CreateView<M, S, Ser>
+impl<E, S, Ser> CreateView<E, S, Ser>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
     Ser: Clone + serde::Serialize + DeserializeOwned + Sync + Send + 'static,
-    <M as EntityTrait>::Model: From<Ser>,
+    <E as EntityTrait>::Model: From<Ser>,
 {
     // Creates a new instance of CreateView with the specified database connection, path, and method.
     pub(crate) fn new(
@@ -119,10 +119,10 @@ where
     }
 
     /// with_serializer sets custom serializer for the CreateView.
-    pub fn with_serializer<Serializer>(self) -> CreateView<M, S, Serializer>
+    pub fn with_serializer<Serializer>(self) -> CreateView<E, S, Serializer>
     where
         Serializer: Clone + DeserializeOwned + Sync + Send + 'static,
-        <M as EntityTrait>::Model: From<Serializer>,
+        <E as EntityTrait>::Model: From<Serializer>,
     {
         CreateView {
             db: self.db,
@@ -139,7 +139,7 @@ where
     /// with_before_save sets a before save handler for the CreateView.
     pub fn with_before_save<T>(
         mut self,
-        before_save: impl quickapi_model::ModelCallback<M, S, T> + Clone + Send + Sync + 'static,
+        before_save: impl quickapi_model::ModelCallback<E, S, T> + Clone + Send + Sync + 'static,
     ) -> Self
     where
         T: Send + Sync + 'static,
@@ -165,12 +165,12 @@ where
 
 /// Implement the ViewTrait for CreateView, which defines how the view handles requests.
 #[async_trait::async_trait]
-impl<M, S, Ser> ViewTrait<S> for CreateView<M, S, Ser>
+impl<E, S, Ser> ViewTrait<S> for CreateView<E, S, Ser>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
     Ser: Clone + DeserializeOwned + Sync + Send + 'static,
-    <M as EntityTrait>::Model: From<Ser>,
+    <E as EntityTrait>::Model: From<Ser>,
 {
     async fn handle_view(
         &self,
@@ -181,9 +181,9 @@ where
         let mut _parts = _parts.clone();
 
         // deserialize the body into the model (via the serializer)
-        let _instance: M::Model = self
+        let _instance: E::Model = self
             .serializer
-            .deserialize_json::<M>(_body)
+            .deserialize_json::<E>(_body)
             .map_err(|e| Error::InternalError(Box::new(e)))?;
 
         // now we need to call before_save handlers

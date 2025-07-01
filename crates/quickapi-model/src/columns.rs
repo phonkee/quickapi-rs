@@ -25,12 +25,12 @@
 use sea_orm::{EntityTrait, Iden, Iterable};
 
 /// primary_key returns the primary key column name for the given entity type.
-pub fn primary_key<M>() -> Result<String, crate::Error>
+pub fn primary_key<E>() -> Result<String, crate::Error>
 where
-    M: EntityTrait,
+    E: EntityTrait,
 {
     // Get the first primary key column name as a string
-    Ok(M::PrimaryKey::iter()
+    Ok(E::PrimaryKey::iter()
         .next()
         .ok_or(crate::Error::ImproperlyConfigured(
             "No primary key found for entity".to_string(),

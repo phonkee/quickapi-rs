@@ -40,9 +40,9 @@ use tracing::debug;
 /// DeleteView is a view for handling DELETE requests for a specific entity.
 #[derive(Clone)]
 #[allow(dead_code)]
-pub struct DeleteView<M, S>
+pub struct DeleteView<E, S>
 where
-    M: sea_orm::EntityTrait,
+    E: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
     db: DatabaseConnection,
@@ -50,14 +50,14 @@ where
     method: Method,
     mode: super::DeleteMode,
     when: WhenViews<S>,
-    lookup: Arc<dyn Lookup<M, S>>,
+    lookup: Arc<dyn Lookup<E, S>>,
     fallback: bool,
-    _phantom_data: PhantomData<(M, S)>,
+    _phantom_data: PhantomData<(E, S)>,
 }
 
-impl<M, S> DeleteView<M, S>
+impl<E, S> DeleteView<E, S>
 where
-    M: sea_orm::EntityTrait,
+    E: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
     /// new creates a new DetailView instance without serializer. It uses the model's default serializer.
@@ -65,7 +65,7 @@ where
         db: DatabaseConnection,
         path: impl Into<String>,
         method: Method,
-        lookup: impl Lookup<M, S> + 'static,
+        lookup: impl Lookup<E, S> + 'static,
     ) -> Self {
         Self {
             db,
@@ -86,7 +86,7 @@ where
     }
 
     /// with_lookup sets the lookup for the DeleteView.
-    pub fn with_lookup(mut self, lookup: impl Lookup<M, S> + 'static) -> Self {
+    pub fn with_lookup(mut self, lookup: impl Lookup<E, S> + 'static) -> Self {
         self.lookup = Arc::new(lookup);
         self
     }
@@ -100,9 +100,9 @@ where
 
 /// Implement the ViewTrait for DeleteView
 #[async_trait::async_trait]
-impl<M, S> ViewTrait<S> for DeleteView<M, S>
+impl<E, S> ViewTrait<S> for DeleteView<E, S>
 where
-    M: sea_orm::EntityTrait,
+    E: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
     async fn handle_view(
@@ -133,9 +133,9 @@ where
 }
 
 /// Implement the RouterExt trait for DeleteView
-impl<M, S> quickapi_view::RouterExt<S> for DeleteView<M, S>
+impl<E, S> quickapi_view::RouterExt<S> for DeleteView<E, S>
 where
-    M: sea_orm::EntityTrait,
+    E: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
     fn register_router_with_prefix(
@@ -146,11 +146,7 @@ where
         let mf = as_method_filter(&self.method)?;
         let path = format!("{}{}", prefix, self.path);
 
-        debug!(
-            method = self.method.to_string(),
-            path = &path,
-            "API delete",
-        );
+        debug!(method = self.method.to_string(), path = &path, "API delete",);
 
         // Register the ListView with the axum router
         Ok(router.route(&path, on(mf, Handler::new(self.clone()))))

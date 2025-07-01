@@ -27,9 +27,9 @@ pub mod view;
 pub use view::ListView;
 
 #[async_trait::async_trait]
-pub trait ListViewTrait<M, S>: quickapi_view::ViewTrait<S>
+pub trait ListViewTrait<E, S>: quickapi_view::ViewTrait<S>
 where
-    M: sea_orm::EntityTrait,
+    E: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
 }

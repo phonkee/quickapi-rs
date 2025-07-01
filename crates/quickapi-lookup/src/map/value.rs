@@ -37,13 +37,13 @@ pub enum Value {
 /// Implementation of the `LookupMapValue` for extracting values from request parts.
 impl Value {
     /// from_parts extracts a value from the request parts based on the provided entity type and state.
-    pub async fn get_parts_value<M, S>(
+    pub async fn get_parts_value<E, S>(
         &self,
         _parts: &mut Parts,
         _state: &S,
     ) -> Result<String, crate::Error>
     where
-        M: sea_orm::EntityTrait,
+        E: sea_orm::EntityTrait,
         S: Clone + Send + Sync + 'static,
     {
         Ok(match self {

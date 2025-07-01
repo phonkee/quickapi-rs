@@ -50,22 +50,22 @@ pub struct QuickApi<S> {
 /// QuickApi implements methods to create views in the application.
 impl<S> QuickApi<S> {
     /// create creates a new CreateView instance with a specified path and method.
-    pub fn create<M>(
+    pub fn create<E>(
         &self,
         path_method: impl Into<CreatePathMethod>,
-    ) -> Result<crate::view::create::CreateView<M, S, M::Model>, Error>
+    ) -> Result<crate::view::create::CreateView<E, S, E::Model>, Error>
     where
-        M: EntityTrait,
+        E: EntityTrait,
         S: Clone + Send + Sync + 'static,
-        <M as EntityTrait>::Model: serde::Serialize
+        <E as EntityTrait>::Model: serde::Serialize
             + for<'a> serde::Deserialize<'a>
-            + Into<M::Model>
+            + Into<E::Model>
             + Sync
             + Send
             + 'static,
     {
         let _path_method = path_method.into();
-        crate::view::create::CreateView::<M, S, M::Model>::new(
+        crate::view::create::CreateView::<E, S, E::Model>::new(
             self.db.clone(),
             _path_method.path,
             _path_method.method,
@@ -73,18 +73,18 @@ impl<S> QuickApi<S> {
     }
 
     /// delete creates a new DeleteView instance with a specified path and method.
-    pub fn delete<M>(
+    pub fn delete<E>(
         &self,
         path_method: impl Into<DeletePathMethod>,
-    ) -> Result<DeleteView<M, S>, Error>
+    ) -> Result<DeleteView<E, S>, Error>
     where
-        M: EntityTrait,
+        E: EntityTrait,
         S: Clone + Send + Sync + 'static,
     {
         let path_method = path_method.into();
 
         // Get the first primary key column name as a string
-        let primary_key = M::PrimaryKey::iter()
+        let primary_key = E::PrimaryKey::iter()
             .next()
             .ok_or(Error::ImproperlyConfigured(
                 "No primary key found for entity".to_string(),
@@ -100,19 +100,19 @@ impl<S> QuickApi<S> {
     }
 
     /// detail
-    pub fn detail<M>(
+    pub fn detail<E>(
         &self,
         path_method: impl Into<DetailPathMethod>,
-        lookup: impl Lookup<M, S> + 'static,
-    ) -> Result<DetailView<M, S, M::Model>, Error>
+        lookup: impl Lookup<E, S> + 'static,
+    ) -> Result<DetailView<E, S, E::Model>, Error>
     where
-        M: EntityTrait,
+        E: EntityTrait,
         S: Clone + Send + Sync + 'static,
-        <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
+        <E as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
     {
         let pm = path_method.into();
 
-        Ok(DetailView::<M, S, M::Model>::new(
+        Ok(DetailView::<E, S, E::Model>::new(
             self.db.clone(),
             pm.path,
             pm.method,
@@ -121,17 +121,17 @@ impl<S> QuickApi<S> {
     }
 
     /// list creates a new ListView instance with a specified path and method.
-    pub fn list<M>(
+    pub fn list<E>(
         &self,
         path_method: impl Into<ListPathMethod>,
-    ) -> Result<ListView<M, S, M::Model>, Error>
+    ) -> Result<ListView<E, S, E::Model>, Error>
     where
-        M: EntityTrait,
+        E: EntityTrait,
         S: Clone + Send + Sync + 'static,
-        <M as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
+        <E as EntityTrait>::Model: serde::Serialize + Clone + Send + Sync + 'static,
     {
         let pm = path_method.into();
-        Ok(ListView::<M, S, M::Model>::new(
+        Ok(ListView::<E, S, E::Model>::new(
             self.db.clone(),
             pm.path,
             pm.method,

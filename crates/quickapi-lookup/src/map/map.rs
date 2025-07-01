@@ -38,19 +38,19 @@ const PRIMARY_KEY: &str = "__primary_key__";
 /// LookupMap is a structure that holds a mapping of string keys to LookupValue.
 #[derive(Clone, Debug)]
 #[allow(dead_code)]
-pub struct Map<M, S>
+pub struct Map<E, S>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     map: HashMap<String, Value>,
-    _phantom_data: PhantomData<(M, S)>,
+    _phantom_data: PhantomData<(E, S)>,
 }
 
 /// Default implementation for LookupMap.
-impl<M, S> Default for Map<M, S>
+impl<E, S> Default for Map<E, S>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     fn default() -> Self {
@@ -61,13 +61,13 @@ where
     }
 }
 
-/// convert HashMap<String, LookupValue> to LookupMap<M, S>
-impl<M, S> From<HashMap<String, Value>> for Map<M, S>
+/// convert HashMap<String, LookupValue> to LookupMap<E, S>
+impl<E, S> From<HashMap<String, Value>> for Map<E, S>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    /// from converts a HashMap<String, LookupValue> into a LookupMap<M, S>
+    /// from converts a HashMap<String, LookupValue> into a LookupMap<E, S>
     fn from(map: HashMap<String, Value>) -> Self {
         let mut result = Self::default();
         result.map = map;
@@ -76,9 +76,9 @@ where
 }
 
 /// Implementation of LookupMap.
-impl<M, S> Map<M, S>
+impl<E, S> Map<E, S>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     // update updates other LookupMap with the current one.
@@ -101,9 +101,9 @@ where
 
 /// Implementation of Lookup trait for LookupMap.
 #[async_trait::async_trait]
-impl<M, S> Lookup<M, S> for Map<M, S>
+impl<E, S> Lookup<E, S> for Map<E, S>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     // lookup converts the LookupMap into a Select query based on the provided parts and state.
@@ -111,8 +111,8 @@ where
         &self,
         parts: &mut Parts,
         state: &S,
-        query: Select<M>,
-    ) -> Result<Select<M>, Error> {
+        query: Select<E>,
+    ) -> Result<Select<E>, Error> {
         // prepare mutable query
         let mut query = query;
 
@@ -120,20 +120,20 @@ where
         for (key, value) in &self.map {
             // check if the key is a primary key, otherwise treat it as a regular column
             let key = match key.as_str() {
-                PRIMARY_KEY => quickapi_model::primary_key::<M>().map_err(|_| {
+                PRIMARY_KEY => quickapi_model::primary_key::<E>().map_err(|_| {
                     Error::ImproperlyConfigured("Failed to get primary key for entity".to_owned())
                 })?,
                 _ => key.to_owned(),
             };
 
             // get the column and value for the key
-            let col = M::Column::from_str(&key).map_err(|_| {
+            let col = E::Column::from_str(&key).map_err(|_| {
                 Error::ImproperlyConfigured("Failed to parse primary key column".to_owned())
             })?;
 
             // get the value from the request parts
             let val = value
-                .get_parts_value::<M, S>(parts, state)
+                .get_parts_value::<E, S>(parts, state)
                 .await
                 .map_err(|e| {
                     Error::ImproperlyConfigured(format!(

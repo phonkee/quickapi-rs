@@ -33,9 +33,9 @@ use std::marker::PhantomData;
 use std::pin::Pin;
 
 #[async_trait::async_trait]
-pub trait SelectFilter<M, S, T>
+pub trait SelectFilter<E, S, T>
 where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    E: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: 'static,
 {
@@ -44,8 +44,8 @@ where
         &self,
         parts: &mut Parts,
         state: &S,
-        query: Select<M>,
-    ) -> Result<Select<M>, crate::Error>;
+        query: Select<E>,
+    ) -> Result<Select<E>, crate::Error>;
 
     /// id is an optional method to return an identifier for the filter.
     /// this is useful for filter that needs to be just once in the SelectFilters.
@@ -54,17 +54,17 @@ where
     }
 }
 
-pub trait SelectFilterErased<M, S>: Send + Sync + DynClone
+pub trait SelectFilterErased<E, S>: Send + Sync + DynClone
 where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    E: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     fn filter_select_boxed<'a>(
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-        query: Select<M>,
-    ) -> Pin<Box<dyn Future<Output = Result<Select<M>, crate::Error>> + Send + 'a>>;
+        query: Select<E>,
+    ) -> Pin<Box<dyn Future<Output = Result<Select<E>, crate::Error>> + Send + 'a>>;
 
     /// id is an optional method to return an identifier for the filter.
     fn id(&self) -> Option<String> {
@@ -72,24 +72,24 @@ where
     }
 }
 
-dyn_clone::clone_trait_object!(<M, S> SelectFilterErased<M, S>);
+dyn_clone::clone_trait_object!(<E, S> SelectFilterErased<E, S>);
 
-pub struct SelectModelBoxed<F, M, S, T>
+pub struct SelectModelBoxed<F, E, S, T>
 where
-    F: SelectFilter<M, S, T> + Send + Sync + 'static,
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    F: SelectFilter<E, S, T> + Send + Sync + 'static,
+    E: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: 'static,
 {
     inner: F,
-    _phantom: PhantomData<(M, S, T)>,
+    _phantom: PhantomData<(E, S, T)>,
 }
 
 // Implement Clone for SelectModelBoxed
-impl<F, M, S, T> Clone for SelectModelBoxed<F, M, S, T>
+impl<F, E, S, T> Clone for SelectModelBoxed<F, E, S, T>
 where
-    F: SelectFilter<M, S, T> + Send + Sync + Clone + 'static,
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    F: SelectFilter<E, S, T> + Send + Sync + Clone + 'static,
+    E: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: 'static,
 {
@@ -101,10 +101,10 @@ where
     }
 }
 
-impl<F, M, S, T> SelectFilterErased<M, S> for SelectModelBoxed<F, M, S, T>
+impl<F, E, S, T> SelectFilterErased<E, S> for SelectModelBoxed<F, E, S, T>
 where
-    F: SelectFilter<M, S, T> + Clone + Send + Sync + 'static,
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    F: SelectFilter<E, S, T> + Clone + Send + Sync + 'static,
+    E: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: Sync + Send + 'static,
 {
@@ -113,8 +113,8 @@ where
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-        query: Select<M>,
-    ) -> Pin<Box<dyn Future<Output = Result<Select<M>, crate::Error>> + Send + 'a>> {
+        query: Select<E>,
+    ) -> Pin<Box<dyn Future<Output = Result<Select<E>, crate::Error>> + Send + 'a>> {
         Box::pin(self.inner.filter_select(parts, state, query))
     }
 
@@ -125,18 +125,18 @@ where
 }
 
 /// SelectFilters is a collection of select filters that can be applied to a select query.
-pub struct SelectFilters<M, S>
+pub struct SelectFilters<E, S>
 where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    E: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    pub(crate) inner: Vec<Box<dyn SelectFilterErased<M, S> + Send + Sync>>,
+    pub(crate) inner: Vec<Box<dyn SelectFilterErased<E, S> + Send + Sync>>,
 }
 
 // Implement Clone for SelectFilters
-impl<M, S> Clone for SelectFilters<M, S>
+impl<E, S> Clone for SelectFilters<E, S>
 where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    E: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     /// Clone filters by cloning each boxed filter
@@ -151,9 +151,9 @@ where
     }
 }
 
-impl<M, S> SelectFilters<M, S>
+impl<E, S> SelectFilters<E, S>
 where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    E: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     // new creates a new instance of SelectFilters.
@@ -164,7 +164,7 @@ where
     // push adds a new filter to the SelectFilters. checks if the filter is already present.
     pub fn push<F, T>(&mut self, f: F)
     where
-        F: SelectFilter<M, S, T> + Clone + Send + Sync + 'static,
+        F: SelectFilter<E, S, T> + Clone + Send + Sync + 'static,
         T: Sync + Send + 'static,
     {
         let boxed = Box::new(SelectModelBoxed {
@@ -190,23 +190,23 @@ where
     // delete removes a filter from the SelectFilters by its id.
     pub fn delete<F>(&mut self, id: &str)
     where
-        F: SelectFilter<M, S, ()> + Send + Sync + 'static,
+        F: SelectFilter<E, S, ()> + Send + Sync + 'static,
     {
         self.inner.retain(|f| f.id().as_deref() != Some(id));
     }
 }
 
-impl<M, S> SelectFilterErased<M, S> for SelectFilters<M, S>
+impl<E, S> SelectFilterErased<E, S> for SelectFilters<E, S>
 where
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    E: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     fn filter_select_boxed<'a>(
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-        query: Select<M>,
-    ) -> Pin<Box<dyn Future<Output = Result<Select<M>, crate::Error>> + Send + 'a>> {
+        query: Select<E>,
+    ) -> Pin<Box<dyn Future<Output = Result<Select<E>, crate::Error>> + Send + 'a>> {
         let mut query = query.clone(); // Clone the query to avoid borrowing issues
         Box::pin(async move {
             for fut in &self.inner {
@@ -234,12 +234,12 @@ macro_rules! impl_select_tuples {
     ([$($ty:ident),*], $last:ident) => {
         #[async_trait::async_trait]
         #[allow(missing_docs, non_snake_case)]
-        impl<F, Fut, M, S, $($ty,)* $last> SelectFilter<M, S, ($($ty,)* $last,)> for F
+        impl<F, Fut, E, S, $($ty,)* $last> SelectFilter<E, S, ($($ty,)* $last,)> for F
         where
-            M: sea_orm::EntityTrait + Send + Sync + 'static,
+            E: sea_orm::EntityTrait + Send + Sync + 'static,
             S: Sync + Send + Clone + 'static,
-            F: Fn(sea_orm::Select<M>, $($ty,)* $last) -> Fut + Send + Sync + 'static,
-            Fut: std::future::Future<Output = Result<sea_orm::Select<M>, crate::Error>> + Send + 'static,
+            F: Fn(sea_orm::Select<E>, $($ty,)* $last) -> Fut + Send + Sync + 'static,
+            Fut: std::future::Future<Output = Result<sea_orm::Select<E>, crate::Error>> + Send + 'static,
             $(
                 $ty: axum::extract::FromRequestParts<S> + Send + 'static,
             )*
@@ -249,8 +249,8 @@ macro_rules! impl_select_tuples {
                 &self,
                 parts: &mut Parts,
                 state: &S,
-                query: sea_orm::Select<M>,
-            ) -> Result<sea_orm::Select<M>, crate::Error> {
+                query: sea_orm::Select<E>,
+            ) -> Result<sea_orm::Select<E>, crate::Error> {
                 $(
                     let $ty = $ty::from_request_parts(parts, state).await.map_err(|_| {
                         crate::Error::NoMatch
@@ -288,13 +288,13 @@ mod tests {
     impl ActiveModelBehavior for ActiveModel {}
 
     // primary_key_filter filters by primary key
-    pub async fn primary_key_filter<M>(
-        _query: Select<M>,
+    pub async fn primary_key_filter<E>(
+        _query: Select<E>,
         _x: axum::extract::OriginalUri,
         _y: axum::extract::OriginalUri,
-    ) -> Result<Select<M>, crate::Error>
+    ) -> Result<Select<E>, crate::Error>
     where
-        M: EntityTrait + Send + Sync + 'static,
+        E: EntityTrait + Send + Sync + 'static,
     {
         // get id query parameter
         let id = url::form_urlencoded::parse(_x.query().unwrap_or("").as_bytes())

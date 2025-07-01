@@ -30,3 +30,4 @@ pub mod serializer;
 
 pub use error::Error;
 pub use response::Response;
+pub use serializer::{ModelDeserializerJson, ModelSerializerJson};

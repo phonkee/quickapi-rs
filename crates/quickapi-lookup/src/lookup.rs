@@ -31,9 +31,9 @@ use std::str::FromStr;
 
 /// Lookup for primary key or other unique identifier in the database.
 #[async_trait::async_trait]
-pub trait Lookup<M, S>: Send + Sync
+pub trait Lookup<E, S>: Send + Sync
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     // lookup method filters the query based on the provided parts and state.
@@ -41,32 +41,32 @@ where
         &self,
         parts: &mut Parts,
         _s: &S,
-        q: Select<M>,
-    ) -> Result<Select<M>, crate::Error>;
+        q: Select<E>,
+    ) -> Result<Select<E>, crate::Error>;
 }
 
 /// String implementation of Lookup trait. It does lookup by a primary key.
 #[async_trait::async_trait]
-impl<M, S> Lookup<M, S> for String
+impl<E, S> Lookup<E, S> for String
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     async fn lookup(
         &self,
         _parts: &mut Parts,
         _s: &S,
-        q: Select<M>,
-    ) -> Result<Select<M>, crate::Error> {
+        q: Select<E>,
+    ) -> Result<Select<E>, crate::Error> {
         PrimaryKey::Path(self.clone()).lookup(_parts, _s, q).await
     }
 }
 
 /// &str implementation of Lookup trait. It does lookup by a primary key.
 #[async_trait::async_trait]
-impl<M, S> Lookup<M, S> for &str
+impl<E, S> Lookup<E, S> for &str
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     // TODO: better errors handling
@@ -74,8 +74,8 @@ where
         &self,
         _parts: &mut Parts,
         _s: &S,
-        q: Select<M>,
-    ) -> Result<Select<M>, crate::Error> {
+        q: Select<E>,
+    ) -> Result<Select<E>, crate::Error> {
         PrimaryKey::Path(ToString::to_string(&self))
             .lookup(_parts, _s, q)
             .await
@@ -89,18 +89,18 @@ pub enum PrimaryKey {
 }
 
 #[async_trait::async_trait]
-impl<M, S> Lookup<M, S> for PrimaryKey
+impl<E, S> Lookup<E, S> for PrimaryKey
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     async fn lookup(
         &self,
         _parts: &mut Parts,
         _s: &S,
-        _q: Select<M>,
-    ) -> Result<Select<M>, crate::Error> {
-        let _pk = quickapi_model::primary_key::<M>().map_err(|err| {
+        _q: Select<E>,
+    ) -> Result<Select<E>, crate::Error> {
+        let _pk = quickapi_model::primary_key::<E>().map_err(|err| {
             crate::Error::ImproperlyConfigured(format!(
                 "Failed to get primary key for entity: {}",
                 err
@@ -108,17 +108,17 @@ where
         })?;
         let _value = match self {
             PrimaryKey::Path(key) => super::Value::Path(key.clone())
-                .get_parts_value::<M, S>(_parts, _s)
+                .get_parts_value::<E, S>(_parts, _s)
                 .await?
                 .clone(),
             PrimaryKey::Query(key) => super::Value::Query(key.clone())
-                .get_parts_value::<M, S>(_parts, _s)
+                .get_parts_value::<E, S>(_parts, _s)
                 .await?
                 .clone(),
         };
 
         // get column from primary key string
-        let col = M::Column::from_str(&_pk).map_err(|_| {
+        let col = E::Column::from_str(&_pk).map_err(|_| {
             crate::Error::ImproperlyConfigured("Failed to parse primary key column".to_owned())
         })?;
 

@@ -30,9 +30,9 @@ use async_trait::async_trait;
 use axum::http::request::Parts;
 
 #[derive(Clone, Debug, Default)]
-pub struct Paginator<M, S>
+pub struct Paginator<E, S>
 where
-    M: sea_orm::EntityTrait,
+    E: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
     pub(crate) page: Page,
@@ -41,13 +41,13 @@ where
     pub(crate) default_limit: Limit,
     pub(crate) limit_constraint: LimitConstraint,
     pub(crate) params: params::Params,
-    _phantom: std::marker::PhantomData<(M, S)>,
+    _phantom: std::marker::PhantomData<(E, S)>,
 }
 
 /// Paginator is a filter that reads pagination from query, and applies to query and also to response.
-impl<M, S> Paginator<M, S>
+impl<E, S> Paginator<E, S>
 where
-    M: sea_orm::EntityTrait,
+    E: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
     /// parse_query extracts the page and limit parameters from a query string.
@@ -92,17 +92,17 @@ where
 }
 
 #[async_trait::async_trait]
-impl<M, S> SelectFilter<M, S, ()> for Paginator<M, S>
+impl<E, S> SelectFilter<E, S, ()> for Paginator<E, S>
 where
-    M: sea_orm::EntityTrait,
+    E: sea_orm::EntityTrait,
     S: Clone + Send + Sync + 'static,
 {
     async fn filter_select(
         &self,
         _parts: &mut Parts,
         _state: &S,
-        query: sea_orm::Select<M>,
-    ) -> Result<sea_orm::Select<M>, crate::Error> {
+        query: sea_orm::Select<E>,
+    ) -> Result<sea_orm::Select<E>, crate::Error> {
         let query_str = _parts.uri.query().unwrap_or_default();
 
         let (_page, _limit) = self.parse_query(query_str)?;

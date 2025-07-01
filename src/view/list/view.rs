@@ -24,13 +24,13 @@
  */
 
 use crate::Error;
-use crate::serializer::ModelSerializerJson;
 use crate::view::handler::Handler;
 use axum::Router;
 use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
 use quickapi_filter::{SelectFilter, SelectFilterErased};
+use quickapi_http::ModelSerializerJson;
 use quickapi_http::response::Response;
 use quickapi_http::response::key::Key;
 use quickapi_view::RouterExt;
@@ -43,28 +43,28 @@ use tracing::debug;
 const DEFAULT_JSON_KEY: &str = "objects";
 
 /// ListView is a view for displaying a list of entities.
-pub struct ListView<M, S, O = <M as EntityTrait>::Model>
+pub struct ListView<E, S, O = <E as EntityTrait>::Model>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
     db: DatabaseConnection,
-    pub filters: quickapi_filter::SelectFilters<M, S>,
+    pub filters: quickapi_filter::SelectFilters<E, S>,
     when: quickapi_when::WhenViews<S>,
     path: String,
     method: Method,
     fallback: bool,
-    _phantom_data: PhantomData<M>,
+    _phantom_data: PhantomData<E>,
     ser: ModelSerializerJson<O>,
     wrap_json_key: Option<Key>,
 }
 
 /// Implementing Clone for ListView to allow cloning of the view.
 /// Does not clone when conditions.
-impl<M, S, O> Clone for ListView<M, S, O>
+impl<E, S, O> Clone for ListView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -85,9 +85,9 @@ where
 }
 
 /// Implementing ListView for various functionalities.
-impl<M, S, O> ListView<M, S, O>
+impl<E, S, O> ListView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -96,8 +96,8 @@ where
         db: DatabaseConnection,
         path: impl Into<String>,
         method: Method,
-    ) -> ListView<M, S, O> {
-        ListView::<M, S, O> {
+    ) -> ListView<E, S, O> {
+        ListView::<E, S, O> {
             db,
             path: path.into(),
             method,
@@ -124,8 +124,8 @@ where
         _f: F,
     ) -> Result<Self, Error>
     where
-        Ser: Clone + serde::Serialize + Send + Sync + 'static + From<<M as EntityTrait>::Model>,
-        F: Fn(ListView<M, S, O>) -> Result<ListView<M, S, Ser>, Error>,
+        Ser: Clone + serde::Serialize + Send + Sync + 'static + From<<E as EntityTrait>::Model>,
+        F: Fn(ListView<E, S, O>) -> Result<ListView<E, S, Ser>, Error>,
         T: Sync + Send + 'static,
     {
         let mut clone = self.clone();
@@ -139,7 +139,7 @@ where
     /// TODO: how to automatically detect T?
     pub fn with_filter<F, T>(mut self, f: F) -> Self
     where
-        F: SelectFilter<M, S, T> + Clone + Send + Sync + 'static,
+        F: SelectFilter<E, S, T> + Clone + Send + Sync + 'static,
         T: Sync + Send + 'static,
     {
         self.filters.push(f);
@@ -147,12 +147,12 @@ where
     }
 
     /// with_serializer method to set a custom serializer
-    pub fn with_serializer<Ser>(self) -> ListView<M, S, Ser>
+    pub fn with_serializer<Ser>(self) -> ListView<E, S, Ser>
     where
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
-        <M as EntityTrait>::Model: Into<Ser>,
+        <E as EntityTrait>::Model: Into<Ser>,
     {
-        ListView::<M, S, Ser> {
+        ListView::<E, S, Ser> {
             db: self.db,
             path: self.path,
             method: self.method,
@@ -168,11 +168,11 @@ where
 
 /// Implementing RouterExt for ListView to register the router
 /// This trait allows the ListView to be registered with an axum router.
-impl<M, S, O> RouterExt<S> for ListView<M, S, O>
+impl<E, S, O> RouterExt<S> for ListView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + From<<M as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<E as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
     /// register_router_with_prefix method to register the ListView with an axum router
     fn register_router_with_prefix(
@@ -192,11 +192,11 @@ where
 
 /// Implementing ViewTrait for ListView to handle view logic
 #[async_trait::async_trait]
-impl<M, S, O> ViewTrait<S> for ListView<M, S, O>
+impl<E, S, O> ViewTrait<S> for ListView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + From<<M as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<E as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
     /// handle_view method to process the view request
     async fn handle_view(
@@ -210,7 +210,7 @@ where
         //
         let query = self
             .filters
-            .filter_select_boxed(_parts, &_state, M::find())
+            .filter_select_boxed(_parts, &_state, E::find())
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
@@ -259,11 +259,11 @@ where
 }
 
 /// Implementing ViewWrapResultTrait for ListView to handle JSON response wrapping
-impl<M, S, O> quickapi_view::ViewWrapResultTrait<S> for ListView<M, S, O>
+impl<E, S, O> quickapi_view::ViewWrapResultTrait<S> for ListView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + From<<M as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<E as sea_orm::EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
     /// wrap_result_key method to set a custom key for the JSON response
     fn wrap_result_key(mut self, key: impl Into<Key>) -> Self {

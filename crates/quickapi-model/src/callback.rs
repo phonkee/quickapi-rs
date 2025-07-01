@@ -31,9 +31,9 @@ use std::pin::Pin;
 
 #[async_trait::async_trait]
 #[allow(dead_code)]
-pub trait ModelCallback<M, S, T>
+pub trait ModelCallback<E, S, T>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: 'static,
 {
@@ -42,42 +42,42 @@ where
         &self,
         parts: &mut Parts,
         state: &S,
-        model: M::Model,
-    ) -> Result<M::Model, crate::Error>;
+        model: E::Model,
+    ) -> Result<E::Model, crate::Error>;
 }
 
 #[allow(dead_code)]
-pub trait ModelCallbackErased<M, S>: Send + Sync + DynClone
+pub trait ModelCallbackErased<E, S>: Send + Sync + DynClone
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     fn call<'a>(
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-        query: M::Model,
-    ) -> Pin<Box<dyn Future<Output = Result<M::Model, crate::Error>> + Send + 'a>>;
+        query: E::Model,
+    ) -> Pin<Box<dyn Future<Output = Result<E::Model, crate::Error>> + Send + 'a>>;
 }
 
-dyn_clone::clone_trait_object!(<M, S> ModelCallbackErased<M, S>);
+dyn_clone::clone_trait_object!(<E, S> ModelCallbackErased<E, S>);
 
-pub struct ModelCallbackBoxed<F, M, S, T>
+pub struct ModelCallbackBoxed<F, E, S, T>
 where
-    F: ModelCallback<M, S, T> + Send + Sync + 'static,
-    M: EntityTrait + Send + Sync + 'static,
+    F: ModelCallback<E, S, T> + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: 'static,
 {
     inner: F,
-    _phantom: PhantomData<(M, S, T)>,
+    _phantom: PhantomData<(E, S, T)>,
 }
 
 // Implement Clone for ModelCallbackBoxed
-impl<F, M, S, T> Clone for ModelCallbackBoxed<F, M, S, T>
+impl<F, E, S, T> Clone for ModelCallbackBoxed<F, E, S, T>
 where
-    F: ModelCallback<M, S, T> + Send + Sync + Clone + 'static,
-    M: EntityTrait + Send + Sync + 'static,
+    F: ModelCallback<E, S, T> + Send + Sync + Clone + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: 'static,
 {
@@ -89,10 +89,10 @@ where
     }
 }
 
-impl<F, M, S, T> ModelCallbackErased<M, S> for ModelCallbackBoxed<F, M, S, T>
+impl<F, E, S, T> ModelCallbackErased<E, S> for ModelCallbackBoxed<F, E, S, T>
 where
-    F: ModelCallback<M, S, T> + Clone + Send + Sync + 'static,
-    M: sea_orm::EntityTrait + Send + Sync + 'static,
+    F: ModelCallback<E, S, T> + Clone + Send + Sync + 'static,
+    E: sea_orm::EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
     T: Sync + Send + 'static,
 {
@@ -100,24 +100,24 @@ where
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-        model: M::Model,
-    ) -> Pin<Box<dyn Future<Output = Result<M::Model, crate::Error>> + Send + 'a>> {
+        model: E::Model,
+    ) -> Pin<Box<dyn Future<Output = Result<E::Model, crate::Error>> + Send + 'a>> {
         Box::pin(self.inner.call(parts, state, model))
     }
 }
 
 /// ModelCallbacks is a container for multiple ModelCallback callbacks.
-pub struct ModelCallbacks<M, S>
+pub struct ModelCallbacks<E, S>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
-    pub(crate) inner: Vec<Box<dyn ModelCallbackErased<M, S> + Send + Sync>>,
+    pub(crate) inner: Vec<Box<dyn ModelCallbackErased<E, S> + Send + Sync>>,
 }
 
-impl<M, S> Default for ModelCallbacks<M, S>
+impl<E, S> Default for ModelCallbacks<E, S>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     /// default creates a new ModelCallbackContainer with no callbacks.
@@ -127,9 +127,9 @@ where
 }
 
 // Now you can derive Clone for ModelCallbackContainer
-impl<M, S> Clone for ModelCallbacks<M, S>
+impl<E, S> Clone for ModelCallbacks<E, S>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     fn clone(&self) -> Self {
@@ -144,9 +144,9 @@ where
 }
 
 #[allow(dead_code)]
-impl<M, S> ModelCallbacks<M, S>
+impl<E, S> ModelCallbacks<E, S>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     /// new creates a new ModelCallbackContainer.
@@ -157,7 +157,7 @@ where
     /// push adds a new ModelCallback callback to the container.
     pub fn push<F, T>(&mut self, f: F)
     where
-        F: ModelCallback<M, S, T> + Clone + Send + Sync + 'static,
+        F: ModelCallback<E, S, T> + Clone + Send + Sync + 'static,
         T: Sync + Send + 'static,
     {
         let boxed = Box::new(ModelCallbackBoxed {
@@ -174,17 +174,17 @@ where
 }
 
 /// Implement ModelCallbackErased for ModelCallbackContainer
-impl<M, S> ModelCallbackErased<M, S> for ModelCallbacks<M, S>
+impl<E, S> ModelCallbackErased<E, S> for ModelCallbacks<E, S>
 where
-    M: EntityTrait + Send + Sync + 'static,
+    E: EntityTrait + Send + Sync + 'static,
     S: Clone + Send + Sync + 'static,
 {
     fn call<'a>(
         &'a self,
         parts: &'a mut Parts,
         state: &'a S,
-        model: M::Model,
-    ) -> Pin<Box<dyn Future<Output = Result<M::Model, crate::Error>> + Send + 'a>> {
+        model: E::Model,
+    ) -> Pin<Box<dyn Future<Output = Result<E::Model, crate::Error>> + Send + 'a>> {
         Box::pin(async move {
             let mut model = model;
             for cb in &self.inner {
@@ -214,12 +214,12 @@ macro_rules! impl_before_save_callback_tuple {
     ([$($ty:ident),*]) => {
         #[async_trait::async_trait]
         #[allow(missing_docs, non_snake_case, unused_variables)]
-        impl<F, Fut, M, S, $($ty,)*> ModelCallback<M, S, ($($ty,)* )> for F
+        impl<F, Fut, E, S, $($ty,)*> ModelCallback<E, S, ($($ty,)* )> for F
         where
-            M: sea_orm::EntityTrait + Send + Sync + 'static,
+            E: sea_orm::EntityTrait + Send + Sync + 'static,
             S: Sync + Send + Clone + 'static,
-            F: Fn(M::Model, $($ty,)*) -> Fut + Send + Sync + 'static,
-            Fut: std::future::Future<Output = Result<M::Model, crate::Error>> + Send + 'static,
+            F: Fn(E::Model, $($ty,)*) -> Fut + Send + Sync + 'static,
+            Fut: std::future::Future<Output = Result<E::Model, crate::Error>> + Send + 'static,
             $(
                 $ty: axum::extract::FromRequestParts<S> + Send + 'static,
             )*
@@ -228,8 +228,8 @@ macro_rules! impl_before_save_callback_tuple {
                 &self,
                 _parts: &mut Parts,
                 _state: &S,
-                model: M::Model,
-            ) -> Result<M::Model, crate::Error> {
+                model: E::Model,
+            ) -> Result<E::Model, crate::Error> {
                 $(
                     let $ty = $ty::from_request_parts(_parts, _state).await.map_err(|_| {
                         crate::Error::NoMatch

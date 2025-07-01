@@ -73,10 +73,10 @@ where
     }
 
     /// Deserializes the provided JSON value into the specified type.
-    pub fn deserialize_json<M>(&self, _data: &bytes::Bytes) -> Result<M::Model, crate::error::Error>
+    pub fn deserialize_json<E>(&self, _data: &bytes::Bytes) -> Result<E::Model, crate::error::Error>
     where
-        M: sea_orm::EntityTrait,
-        <M as sea_orm::EntityTrait>::Model: From<S>,
+        E: sea_orm::EntityTrait,
+        <E as sea_orm::EntityTrait>::Model: From<S>,
     {
         let _intermediate: S = serde_json::from_slice(&_data)?;
         Ok(_intermediate.into())

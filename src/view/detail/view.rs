@@ -24,7 +24,6 @@
  */
 
 use crate::Error;
-use crate::serializer::ModelSerializerJson;
 use crate::view::detail::DetailViewTrait;
 use crate::view::handler::Handler;
 use axum::Router;
@@ -32,6 +31,7 @@ use axum::http::Method;
 use axum::http::request::Parts;
 use axum::routing::on;
 use quickapi_filter::SelectFilterErased;
+use quickapi_http::ModelSerializerJson;
 use quickapi_http::response::{Key, Response};
 use quickapi_lookup::Lookup;
 use quickapi_view::{ViewTrait, as_method_filter};
@@ -44,9 +44,9 @@ use tracing::debug;
 const DEFAULT_JSON_KEY: &str = "object";
 
 /// DetailView is a view for displaying details of a single entity.
-pub struct DetailView<M, S, O>
+pub struct DetailView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -54,18 +54,18 @@ where
     path: String,
     method: Method,
     when: quickapi_when::WhenViews<S>,
-    lookup: Arc<dyn Lookup<M, S>>,
-    filters: quickapi_filter::SelectFilters<M, S>,
+    lookup: Arc<dyn Lookup<E, S>>,
+    filters: quickapi_filter::SelectFilters<E, S>,
     ser: ModelSerializerJson<O>,
     wrap_json_key: Option<Key>,
     fallback: bool,
-    _phantom: PhantomData<(M, S, O)>,
+    _phantom: PhantomData<(E, S, O)>,
 }
 
 /// Implementing DetailView for creating a new instance.
-impl<M, S, O> DetailView<M, S, O>
+impl<E, S, O> DetailView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -74,7 +74,7 @@ where
         db: DatabaseConnection,
         path: impl AsRef<str>,
         method: Method,
-        lookup: impl Lookup<M, S> + 'static,
+        lookup: impl Lookup<E, S> + 'static,
     ) -> Self {
         Self {
             db,
@@ -97,8 +97,8 @@ where
         _f: F,
     ) -> Result<Self, Error>
     where
-        Ser: Clone + serde::Serialize + Send + Sync + 'static + From<<M as EntityTrait>::Model>,
-        F: Fn(DetailView<M, S, O>) -> Result<DetailView<M, S, Ser>, Error>,
+        Ser: Clone + serde::Serialize + Send + Sync + 'static + From<<E as EntityTrait>::Model>,
+        F: Fn(DetailView<E, S, O>) -> Result<DetailView<E, S, Ser>, Error>,
         T: Sync + Send + 'static,
     {
         let mut clone = self.clone();
@@ -109,7 +109,7 @@ where
     }
 
     /// with_lookup sets the lookup for the DetailView.
-    pub fn with_lookup(mut self, lookup: impl Lookup<M, S> + 'static) -> Self {
+    pub fn with_lookup(mut self, lookup: impl Lookup<E, S> + 'static) -> Self {
         self.lookup = Arc::new(lookup);
         self
     }
@@ -118,7 +118,7 @@ where
     #[allow(unused_mut)]
     pub fn with_filter<F, T>(
         mut self,
-        _filter: impl quickapi_filter::SelectFilter<M, S, T> + Clone + Send + Sync + 'static,
+        _filter: impl quickapi_filter::SelectFilter<E, S, T> + Clone + Send + Sync + 'static,
     ) -> Self
     where
         T: Send + Sync + 'static,
@@ -128,11 +128,11 @@ where
     }
 
     /// with_serializer creates a new DetailView with a specified serializer.
-    pub fn with_serializer<Ser>(self) -> DetailView<M, S, Ser>
+    pub fn with_serializer<Ser>(self) -> DetailView<E, S, Ser>
     where
         Ser: serde::Serialize + Clone + Send + Sync + 'static,
     {
-        DetailView::<M, S, Ser> {
+        DetailView::<E, S, Ser> {
             db: self.db,
             path: self.path,
             method: self.method,
@@ -154,17 +154,17 @@ where
 }
 
 /// Implementing DetailViewTrait for DetailView to define the detail view behavior.
-impl<M, S, O> DetailViewTrait<M, S> for DetailView<M, S, O>
+impl<E, S, O> DetailViewTrait<E, S> for DetailView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + From<<M as EntityTrait>::Model> + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<E as EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
 }
 
-impl<M, S, O> Clone for DetailView<M, S, O>
+impl<E, S, O> Clone for DetailView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
     O: serde::Serialize + Clone + Send + Sync + 'static,
 {
@@ -185,11 +185,11 @@ where
 }
 
 /// Implementing RouterExt for DetailView to register the router.
-impl<M, S, O> quickapi_view::RouterExt<S> for DetailView<M, S, O>
+impl<E, S, O> quickapi_view::RouterExt<S> for DetailView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + From<<M as EntityTrait>::Model> + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<E as EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
     /// register_router_with_prefix method to register the DetailView with an axum router.
     fn register_router_with_prefix(
@@ -200,11 +200,7 @@ where
         let mf = as_method_filter(&self.method)?;
         let path = format!("{}{}", prefix, self.path);
 
-        debug!(
-            method = self.method.to_string(),
-            path = &path,
-            "API detail",
-        );
+        debug!(method = self.method.to_string(), path = &path, "API detail",);
 
         // Register the ListView with the axum router
         Ok(router.route(&path, on(mf, Handler::new(self.clone()))))
@@ -213,11 +209,11 @@ where
 
 /// Implementing View for DetailView to render the detail view.
 #[async_trait::async_trait]
-impl<M, S, O> ViewTrait<S> for DetailView<M, S, O>
+impl<E, S, O> ViewTrait<S> for DetailView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + From<<M as EntityTrait>::Model> + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<E as EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
     async fn handle_view(
         &self,
@@ -229,7 +225,7 @@ where
 
         let query = self
             .filters
-            .filter_select_boxed(_parts, &_state, M::find())
+            .filter_select_boxed(_parts, &_state, E::find())
             .await
             .map_err(|e| quickapi_view::Error::InternalError(Box::new(e)))?;
 
@@ -291,11 +287,11 @@ where
 }
 
 /// Implementing ViewWrapResultTrait for ListView to handle JSON response wrapping
-impl<M, S, O> quickapi_view::ViewWrapResultTrait<S> for DetailView<M, S, O>
+impl<E, S, O> quickapi_view::ViewWrapResultTrait<S> for DetailView<E, S, O>
 where
-    M: EntityTrait,
+    E: EntityTrait,
     S: Clone + Send + Sync + 'static,
-    O: serde::Serialize + From<<M as EntityTrait>::Model> + Clone + Send + Sync + 'static,
+    O: serde::Serialize + From<<E as EntityTrait>::Model> + Clone + Send + Sync + 'static,
 {
     /// wrap_result_key method to set a custom key for the JSON response
     fn wrap_result_key(mut self, key: impl Into<Key>) -> Self {
