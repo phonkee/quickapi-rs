@@ -1,0 +1,18 @@
+[package]
+name = "example"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+quickapi-filter = { path = "../crates/quickapi-filter" }
+quickapi-lookup = { path = "../crates/quickapi-lookup" }
+quickapi-when = { path = "../crates/quickapi-when" }
+
+tokio = { version = "1.45", features = ["full"] }
+axum = { version = "0.8", features = ["macros"] }
+quickapi = { path = "../" }
+entity = { path = "entity" }
+sea-orm = { version = "1.1.12", features = ["sqlx-postgres", "runtime-tokio"] }
+tracing = { version = "0.1" }
+tracing-subscriber = { version = "0.3" }
+serde = { version = "1.0", features = ["derive"] }
